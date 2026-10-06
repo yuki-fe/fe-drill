@@ -1,0 +1,13 @@
+{
+  "site_name": "FE用語ドリル",
+  "tagline": "基本情報技術者試験の用語を無料で覚える単語帳",
+  "description": "基本情報技術者試験（FE）の頻出用語を、カード・4択クイズ・書いて答える問題で覚えられる無料の単語帳サイトです。用語ごとの解説ページもあります。",
+  "base_url": "https://yuki-fe.github.io/fe-drill",
+  "operator": "Yuki-fe",
+  "contact": "https://forms.gle/s4yB1xMbcoRqZps2A",
+  "established": "2026-10-06",
+  "google_analytics_id": "",
+  "adsense_client": "",
+  "amazon_associate": false,
+  "affiliate_html": ""
+}
