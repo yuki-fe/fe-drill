@@ -12,6 +12,7 @@ import sys
 from datetime import date
 from html import escape
 from pathlib import Path
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).parent
 OUT = ROOT / "docs"
@@ -359,7 +360,11 @@ def build_meta_files():
         pub = ad.replace("ca-", "")
         (OUT / "ads.txt").write_text(f"google.com, {pub}, DIRECT, f08c47fec0942fa0\n", encoding="utf-8")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")
-    data = [{"id": t["id"], "f": t["field"], "sub": t["sub"], "term": t["term"], "desc": t["desc"]} for t in terms]
+    # 独自ドメインのときは GitHub Pages 用の CNAME を書く（docs/ を作り直しても設定が消えないように）
+    host = urlparse(BASE).hostname or ""
+    if host and not host.endswith("github.io"):
+        (OUT / "CNAME").write_text(host + "\n", encoding="utf-8")
+    data =[{"id": t["id"], "f": t["field"], "sub": t["sub"], "term": t["term"], "desc": t["desc"]} for t in terms]
     (OUT / "assets" / "terms.js").write_text("window.FE_TERMS = " + json.dumps(data, ensure_ascii=False) + ";\n", encoding="utf-8")
 
 
