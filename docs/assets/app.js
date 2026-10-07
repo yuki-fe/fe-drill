@@ -253,7 +253,7 @@
     }
     $("#panel").innerHTML = `
       <div class="meta"><span class="mono">問${typing.i + 1} / ${typing.qs.length}</span><span>正解 <span class="mono">${typing.score}</span></span></div>
-      <div class="question"><div class="q">${FIELD[q.t.f]}・${esc(q.t.sub)}</div><p>次の説明に当てはまる用語を答えよ。</p><p>${esc(masked(q.t))}</p>${hint}</div>
+      <div class="question"><div class="q">${FIELD[q.t.f]}・${esc(q.t.sub)}</div><p>${esc(masked(q.t))}</p>${hint}</div>
       ${foot}`;
     if (q.result === null) {
       const inp = $("#answer");
