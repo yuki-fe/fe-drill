@@ -11,6 +11,8 @@
 | `build.py` | ページを生成するスクリプト。運営者情報・プライバシーポリシーの文面もここにある | 文面を変えるとき |
 | `static/assets/` | CSS と JavaScript（学習機能・確認問題） | 見た目や機能を変えるとき |
 | `docs/` | 生成されたサイト。**直接編集しない**（ビルドのたびに作り直される） | しない |
+| `make_ig_images.py` | Instagram 投稿用の画像と投稿文（`static/ig/`）を作る。`python make_ig_images.py 120` で投稿のストックを増やす | ストックを増やすとき |
+| `line-bot/` | LINE 運用ボット（Google Apps Script）のプログラム。合言葉は入っていない | 話し方やジャンルを変えるとき |
 
 ## 普段の作業
 
