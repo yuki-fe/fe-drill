@@ -6,22 +6,37 @@
   const MODES = [
     { id: "card", name: "カード", cap: "めくって覚える", title: "カード", sub: "タップで裏返し、覚えたかどうかを仕分けます" },
     { id: "quiz", name: "4択", cap: "ア〜エから選ぶ", title: "4択クイズ", sub: "10問ずつ。覚えていない用語から出ます" },
-    { id: "type", name: "書いて答える", cap: "意味から用語を入力", title: "書いて答える", sub: "説明を読んで用語を入力します。ひらがなや英字の略語でも答えられます" },
+    { id: "type", name: "書いて答える", short: "書く", cap: "意味から用語を入力", title: "書いて答える", sub: "説明を読んで用語を入力します。ひらがなや英字の略語でも答えられます" },
+    { id: "review", name: "復習", cap: "間違えた用語だけ", title: "復習", sub: "「まだ」を押した用語や間違えた用語を、まとめて学習します。正解すると復習リストから外れます" },
     { id: "list", name: "一覧", cap: "検索・チェック", title: "用語一覧", sub: "検索して、覚えた用語に印を付けられます" }
   ];
+  const KINDS = [["card", "カード"], ["quiz", "4択"], ["type", "書いて答える"]];
 
   /* ---------- 保存 ---------- */
   function load(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v && typeof v === "object" ? v : d; } catch (e) { return d; } }
   function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   let known = load("fe-drill-v1", {});
-  const prefs = Object.assign({ mode: "card", field: "all", cardDir: "t2d", quizDir: "d2t" }, load("fe-drill-prefs", {}));
+  let weak = load("fe-drill-weak", {});
+  const prefs = Object.assign({ mode: "card", field: "all", cardDir: "t2d", quizDir: "d2t", reviewKind: "card" }, load("fe-drill-prefs", {}));
   const hashMode = location.hash.slice(1);
   if (MODES.some((m) => m.id === hashMode)) prefs.mode = hashMode;
   if (!MODES.some((m) => m.id === prefs.mode)) prefs.mode = "card";
   if (prefs.field !== "all" && !FIELD[prefs.field]) prefs.field = "all";
+  if (!KINDS.some(([k]) => k === prefs.reviewKind)) prefs.reviewKind = "card";
   const savePrefs = () => store("fe-drill-prefs", prefs);
   const isKnown = (t) => !!known[t.term];
-  function setKnown(t, v) { if (v) known[t.term] = 1; else delete known[t.term]; store("fe-drill-v1", known); renderFields(); }
+  const isWeak = (t) => !!weak[t.term];
+  function saveProgress() { store("fe-drill-v1", known); store("fe-drill-weak", weak); renderFields(); updateWeakCount(); }
+  /* 学習での答え: 正解・覚えた → 覚えた用語に、間違い・まだ → 復習リストに */
+  function record(t, ok) {
+    if (ok) { known[t.term] = 1; delete weak[t.term]; } else { delete known[t.term]; weak[t.term] = 1; }
+    saveProgress();
+  }
+  /* 一覧での印の付け外し: 復習リストには入れない */
+  function setKnown(t, v) {
+    if (v) { known[t.term] = 1; delete weak[t.term]; } else delete known[t.term];
+    saveProgress();
+  }
 
   /* ---------- 文字列 ---------- */
   const $ = (s) => document.querySelector(s);
@@ -50,15 +65,26 @@
 
   let field = prefs.field, mode = prefs.mode, query = "";
   let deck = [], idx = 0, flipped = false, quiz = null, typing = null;
-  const pool = () => field === "all" ? TERMS : TERMS.filter((t) => t.f === field);
+  const reviewing = () => mode === "review";
+  const kind = () => reviewing() ? prefs.reviewKind : mode;
+  const basePool = () => field === "all" ? TERMS : TERMS.filter((t) => t.f === field);
+  const pool = () => reviewing() ? basePool().filter(isWeak) : basePool();
   const studyOrder = (p) => [...shuffle(p.filter((t) => !isKnown(t))), ...shuffle(p.filter(isKnown))];
 
   /* ---------- サイドバー ---------- */
   function renderModes() {
     $("#modes").innerHTML = MODES.map((m) => `
       <button class="mode" type="button" role="tab" data-mode="${m.id}" aria-selected="${m.id === mode}">
-        <span class="bub" aria-hidden="true"></span><b>${m.name}</b><small>${m.cap}</small>
+        <span class="bub" aria-hidden="true"></span><b><span class="nm${m.short ? " has-short" : ""}">${m.name}</span>${m.short ? `<span class="nm-short">${m.short}</span>` : ""}${m.id === "review" ? `<span class="count" id="weakCount"></span>` : ""}</b><small>${m.cap}</small>
       </button>`).join("");
+    updateWeakCount();
+  }
+  function updateWeakCount() {
+    const el = $("#weakCount");
+    if (!el) return;
+    const n = basePool().filter(isWeak).length;
+    el.textContent = n ? String(n) : "";
+    el.setAttribute("aria-label", `復習する用語 ${n}語`);
   }
   function renderFields() {
     const rows = [["all", "すべて", TERMS], ...Object.entries(FIELD).map(([k, v]) => [k, v, TERMS.filter((t) => t.f === k)])];
@@ -73,7 +99,10 @@
   function renderToolbar() {
     const m = MODES.find((x) => x.id === mode);
     let seg = "";
-    if (mode === "card" || mode === "quiz") {
+    if (reviewing()) {
+      seg = `<div class="seg" role="group" aria-label="復習のしかた">${KINDS.map(([k, label]) =>
+        `<button type="button" data-kind="${k}" aria-pressed="${prefs.reviewKind === k}">${label}</button>`).join("")}</div>`;
+    } else if (mode === "card" || mode === "quiz") {
       const key = mode === "card" ? "cardDir" : "quizDir";
       seg = `<div class="seg" role="group" aria-label="出題の向き">
         <button type="button" data-dir="t2d" data-key="${key}" aria-pressed="${prefs[key] === "t2d"}">用語 → 意味</button>
@@ -85,10 +114,29 @@
 
   function renderRoundEnd(head, big, unit, extra, btn, fn) {
     $("#panel").innerHTML = `<div class="result"><div>${head}</div><div class="score">${big}<span> ${unit}</span></div>${extra}<button class="btn primary" type="button" id="again2">${btn}</button></div>`;
-    $("#again2").onclick = fn; $("#again2").focus();
+    $("#again2").onclick = fn; $("#again2").focus({ preventScroll: true });
   }
   function missList(miss) {
     return miss.length ? `<ul class="misses">${miss.map((t) => `<li><a href="${link(t)}">${esc(t.term)}</a>: ${esc(t.desc)}</li>`).join("")}</ul>` : `<div>全問正解です</div>`;
+  }
+  /* 復習モードで1回分を終えたときの「続ける」ボタン */
+  function reviewNext(fallbackLabel, fallback) {
+    if (!reviewing()) return [fallbackLabel, fallback];
+    const n = pool().length;
+    return n ? [`続けて復習する（残り${n}語）`, start] : ["復習を終える", start];
+  }
+  function renderReviewEmpty() {
+    const scope = field === "all" ? "" : `${FIELD[field]}の`;
+    $("#panel").innerHTML = `
+      <div class="result">
+        <div class="score" style="font-size:1.35rem;line-height:1.4">復習する${scope}用語はありません</div>
+        <p style="margin:0">カードで「まだ」を押した用語や、4択・書いて答えるで間違えた用語がここに集まります。<br>正解すると、復習リストから外れます。</p>
+        <div class="cta-row" style="justify-content:center">
+          <button class="btn primary" type="button" data-go="quiz">4択クイズをする</button>
+          <button class="btn" type="button" data-go="card">カードで覚える</button>
+        </div>
+      </div>`;
+    document.querySelectorAll("[data-go]").forEach((b) => b.onclick = () => { mode = b.dataset.go; refresh(); });
   }
 
   /* ---------- カード ---------- */
@@ -96,14 +144,14 @@
   function renderCard() {
     const t = deck[idx];
     if (!t) { $("#panel").innerHTML = `<div class="empty">用語がありません</div>`; return; }
-    const left = pool().filter((x) => !isKnown(x)).length;
+    const left = reviewing() ? `復習リスト 残り <span class="mono">${pool().length}</span>` : `まだ覚えていない用語 <span class="mono">${pool().filter((x) => !isKnown(x)).length}</span>`;
     const rev = prefs.cardDir === "d2t";
     let body;
     if (!rev) body = `<div class="term">${esc(t.term)}</div>` + (flipped ? `<div class="desc">${esc(t.desc)}</div>` : `<div class="hint">タップして意味を見る</div>`);
     else body = flipped ? `<div class="term">${esc(t.term)}</div><div class="desc">${esc(t.desc)}</div>`
                         : `<div class="desc big">${esc(masked(t))}</div><div class="hint">用語を思い浮かべてからタップ</div>`;
     $("#panel").innerHTML = `
-      <div class="meta"><span class="mono">${idx + 1} / ${deck.length}</span><span>まだ覚えていない用語 <span class="mono">${left}</span></span></div>
+      <div class="meta"><span class="mono">${idx + 1} / ${deck.length}</span><span>${left}</span></div>
       <div class="card" id="flashcard" tabindex="0" role="button" aria-label="カードを裏返す">
         ${isKnown(t) ? `<span class="known-badge">覚えた</span>` : ""}
         <span class="tag">${FIELD[t.f]}・${esc(t.sub)}</span>${body}
@@ -114,16 +162,20 @@
     $("#again").onclick = () => answerCard(false);
     $("#ok").onclick = () => answerCard(true);
   }
-  function flip() { flipped = !flipped; renderCard(); $("#flashcard").focus(); }
+  function flip() { flipped = !flipped; renderCard(); $("#flashcard").focus({ preventScroll: true }); }
   function answerCard(ok) {
-    setKnown(deck[idx], ok); idx++; flipped = false;
-    if (idx >= deck.length) return renderRoundEnd("1周しました", pool().filter(isKnown).length, `/ ${pool().length} 覚えた`, "", "もう1周する", () => { newDeck(); renderCard(); });
-    renderCard();
+    record(deck[idx], ok); idx++; flipped = false;
+    if (idx < deck.length) return renderCard();
+    if (reviewing()) {
+      const n = pool().length;
+      return renderRoundEnd("1周しました", n, "語が復習リストに残っています", "", ...reviewNext());
+    }
+    renderRoundEnd("1周しました", pool().filter(isKnown).length, `/ ${pool().length} 覚えた`, "", "もう1周する", () => { newDeck(); renderCard(); });
   }
 
   /* ---------- 4択 ---------- */
   function newQuiz() {
-    const p = pool(), src = p.length >= 4 ? p : TERMS;
+    const p = pool(), all = basePool(), src = all.length >= 4 ? all : TERMS;
     quiz = { qs: studyOrder(p).slice(0, 10).map((t) => {
       const same = shuffle(src.filter((x) => x.id !== t.id && x.sub === t.sub));
       const rest = shuffle(src.filter((x) => x.id !== t.id && x.sub !== t.sub));
@@ -134,11 +186,10 @@
     const q = quiz.qs[quiz.i];
     if (!q) {
       const miss = quiz.qs.filter((x) => x.choices[x.picked].id !== x.t.id).map((x) => x.t);
-      return renderRoundEnd("結果", quiz.score, `/ ${quiz.qs.length} 問正解`, missList(miss), "次の10問", () => { newQuiz(); renderQuiz(); });
+      return renderRoundEnd("結果", quiz.score, `/ ${quiz.qs.length} 問正解`, missList(miss), ...reviewNext("次の10問", () => { newQuiz(); renderQuiz(); }));
     }
     const d2t = quiz.dir === "d2t", done = q.picked !== null;
-    const stem = d2t ? `<p>次の説明に当てはまる用語はどれか。</p><p>${esc(masked(q.t))}</p>`
-                     : `<p>次の用語の説明として、適切なものはどれか。</p><div class="qterm">${esc(q.t.term)}</div>`;
+    const stem = d2t ? `<p>${esc(masked(q.t))}</p>` : `<div class="qterm">${esc(q.t.term)}</div>`;
     const label = (c) => d2t ? esc(c.term) : esc(c.id === q.t.id ? masked(c) : c.desc);
     let explain = "";
     if (done && q.choices[q.picked].id !== q.t.id) {
@@ -155,7 +206,7 @@
       ${done ? `${explain}<button class="btn primary" type="button" id="next">${quiz.i + 1 < quiz.qs.length ? "次の問題" : "結果を見る"}</button>` : ""}
       <div class="kbd">1〜4 で解答 / Enter で次へ</div>`;
     document.querySelectorAll(".choice").forEach((b) => b.onclick = () => pick(+b.dataset.k));
-    if (done) { $("#next").onclick = () => { quiz.i++; renderQuiz(); }; $("#next").focus(); }
+    if (done) { $("#next").onclick = () => { quiz.i++; renderQuiz(); }; $("#next").focus({ preventScroll: true }); }
   }
   function pick(k) {
     const q = quiz.qs[quiz.i];
@@ -163,7 +214,7 @@
     q.picked = k;
     const ok = q.choices[k].id === q.t.id;
     if (ok) quiz.score++;
-    setKnown(q.t, ok);
+    record(q.t, ok);
     renderQuiz();
   }
 
@@ -173,7 +224,7 @@
     const q = typing.qs[typing.i];
     if (!q) {
       const miss = typing.qs.filter((x) => x.result !== "ok").map((x) => x.t);
-      return renderRoundEnd("結果", typing.score, `/ ${typing.qs.length} 問正解`, missList(miss), "次の10問", () => { newTyping(); renderTyping(); });
+      return renderRoundEnd("結果", typing.score, `/ ${typing.qs.length} 問正解`, missList(miss), ...reviewNext("次の10問", () => { newTyping(); renderTyping(); }));
     }
     const chars = Array.from(primary(q.t.term));
     const hint = q.hint ? `<div class="hint" style="padding:0">ヒント: 「${esc(chars[0])}」から始まる${chars.length}文字</div>` : "";
@@ -210,7 +261,7 @@
       inp.onkeydown = (e) => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); submitTyping(); } };
       $("#submit").onclick = submitTyping;
       $("#hintBtn").onclick = () => { q.hint = true; renderTyping(); };
-      $("#skip").onclick = () => { q.result = "skip"; setKnown(q.t, false); renderTyping(); };
+      $("#skip").onclick = () => { q.result = "skip"; record(q.t, false); renderTyping(); };
       inp.focus({ preventScroll: true });
     } else {
       $("#next").onclick = () => { typing.i++; renderTyping(); };
@@ -224,7 +275,7 @@
     const ok = aliases(q.t.term).some((a) => norm(a) === v);
     q.result = ok ? "ok" : "ng";
     if (ok) typing.score++;
-    setKnown(q.t, ok);
+    record(q.t, ok);
     renderTyping();
   }
 
@@ -242,18 +293,20 @@
     $("#list").innerHTML = rows.length ? rows.map((t) => `
       <div class="row">
         <button class="st" type="button" data-n="${t.n}" aria-pressed="${isKnown(t)}" aria-label="${esc(t.term)}を覚えたにする" title="覚えた"></button>
-        <div><h3><a href="${link(t)}">${esc(t.term)}</a><small>${FIELD[t.f]}・${esc(t.sub)}</small></h3><p>${esc(t.desc)}</p></div>
+        <div><h3><a href="${link(t)}">${esc(t.term)}</a>${isWeak(t) ? `<span class="weak-tag">復習</span>` : ""}<small>${FIELD[t.f]}・${esc(t.sub)}</small></h3><p>${esc(t.desc)}</p></div>
       </div>`).join("") : `<div class="empty">「${esc(query)}」に当てはまる用語はありません</div>`;
     document.querySelectorAll(".st").forEach((b) => b.onclick = () => {
-      const t = TERMS[+b.dataset.n]; setKnown(t, !isKnown(t)); b.setAttribute("aria-pressed", isKnown(t));
+      const t = TERMS[+b.dataset.n]; setKnown(t, !isKnown(t)); renderRows();
     });
   }
 
   /* ---------- 切り替え ---------- */
   function start() {
-    if (mode === "card") { newDeck(); renderCard(); }
-    else if (mode === "quiz") { newQuiz(); renderQuiz(); }
-    else if (mode === "type") { newTyping(); renderTyping(); }
+    if (reviewing() && !pool().length) return renderReviewEmpty();
+    const k = kind();
+    if (k === "card") { newDeck(); renderCard(); }
+    else if (k === "quiz") { newQuiz(); renderQuiz(); }
+    else if (k === "type") { newTyping(); renderTyping(); }
     else renderList();
   }
   function refresh() {
@@ -265,6 +318,8 @@
   $("#modes").onclick = (e) => { const b = e.target.closest(".mode"); if (b) { mode = b.dataset.mode; refresh(); } };
   $("#fields").onclick = (e) => { const b = e.target.closest(".frow"); if (b) { field = b.dataset.f; refresh(); } };
   $("#toolbar").onclick = (e) => {
+    const kb = e.target.closest("[data-kind]");
+    if (kb) { prefs.reviewKind = kb.dataset.kind; savePrefs(); renderToolbar(); start(); return; }
     const b = e.target.closest("[data-dir]"); if (!b) return;
     prefs[b.dataset.key] = b.dataset.dir; savePrefs(); renderToolbar();
     if (mode === "card") { flipped = false; renderCard(); } else { newQuiz(); renderQuiz(); }
@@ -274,17 +329,19 @@
   $("#reset").onclick = () => {
     const btn = $("#reset");
     if (!resetArmed) { resetArmed = true; btn.textContent = "もう一度押すとリセットします"; setTimeout(() => { resetArmed = false; btn.textContent = "進み具合をリセット"; }, 3000); return; }
-    known = {}; store("fe-drill-v1", known); resetArmed = false; btn.textContent = "進み具合をリセット"; refresh();
+    known = {}; weak = {}; store("fe-drill-v1", known); store("fe-drill-weak", weak);
+    resetArmed = false; btn.textContent = "進み具合をリセット"; refresh();
   };
 
   document.addEventListener("keydown", (e) => {
     const tag = e.target.tagName;
     if (tag === "INPUT" || tag === "A" || (tag === "BUTTON" && (e.key === "Enter" || e.key === " "))) return;
-    if (mode === "card" && deck[idx] && $("#flashcard")) {
+    const k = kind();
+    if (k === "card" && deck[idx] && $("#flashcard")) {
       if (e.key === " ") { e.preventDefault(); flip(); }
       else if (e.key === "ArrowLeft") answerCard(false);
       else if (e.key === "ArrowRight") answerCard(true);
-    } else if (mode === "quiz" && quiz && quiz.qs[quiz.i]) {
+    } else if (k === "quiz" && quiz && quiz.qs[quiz.i] && $(".choices")) {
       const q = quiz.qs[quiz.i];
       if (["1", "2", "3", "4"].includes(e.key)) pick(+e.key - 1);
       else if (e.key === "Enter" && q.picked !== null) { quiz.i++; renderQuiz(); }

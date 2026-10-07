@@ -54,6 +54,10 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 .mode[aria-selected="true"] { background: var(--paper); }
 .mode[aria-selected="true"] .bub { background: var(--mark); }
 .mode[aria-selected="true"] b { color: var(--mark); }
+.mode .count { display: inline-block; min-width: 1.7em; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--mark); color: var(--paper); font-family: var(--f-mono); font-size: .7rem; line-height: 1.6; text-align: center; vertical-align: 1px; }
+.mode .count:empty { display: none; }
+.mode .nm-short { display: none; }
+.weak-tag { font-size: .68rem; font-weight: 700; color: var(--mark); background: var(--mark-soft); border-radius: 4px; padding: 0 6px; }
 .fields { display: grid; grid-template-columns: 1fr; gap: 6px; }
 .frow { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid transparent; border-radius: 8px; background: none; text-align: left; cursor: pointer; }
 .frow:hover { background: var(--paper); }
@@ -199,6 +203,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
   .mode .bub { grid-row: auto; width: 26px; height: 15px; }
   .mode b { font-size: .78rem; }
   .mode small { display: none; }
+  .mode .nm.has-short { display: none; }
+  .mode .nm-short { display: inline; }
   .mode[aria-selected="true"] { background: none; }
   .kbd { display: none; }
   body.home { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
