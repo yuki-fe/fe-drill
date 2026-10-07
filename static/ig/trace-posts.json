@@ -1,0 +1,202 @@
+[
+ {
+  "no": 1,
+  "id": "t1",
+  "term": "配列の合計",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t1-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t1-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.1】配列の合計\ntotal（data = {3, 5, 2}）を実行したとき、5行目を実行した直後の i・s の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 2,
+  "id": "t2",
+  "term": "偶数の個数を数える",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t2-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t2-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.2】偶数の個数を数える\ncountEven（data = {6, 3, 8, 10, 5}）を実行したとき、6行目を実行した直後の i・count の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 3,
+  "id": "t3",
+  "term": "各桁の和",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t3-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t3-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.3】各桁の和\ndigitSum（n = 4721）を実行したとき、5行目を実行した直後の n・sum の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 4,
+  "id": "t4",
+  "term": "二分探索の範囲を追う",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t4-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t4-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.4】二分探索の範囲を追う\nbinarySearch（data = {3, 8, 11, 15, 20, 26, 31, 40}、target = 11）を実行したとき、6行目を実行した直後の low・high・mid の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 5,
+  "id": "t5",
+  "term": "二重ループの回数",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t5-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t5-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.5】二重ループの回数\ncountPairs（n = 3）を実行したとき、6行目を実行した直後の i・j・count の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 6,
+  "id": "t6",
+  "term": "再帰で 1 から n までの和",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t6-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t6-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.6】再帰で 1 から n までの和\nsumTo（n = 3）を実行したとき、6行目を実行した直後の n・r の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 7,
+  "id": "t7",
+  "term": "配列を逆順にする",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t7-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t7-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.7】配列を逆順にする\nreverse（data = {1, 2, 3, 4, 5}）を実行したとき、10行目を実行した直後の left・right・tmp の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 8,
+  "id": "t8",
+  "term": "最大公約数（互除法）",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t8-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t8-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.8】最大公約数（互除法）\ngcd（a = 48、b = 18）を実行したとき、6行目を実行した直後の a・b・r の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 9,
+  "id": "t9",
+  "term": "線形探索で見つかるまで",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t9-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t9-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.9】線形探索で見つかるまで\nsearch（data = {7, 2, 9, 4, 6}、target = 4）を実行したとき、7行目を実行した直後の i の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 10,
+  "id": "t10",
+  "term": "バブルソートの1周目",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t10-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t10-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.10】バブルソートの1周目\nbubblePass（data = {3, 1, 4, 2, 5}）を実行したとき、7行目を実行した直後の j・tmp の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 11,
+  "id": "t11",
+  "term": "最小値の位置を探す",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t11-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t11-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.11】最小値の位置を探す\nminIndex（data = {8, 5, 9, 3, 6, 1}）を実行したとき、6行目を実行した直後の i・m の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 12,
+  "id": "t12",
+  "term": "2進数の1の数を数える",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t12-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t12-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.12】2進数の1の数を数える\ncountBits（n = 13）を実行したとき、7行目を実行した直後の n・count の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 13,
+  "id": "t13",
+  "term": "フィボナッチ数をループで求める",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t13-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t13-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.13】フィボナッチ数をループで求める\nfib（n = 6）を実行したとき、8行目を実行した直後の i・a・b の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 14,
+  "id": "t14",
+  "term": "大域変数に足していく",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t14-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t14-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.14】大域変数に足していく\nadd（x = 5）を実行したとき、5行目を実行した直後の x・total の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 15,
+  "id": "t15",
+  "term": "素数かどうかを調べる",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t15-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t15-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.15】素数かどうかを調べる\nisPrime（n = 29）を実行したとき、7行目を実行した直後の d の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 16,
+  "id": "t16",
+  "term": "再帰で最大値を求める",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t16-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t16-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.16】再帰で最大値を求める\nmaxOf（data = {4, 9, 2, 7}、n = 4）を実行したとき、6行目を実行した直後の n・m の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 17,
+  "id": "t17",
+  "term": "配列で作るキュー",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t17-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t17-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.17】配列で作るキュー\nenqueue（x = 10）を実行したとき、7行目を実行した直後の x・tail の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 18,
+  "id": "t18",
+  "term": "挿入ソートで要素をずらす",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t18-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t18-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.18】挿入ソートで要素をずらす\ninsertionSort（data = {4, 3, 5, 1}）を実行したとき、8行目を実行した直後の i・j・key の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 19,
+  "id": "t19",
+  "term": "do-while で数字を逆に並べる",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t19-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t19-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.19】do-while で数字を逆に並べる\nreverseNum（n = 507）を実行したとき、5行目を実行した直後の n・r の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ },
+ {
+  "no": 20,
+  "id": "t20",
+  "term": "同じ値の組を数える",
+  "images": [
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t20-q.jpg",
+   "https://yuki-fe.github.io/fe-drill/ig/trace/t20-a.jpg"
+  ],
+  "caption": "【科目B トレースクイズ No.20】同じ値の組を数える\ncountSame（data = {2, 5, 2, 5, 2}）を実行したとき、7行目を実行した直後の i・j・count の値を順に書き出してみよう。\n\n答えは2枚目の画像へ。\n▶ プログラムが1行ずつ動く様子は「FE用語ドリル」のトレース練習で見られます（無料）。プロフィールのリンクから。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格"
+ }
+]

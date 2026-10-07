@@ -1,0 +1,114 @@
+[
+ {
+  "key": "trace-t1",
+  "kind": "trace",
+  "id": "t1",
+  "title": "配列の合計",
+  "seconds": 16.9,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t1.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t1.jpg",
+  "caption": "【科目B トレース No.1】配列の合計\nこのプログラム、動きを追えた？\n変数 i、s がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.1で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】配列の合計｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.1】配列の合計\n変数 i、s がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t1#t1\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t2",
+  "kind": "trace",
+  "id": "t2",
+  "title": "偶数の個数を数える",
+  "seconds": 23.2,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t2.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t2.jpg",
+  "caption": "【科目B トレース No.2】偶数の個数を数える\nこのプログラム、動きを追えた？\n変数 i、count がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.2で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】偶数の個数を数える｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.2】偶数の個数を数える\n変数 i、count がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t2#t2\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "algo-linear-search",
+  "kind": "algo",
+  "id": "linear-search",
+  "title": "線形探索",
+  "seconds": 16.9,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-linear-search.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-linear-search.jpg",
+  "caption": "【科目B アルゴリズム】線形探索\nこのプログラム、動きを追えた？\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のアルゴリズム図鑑「線形探索」で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】線形探索｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B アルゴリズム】線形探索\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/algorithms/linear-search.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-linear-search\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t3",
+  "kind": "trace",
+  "id": "t3",
+  "title": "各桁の和",
+  "seconds": 21.4,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t3.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t3.jpg",
+  "caption": "【科目B トレース No.3】各桁の和\nこのプログラム、動きを追えた？\n変数 n、sum がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.3で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】各桁の和｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.3】各桁の和\n変数 n、sum がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t3#t3\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t4",
+  "kind": "trace",
+  "id": "t4",
+  "title": "二分探索の範囲を追う",
+  "seconds": 22.2,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t4.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t4.jpg",
+  "caption": "【科目B トレース No.4】二分探索の範囲を追う\nこのプログラム、動きを追えた？\n変数 low、high、mid がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.4で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】二分探索の範囲を追う｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.4】二分探索の範囲を追う\n変数 low、high、mid がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t4#t4\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "algo-binary-search",
+  "kind": "algo",
+  "id": "binary-search",
+  "title": "二分探索",
+  "seconds": 18.7,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-binary-search.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-binary-search.jpg",
+  "caption": "【科目B アルゴリズム】二分探索\nこのプログラム、動きを追えた？\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のアルゴリズム図鑑「二分探索」で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】二分探索｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B アルゴリズム】二分探索\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/algorithms/binary-search.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-binary-search\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t5",
+  "kind": "trace",
+  "id": "t5",
+  "title": "二重ループの回数",
+  "seconds": 23.1,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t5.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t5.jpg",
+  "caption": "【科目B トレース No.5】二重ループの回数\nこのプログラム、動きを追えた？\n変数 i、j、count がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.5で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】二重ループの回数｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.5】二重ループの回数\n変数 i、j、count がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t5#t5\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t6",
+  "kind": "trace",
+  "id": "t6",
+  "title": "再帰で 1 から n までの和",
+  "seconds": 22.2,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t6.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t6.jpg",
+  "caption": "【科目B トレース No.6】再帰で 1 から n までの和\nこのプログラム、動きを追えた？\n変数 n、r がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.6で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】再帰で 1 から n までの和｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.6】再帰で 1 から n までの和\n変数 n、r がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t6#t6\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ }
+]

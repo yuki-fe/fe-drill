@@ -153,6 +153,7 @@ def build_home():
     counts = {k: sum(t["field"] == k for t in terms) for k in FIELDS}
     field_links = "".join(f'<li><a href="terms/index.html#{k}">{v}</a><span class="mono">{counts[k]}語</span></li>' for k, v in FIELDS.items())
     body = f"""
+<a class="home-feature" href="b/trace.html"><span class="tag">科目B</span><b>プログラムの動きを1行ずつ再生できる「トレース練習」{len(B["trace"])}問</b><span class="go">試してみる →</span></a>
 <div class="app">
   <aside class="side">
     <div>
@@ -186,7 +187,7 @@ def build_home():
   <ul class="field-list">{field_links}</ul>
   <p>すべての用語は<a href="terms/index.html">用語一覧</a>から、1語ずつ解説ページで読めます。</p>
   <h2>科目Bの対策</h2>
-  <p>擬似言語の書き方、アルゴリズムの動きを1行ずつ見られる図鑑、トレース練習、穴埋め問題、情報セキュリティの事例問題、自分で書いたプログラムを動かせるシミュレータを用意しています。<a href="b/index.html">科目Bのページへ</a></p>
+  <p>科目Bでは、プログラムの動きを追う「トレース」が鍵になります。このサイトでは、擬似言語のプログラムを<b>1行ずつ再生</b>して、どの行で変数がどう変わるかを目で見て確かめられます。<a href="b/trace.html">トレース練習</a>（{len(B["trace"])}問）のほか、アルゴリズム図鑑、穴埋め問題、情報セキュリティの事例問題、自分で書いたプログラムを動かせるシミュレータも用意しています。<a href="b/index.html">科目Bのページへ</a></p>
 </section>
 """
     ld = [{"@context": "https://schema.org", "@type": "WebSite", "name": SITE, "url": BASE + "/", "description": config["description"]}]
@@ -367,7 +368,7 @@ def build_b_hub():
     cards = [
         ("notation.html", "擬似言語の書き方", f"記号と書き方の早見表と、確認クイズ {counts['notation']}問。まずはここから。"),
         ("algorithms/index.html", "アルゴリズム図鑑", f"探索・整列・再帰など {counts['algorithms']}種類。プログラムの動きを1行ずつ見られます。"),
-        ("trace.html", "トレース練習", f"変数の値を表に書き込んで、プログラムの動きを追う練習 {counts['trace']}問。"),
+        ("trace.html", "トレース練習", f"変数の値を表に書き込んで、プログラムの動きを追う練習 {counts['trace']}問。答え合わせの後、1行ずつ再生して確かめられます。"),
         ("fill.html", "穴埋め問題", f"本番と同じ形の、空欄に入るものを選ぶ問題 {counts['fill']}問。間違えた答えで動かして確かめられます。"),
         ("security.html", "セキュリティ事例", f"場面を読んで正しい対応を選ぶ問題 {counts['security']}問。"),
         ("simulator.html", "シミュレータ", "自分で書いた擬似言語のプログラムを、ブラウザで動かせます。"),
@@ -381,6 +382,13 @@ def build_b_hub():
   {b_nav("", "index.html")}
   <h1 class="b-title">科目B対策<small>擬似言語のトレースと情報セキュリティ</small></h1>
   <p class="b-intro">科目Bは100分で20問。そのうち16問がアルゴリズムとプログラミング（擬似言語）、4問が情報セキュリティです。用語を覚えるより、<b>プログラムを読んで動きを追う力</b>が問われます。</p>
+  <section class="b-feature">
+    <p class="b-feature-tag">このサイトだけの機能</p>
+    <h2>トレースを、1行ずつ再生して確かめる</h2>
+    <p>紙の上で追うしかなかったプログラムの動きを、「再生」「進む」で1行ずつ見られます。いま実行している行と、値が変わった変数に色が付くので、自分のトレースがどこでずれたかをその場で見つけられます。下は二分探索の例です。「再生」を押してみてください。</p>
+    <div data-b="trace-demo" data-id="t4"><noscript><p>動きを見るには JavaScript を有効にしてください。</p></noscript></div>
+    <div class="cta-row"><a class="btn primary" href="trace.html#t4">この問題を自分で解く</a><a class="btn" href="trace.html">トレース練習 {counts['trace']}問へ</a></div>
+  </section>
   <div class="b-cards">{cards_html}</div>
   <section class="b-sec">
     <h2>学習状況</h2>
@@ -583,8 +591,8 @@ def build_b():
     build_b_notation()
     build_b_algorithms()
     build_b_practice("b/trace.html", "trace", "トレース練習", "変数の値を表に書き込んで追う",
-                     "プログラムを1行ずつ追い、指定された行を実行した直後の変数の値を表に書き込みます。わからないときは「動きを見る」で確かめられます。",
-                     f"基本情報技術者試験 科目Bのトレース練習{len(B['trace'])}問。擬似言語のプログラムを追い、変数の値を表に書き込んで答え合わせできます。", B["trace"])
+                     "プログラムを1行ずつ追い、指定された行を実行した直後の変数の値を表に書き込みます。答え合わせの後は<b>「▶ 動きを見る」でプログラムを1行ずつ再生</b>して、どの行で変数がどう変わるかを確かめられます。自分のトレースがどこでずれたかが、その場でわかります。",
+                     f"基本情報技術者試験 科目Bのトレース練習{len(B['trace'])}問。擬似言語のプログラムを1行ずつ再生して、変数の動きを目で見て確かめられます。表に書き込んで答え合わせもできる無料の練習問題です。", B["trace"])
     build_b_practice("b/fill.html", "fill", "穴埋め問題", "空欄に入るものを選ぶ",
                      "本番と同じく、プログラムの空欄に入るものをア〜エから選びます。間違えたときは、選んだ答えでプログラムを動かして、どこがおかしくなるかを確かめられます。",
                      f"基本情報技術者試験 科目Bの擬似言語の穴埋め問題{len(B['fill'])}問。解説付きで、正しい答えと選んだ答えのそれぞれでプログラムの動きを確認できます。", B["fill"])

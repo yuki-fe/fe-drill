@@ -365,3 +365,15 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 .given p { margin: 0; }
 .given .v-vars th { width: 6em; }
 .given-out th, .given-out td { font-weight: 700; color: var(--ok); }
+
+/* ---------- 「1行ずつ再生」の紹介（科目Bのトップ・ホーム） ---------- */
+.b-feature { border: 1.5px solid var(--mark); border-radius: 14px; background: var(--paper); padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+.b-feature h2 { margin: 0; font-size: 1.3rem; }
+.b-feature p { margin: 0; }
+.b-feature-tag { display: inline-block; align-self: flex-start; background: var(--mark); color: var(--paper); font-size: .78rem; font-weight: 700; padding: 2px 12px; border-radius: 999px; }
+.b-feature .cta-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.home-feature { max-width: 1100px; margin: 16px auto 0; padding: 10px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; border: 1.5px solid var(--mark); border-radius: 10px; background: var(--paper); color: var(--ink); text-decoration: none; font-size: .92rem; width: calc(100% - 48px); }
+.home-feature:hover { background: var(--mark-soft); }
+.home-feature .tag { background: var(--mark); color: var(--paper); font-size: .75rem; font-weight: 700; padding: 1px 10px; border-radius: 999px; }
+.home-feature .go { margin-left: auto; color: var(--mark); font-weight: 700; }
+@media (max-width: 859px) { .home-feature { width: calc(100% - 32px); } }

@@ -71,7 +71,7 @@
       ${given}
       <div class="viewer" tabindex="-1">
         <div class="v-code">
-          <p class="v-label">プログラム</p>${codeList(code, 1)}
+          <p class="v-label">プログラム</p>${codeList(code, 1, { mark: opts.mark })}
         </div>
         <div class="v-side">
           <div class="v-ctrl">
@@ -211,7 +211,7 @@
         <button type="button" class="btn primary" data-a="check">確かめる</button>
         <button type="button" class="btn" data-a="hint">ヒント</button>
         <button type="button" class="btn" data-a="answer">答えを見る</button>
-        <button type="button" class="btn" data-a="view">動きを見る</button>
+        <button type="button" class="btn again" data-a="view">▶ 動きを見る</button>
       </div>
       <p class="b-result" aria-live="polite"></p>
       <div class="b-viewer" hidden></div>
@@ -234,7 +234,7 @@
         if (!filled) { result.textContent = "表に値を書き込んでから確かめてください。"; return; }
         record(id, ok === all);
         result.className = "b-result " + (ok === all ? "ok" : "ng");
-        result.textContent = ok === all ? "全部正解です。" : `${all} 個中 ${ok} 個が正解です。赤い欄を見直してください。`;
+        result.textContent = ok === all ? "全部正解です。「動きを見る」で、実際の動きと見比べてみましょう。" : `${all} 個中 ${ok} 個が正解です。赤い欄を見直してください。「動きを見る」で1行ずつ再生すると、どこでずれたかがわかります。`;
         onRecord();
       } else if (a.dataset.a === "hint") {
         result.className = "b-result";
@@ -247,7 +247,7 @@
       } else if (a.dataset.a === "view") {
         const v = $(".b-viewer", box);
         v.hidden = !v.hidden;
-        if (!v.hidden && !v.firstChild) viewer(v, p.code, p.main);
+        if (!v.hidden && !v.firstChild) viewer(v, p.code, p.main, { mark: p.line });
       }
     };
   }
@@ -435,6 +435,9 @@
     if (k === "viewer") {
       const a = B.algorithms.find((x) => x.slug === el.dataset.algo);
       if (a) viewer(el, a.code, a.main, { given: true, example: a.example });
+    } else if (k === "trace-demo") {
+      const p = B.trace.find((x) => x.id === el.dataset.id);
+      if (p) viewer(el, p.code, p.main, { given: true, mark: p.line });
     } else if (k === "trace") practice(el, "trace", B.trace, renderTrace);
     else if (k === "fill") practice(el, "fill", B.fill, renderFill);
     else if (k === "security") practice(el, "sec", B.security, renderSecurity);

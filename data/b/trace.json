@@ -255,5 +255,397 @@
    "r"
   ],
   "hint": "48 mod 18 は 48 を 18 で割った余りで 12。そのあと a と b が1つずつずれていきます。"
+ },
+ {
+  "id": "t9",
+  "title": "線形探索で見つかるまで",
+  "tags": [
+   "探索",
+   "ループ"
+  ],
+  "terms": [
+   "線形探索"
+  ],
+  "algo": "linear-search",
+  "code": [
+   "○整数型: search(整数型の配列: data, 整数型: target)",
+   "  整数型: i ← 1",
+   "  while (i ≦ dataの要素数)",
+   "    if (data[i] = target)",
+   "      return i",
+   "    endif",
+   "    i ← i + 1",
+   "  endwhile",
+   "  return -1"
+  ],
+  "main": [
+   "print(search({7, 2, 9, 4, 6}, 4))"
+  ],
+  "line": 7,
+  "vars": [
+   "i"
+  ],
+  "hint": "見つかった時点で return するので、7行目はそれ以降実行されません。data[4] = 4 が見つかる直前まで i が増えます。"
+ },
+ {
+  "id": "t10",
+  "title": "バブルソートの1周目",
+  "tags": [
+   "整列",
+   "配列"
+  ],
+  "terms": [
+   "バブルソート"
+  ],
+  "algo": "bubble-sort",
+  "code": [
+   "○bubblePass(整数型の配列: data)",
+   "  整数型: j, tmp",
+   "  for (j を 1 から dataの要素数 - 1 まで 1 ずつ増やす)",
+   "    if (data[j] > data[j + 1])",
+   "      tmp ← data[j]",
+   "      data[j] ← data[j + 1]",
+   "      data[j + 1] ← tmp",
+   "    endif",
+   "  endfor"
+  ],
+  "main": [
+   "整数型の配列: a ← {3, 1, 4, 2, 5}",
+   "bubblePass(a)",
+   "print(a)"
+  ],
+  "line": 7,
+  "vars": [
+   "j",
+   "tmp"
+  ],
+  "hint": "7行目は、隣どうしを入れ替えたときだけ実行されます。入れ替えると配列が変わるので、次の比較は入れ替えた後の配列で考えます。"
+ },
+ {
+  "id": "t11",
+  "title": "最小値の位置を探す",
+  "tags": [
+   "探索",
+   "配列"
+  ],
+  "terms": [
+   "選択ソート"
+  ],
+  "algo": "selection-sort",
+  "code": [
+   "○整数型: minIndex(整数型の配列: data)",
+   "  整数型: m ← 1",
+   "  整数型: i",
+   "  for (i を 2 から dataの要素数 まで 1 ずつ増やす)",
+   "    if (data[i] < data[m])",
+   "      m ← i",
+   "    endif",
+   "  endfor",
+   "  return m"
+  ],
+  "main": [
+   "print(minIndex({8, 5, 9, 3, 6, 1}))"
+  ],
+  "line": 6,
+  "vars": [
+   "i",
+   "m"
+  ],
+  "hint": "m は値ではなく「今までで一番小さい要素の番号」です。data[i] がそれより小さいときだけ6行目で m が i に変わります。"
+ },
+ {
+  "id": "t12",
+  "title": "2進数の1の数を数える",
+  "tags": [
+   "ループ",
+   "計算"
+  ],
+  "terms": [
+   "基数変換"
+  ],
+  "algo": "to-binary",
+  "code": [
+   "○整数型: countBits(整数型: n)",
+   "  整数型: count ← 0",
+   "  while (n > 0)",
+   "    if (n mod 2 = 1)",
+   "      count ← count + 1",
+   "    endif",
+   "    n ← n ÷ 2",
+   "  endwhile",
+   "  return count"
+  ],
+  "main": [
+   "print(countBits(13))"
+  ],
+  "line": 7,
+  "vars": [
+   "n",
+   "count"
+  ],
+  "hint": "n mod 2 は2進数の一番下の桁、n ÷ 2 はその桁を取り除いた数です。13 は2進数で 1101 です。"
+ },
+ {
+  "id": "t13",
+  "title": "フィボナッチ数をループで求める",
+  "tags": [
+   "ループ",
+   "計算"
+  ],
+  "terms": [],
+  "algo": null,
+  "code": [
+   "○整数型: fib(整数型: n)",
+   "  整数型: a ← 0",
+   "  整数型: b ← 1",
+   "  整数型: t, i",
+   "  for (i を 1 から n まで 1 ずつ増やす)",
+   "    t ← a + b",
+   "    a ← b",
+   "    b ← t",
+   "  endfor",
+   "  return a"
+  ],
+  "main": [
+   "print(fib(6))"
+  ],
+  "line": 8,
+  "vars": [
+   "i",
+   "a",
+   "b"
+  ],
+  "hint": "6〜8行目で、a と b が1つずつ先へずれます。新しい b は、ずらす前の a + b です。"
+ },
+ {
+  "id": "t14",
+  "title": "大域変数に足していく",
+  "tags": [
+   "大域変数",
+   "条件分岐"
+  ],
+  "terms": [],
+  "algo": null,
+  "code": [
+   "大域: 整数型: total ← 0",
+   "",
+   "○add(整数型: x)",
+   "  if (x > 0)",
+   "    total ← total + x",
+   "  endif"
+  ],
+  "main": [
+   "add(5)",
+   "add(-2)",
+   "add(3)",
+   "print(total)"
+  ],
+  "line": 5,
+  "vars": [
+   "x",
+   "total"
+  ],
+  "hint": "total は大域変数なので、add を呼び出し終わっても値が残ります。x が 0 以下のときは5行目を通りません。"
+ },
+ {
+  "id": "t15",
+  "title": "素数かどうかを調べる",
+  "tags": [
+   "ループ",
+   "条件分岐"
+  ],
+  "terms": [],
+  "algo": null,
+  "code": [
+   "○論理型: isPrime(整数型: n)",
+   "  整数型: d ← 2",
+   "  while (d × d ≦ n)",
+   "    if (n mod d = 0)",
+   "      return false",
+   "    endif",
+   "    d ← d + 1",
+   "  endwhile",
+   "  return true"
+  ],
+  "main": [
+   "print(isPrime(29))"
+  ],
+  "line": 7,
+  "vars": [
+   "d"
+  ],
+  "hint": "割り切れる数がないので、d × d が 29 を超えるまで d が増えます。6 × 6 = 36 > 29 で終わります。"
+ },
+ {
+  "id": "t16",
+  "title": "再帰で最大値を求める",
+  "tags": [
+   "再帰",
+   "配列"
+  ],
+  "terms": [
+   "再帰"
+  ],
+  "algo": "find-max",
+  "code": [
+   "○整数型: maxOf(整数型の配列: data, 整数型: n)",
+   "  整数型: m",
+   "  if (n = 1)",
+   "    return data[1]",
+   "  endif",
+   "  m ← maxOf(data, n - 1)",
+   "  if (data[n] > m)",
+   "    m ← data[n]",
+   "  endif",
+   "  return m"
+  ],
+  "main": [
+   "print(maxOf({4, 9, 2, 7}, 4))"
+  ],
+  "line": 6,
+  "vars": [
+   "n",
+   "m"
+  ],
+  "hint": "6行目は、呼び出した maxOf の結果が返ってきてから終わります。n = 1 は4行目で返るので、6行目が最初に終わるのは n = 2 の回です。"
+ },
+ {
+  "id": "t17",
+  "title": "配列で作るキュー",
+  "tags": [
+   "データ構造",
+   "大域変数"
+  ],
+  "terms": [
+   "キュー"
+  ],
+  "algo": "stack",
+  "code": [
+   "大域: 整数型の配列: queue ← {5個の 0}",
+   "大域: 整数型: head ← 1",
+   "大域: 整数型: tail ← 1",
+   "",
+   "○enqueue(整数型: x)",
+   "  queue[tail] ← x",
+   "  tail ← tail + 1",
+   "",
+   "○整数型: dequeue()",
+   "  整数型: x ← queue[head]",
+   "  head ← head + 1",
+   "  return x"
+  ],
+  "main": [
+   "enqueue(10)",
+   "enqueue(20)",
+   "print(dequeue())",
+   "enqueue(30)",
+   "print(dequeue())"
+  ],
+  "line": 7,
+  "vars": [
+   "x",
+   "tail"
+  ],
+  "hint": "7行目は enqueue のときだけ実行されます。dequeue は head を進めるだけで、tail は変わりません。"
+ },
+ {
+  "id": "t18",
+  "title": "挿入ソートで要素をずらす",
+  "tags": [
+   "整列",
+   "二重ループ"
+  ],
+  "terms": [
+   "挿入ソート"
+  ],
+  "algo": "insertion-sort",
+  "code": [
+   "○insertionSort(整数型の配列: data)",
+   "  整数型: i, j, key",
+   "  for (i を 2 から dataの要素数 まで 1 ずつ増やす)",
+   "    key ← data[i]",
+   "    j ← i - 1",
+   "    while (j ≧ 1 and data[j] > key)",
+   "      data[j + 1] ← data[j]",
+   "      j ← j - 1",
+   "    endwhile",
+   "    data[j + 1] ← key",
+   "  endfor"
+  ],
+  "main": [
+   "整数型の配列: a ← {4, 3, 5, 1}",
+   "insertionSort(a)",
+   "print(a)"
+  ],
+  "line": 8,
+  "vars": [
+   "i",
+   "j",
+   "key"
+  ],
+  "hint": "8行目は、key より大きい要素を1つ後ろへずらしたときだけ実行されます。i = 3 のときは data[2] = 4 が key = 5 より小さいので、1回もずらしません。"
+ },
+ {
+  "id": "t19",
+  "title": "do-while で数字を逆に並べる",
+  "tags": [
+   "ループ",
+   "計算"
+  ],
+  "terms": [],
+  "algo": null,
+  "code": [
+   "○整数型: reverseNum(整数型: n)",
+   "  整数型: r ← 0",
+   "  do",
+   "    r ← r × 10 + n mod 10",
+   "    n ← n ÷ 10",
+   "  while (n > 0)",
+   "  return r"
+  ],
+  "main": [
+   "print(reverseNum(507))"
+  ],
+  "line": 5,
+  "vars": [
+   "n",
+   "r"
+  ],
+  "hint": "mod は × と同じ優先順位なので、4行目は r × 10 と n mod 10 を足します。do は条件を調べる前に必ず1回実行します。"
+ },
+ {
+  "id": "t20",
+  "title": "同じ値の組を数える",
+  "tags": [
+   "二重ループ",
+   "配列"
+  ],
+  "terms": [
+   "配列"
+  ],
+  "algo": null,
+  "code": [
+   "○整数型: countSame(整数型の配列: data)",
+   "  整数型: count ← 0",
+   "  整数型: i, j",
+   "  for (i を 1 から dataの要素数 - 1 まで 1 ずつ増やす)",
+   "    for (j を i + 1 から dataの要素数 まで 1 ずつ増やす)",
+   "      if (data[i] = data[j])",
+   "        count ← count + 1",
+   "      endif",
+   "    endfor",
+   "  endfor",
+   "  return count"
+  ],
+  "main": [
+   "print(countSame({2, 5, 2, 5, 2}))"
+  ],
+  "line": 7,
+  "vars": [
+   "i",
+   "j",
+   "count"
+  ],
+  "hint": "内側の j は i + 1 から始まるので、同じ組を2回数えません。data[i] と data[j] が等しい組のときだけ7行目を通ります。"
  }
 ]
