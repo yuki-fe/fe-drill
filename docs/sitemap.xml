@@ -2,8 +2,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://yuki-fe.github.io/fe-drill/</loc><lastmod>2026-10-07</lastmod></url>
   <url><loc>https://yuki-fe.github.io/fe-drill/terms/index.html</loc><lastmod>2026-10-07</lastmod></url>
-  <url><loc>https://yuki-fe.github.io/fe-drill/about.html</loc><lastmod>2026-10-07</lastmod></url>
-  <url><loc>https://yuki-fe.github.io/fe-drill/privacy.html</loc><lastmod>2026-10-07</lastmod></url>
   <url><loc>https://yuki-fe.github.io/fe-drill/terms/0001.html</loc><lastmod>2026-10-07</lastmod></url>
   <url><loc>https://yuki-fe.github.io/fe-drill/terms/0002.html</loc><lastmod>2026-10-07</lastmod></url>
   <url><loc>https://yuki-fe.github.io/fe-drill/terms/0003.html</loc><lastmod>2026-10-07</lastmod></url>
@@ -349,4 +347,23 @@
   <url><loc>https://yuki-fe.github.io/fe-drill/terms/0343.html</loc><lastmod>2026-10-07</lastmod></url>
   <url><loc>https://yuki-fe.github.io/fe-drill/terms/0344.html</loc><lastmod>2026-10-07</lastmod></url>
   <url><loc>https://yuki-fe.github.io/fe-drill/terms/0345.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/about.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/privacy.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/index.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/notation.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/index.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/linear-search.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/binary-search.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/bubble-sort.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/selection-sort.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/insertion-sort.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/find-max.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/factorial.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/gcd.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/stack.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/algorithms/to-binary.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/trace.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/fill.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/security.html</loc><lastmod>2026-10-07</lastmod></url>
+  <url><loc>https://yuki-fe.github.io/fe-drill/b/simulator.html</loc><lastmod>2026-10-07</lastmod></url>
 </urlset>

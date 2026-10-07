@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>最大値を求めるの擬似言語と動き｜基本情報技術者試験 科目B｜FE用語ドリル</title>
+<meta name="description" content="最大値を求めるを基本情報技術者試験 科目Bの擬似言語で解説。配列の先頭の値を仮の最大値にして、残りの要素と順に比べながら、より大きい値が見つかるたびに入れ替えていきます。">
+<link rel="canonical" href="https://yuki-fe.github.io/fe-drill/b/algorithms/find-max.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="最大値を求めるの擬似言語と動き｜基本情報技術者試験 科目B｜FE用語ドリル">
+<meta property="og:description" content="最大値を求めるを基本情報技術者試験 科目Bの擬似言語で解説。配列の先頭の値を仮の最大値にして、残りの要素と順に比べながら、より大きい値が見つかるたびに入れ替えていきます。">
+<meta property="og:url" content="https://yuki-fe.github.io/fe-drill/b/algorithms/find-max.html">
+<meta property="og:site_name" content="FE用語ドリル">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+
+
+
+</head>
+<body class="b-page" data-root="../../">
+<header class="site-head">
+  <a class="brand" href="../../index.html">FE用語ドリル</a>
+  <nav class="site-nav" aria-label="サイト内">
+    <a href="../../index.html">科目A 用語</a>
+    <a href="../../b/index.html">科目B</a>
+    <a href="../../terms/index.html">用語一覧</a>
+    <a href="../../about.html">このサイトについて</a>
+  </nav>
+</header>
+
+<main class="b-wrap">
+  <nav class="crumbs" aria-label="パンくずリスト"><a href="../../index.html">ホーム</a><span>›</span><a href="../../b/index.html">科目B</a><span>›</span><a href="index.html">アルゴリズム図鑑</a><span>›</span><span>最大値を求める</span></nav>
+  <nav class="b-nav" aria-label="科目Bのメニュー"><a href="../index.html">トップ</a><a href="../notation.html">擬似言語の書き方</a><a href="../algorithms/index.html" aria-current="page">アルゴリズム図鑑</a><a href="../trace.html">トレース練習</a><a href="../fill.html">穴埋め問題</a><a href="../security.html">セキュリティ事例</a><a href="../simulator.html">シミュレータ</a></nav>
+  <p class="eyebrow">アルゴリズム図鑑</p>
+  <h1 class="b-title">最大値を求める</h1>
+  <p class="lead">配列の先頭の値を仮の最大値にして、残りの要素と順に比べながら、より大きい値が見つかるたびに入れ替えていきます。</p>
+  <div data-b="viewer" data-algo="find-max"><noscript><pre class="code-plain">○整数型: findMax(整数型の配列: data)
+  整数型: max ← data[1]
+  整数型: i
+  for (i を 2 から dataの要素数 まで 1 ずつ増やす)
+    if (data[i] &gt; max)
+      max ← data[i]
+    endif
+  endfor
+  return max</pre></noscript></div>
+  <div class="b-cols">
+    <section><h2>考え方</h2><ul><li>最初に max ← data[1] として、比べる相手を2番目からにする</li><li>より大きい値が出てきたときだけ max を更新する</li><li>全部の要素を1回ずつ見るので、計算量は O(n)</li></ul></section>
+    <section><h2>計算量</h2><p class="b-big mono">O(n)</p></section>
+    <section><h2>試験でのポイント</h2><ul><li>max の初期値を 0 にすると、負の数だけの配列で正しく動かない</li><li>最小値を求める場合は、比較の向き（&gt;）を逆にする</li></ul></section>
+  </div>
+  <section class="b-sec"><h2>この図鑑の問題を解く</h2><ul class="b-links"><li><a href="../fill.html#f2">穴埋め問題: 最大値を更新する条件</a></li></ul></section>
+  <p class="b-related"><span>関連する用語</span><a class="term-chip" href="../../terms/0026.html">配列</a><a class="term-chip" href="../../terms/0032.html">線形探索</a></p>
+  <section class="b-sec"><h2>ほかのアルゴリズム</h2><ul class="b-links inline"><li><a href="linear-search.html">線形探索</a></li><li><a href="binary-search.html">二分探索</a></li><li><a href="bubble-sort.html">バブルソート</a></li><li><a href="selection-sort.html">選択ソート</a></li><li><a href="insertion-sort.html">挿入ソート</a></li><li><a href="factorial.html">階乗（再帰）</a></li><li><a href="gcd.html">ユークリッドの互除法</a></li><li><a href="stack.html">スタック（配列で作る）</a></li><li><a href="to-binary.html">10進数を2進数に変換する</a></li></ul></section>
+</main>
+
+<footer class="site-foot">
+  <nav aria-label="フッター">
+    <a href="../../terms/index.html">用語一覧</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../privacy.html">プライバシーポリシー・免責事項</a>
+  </nav>
+  <p>基本情報技術者試験は、独立行政法人 情報処理推進機構（IPA）が実施する国家試験です。当サイトはIPAとは関係のない個人の学習サイトです。</p>
+  <p>© 2026 Yuki-fe</p>
+</footer>
+<script src="../../assets/pseudo.js"></script>
+<script src="../../assets/b-data.js"></script>
+<script src="../../assets/b.js"></script>
+</body>
+</html>

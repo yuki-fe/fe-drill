@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>アルゴリズム図鑑｜基本情報技術者試験 科目B｜FE用語ドリル</title>
+<meta name="description" content="基本情報技術者試験 科目Bによく出るアルゴリズム10種類（線形探索・二分探索・バブルソート・選択ソート・挿入ソート・再帰など）を、擬似言語のコードと動きのアニメーションで解説します。">
+<link rel="canonical" href="https://yuki-fe.github.io/fe-drill/b/algorithms/index.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="アルゴリズム図鑑｜基本情報技術者試験 科目B｜FE用語ドリル">
+<meta property="og:description" content="基本情報技術者試験 科目Bによく出るアルゴリズム10種類（線形探索・二分探索・バブルソート・選択ソート・挿入ソート・再帰など）を、擬似言語のコードと動きのアニメーションで解説します。">
+<meta property="og:url" content="https://yuki-fe.github.io/fe-drill/b/algorithms/index.html">
+<meta property="og:site_name" content="FE用語ドリル">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+
+
+
+</head>
+<body class="b-page" data-root="../../">
+<header class="site-head">
+  <a class="brand" href="../../index.html">FE用語ドリル</a>
+  <nav class="site-nav" aria-label="サイト内">
+    <a href="../../index.html">科目A 用語</a>
+    <a href="../../b/index.html">科目B</a>
+    <a href="../../terms/index.html">用語一覧</a>
+    <a href="../../about.html">このサイトについて</a>
+  </nav>
+</header>
+
+<main class="b-wrap">
+  <nav class="crumbs" aria-label="パンくずリスト"><a href="../../index.html">ホーム</a><span>›</span><a href="../../b/index.html">科目B</a><span>›</span><span>アルゴリズム図鑑</span></nav>
+  <nav class="b-nav" aria-label="科目Bのメニュー"><a href="../index.html">トップ</a><a href="../notation.html">擬似言語の書き方</a><a href="../algorithms/index.html" aria-current="page">アルゴリズム図鑑</a><a href="../trace.html">トレース練習</a><a href="../fill.html">穴埋め問題</a><a href="../security.html">セキュリティ事例</a><a href="../simulator.html">シミュレータ</a></nav>
+  <h1 class="b-title">アルゴリズム図鑑<small>擬似言語のコードと、動きの見える化</small></h1>
+  <p class="b-intro">科目Bによく出るアルゴリズムを、擬似言語のコードで紹介します。各ページの「進む」「再生」で、どの行が実行され、変数がどう変わるかを1行ずつ確かめられます。</p>
+  <div class="b-cards"><a class="b-card" href="linear-search.html"><b>線形探索</b><span>配列の先頭から順に1つずつ比べて、探している値を見つける方法です。見つかったら、その位置（番号）を返します。</span><em class="mono">O(n)</em></a><a class="b-card" href="binary-search.html"><b>二分探索</b><span>小さい順に並んだ配列で、真ん中の値と比べて探す範囲を半分ずつ狭めていく方法です。</span><em class="mono">O(log n)</em></a><a class="b-card" href="bubble-sort.html"><b>バブルソート</b><span>隣り合う要素を比べて、順番が逆なら入れ替える操作を繰り返す整列法です。1周するごとに、一番大きい値が右端に決まります。</span><em class="mono">O(n²)</em></a><a class="b-card" href="selection-sort.html"><b>選択ソート</b><span>まだ並べていない部分から一番小さい値を探し、その部分の先頭と入れ替える操作を繰り返す整列法です。</span><em class="mono">O(n²)</em></a><a class="b-card" href="insertion-sort.html"><b>挿入ソート</b><span>左側の整列済みの部分に、次の要素を正しい位置まで差し込んでいく整列法です。トランプの手札を並べるときの動きに似ています。</span><em class="mono">O(n²)</em></a><a class="b-card" href="find-max.html"><b>最大値を求める</b><span>配列の先頭の値を仮の最大値にして、残りの要素と順に比べながら、より大きい値が見つかるたびに入れ替えていきます。</span><em class="mono">O(n)</em></a><a class="b-card" href="factorial.html"><b>階乗（再帰）</b><span>関数の中で自分自身を呼び出す「再帰」を使って、n! = n × (n−1)! を計算します。</span><em class="mono">O(n)</em></a><a class="b-card" href="gcd.html"><b>ユークリッドの互除法</b><span>2つの整数の最大公約数を求める方法です。「大きいほうを小さいほうで割った余り」で置き換える操作を、余りが 0 になるまで繰り返します。</span><em class="mono">O(log n)</em></a><a class="b-card" href="stack.html"><b>スタック（配列で作る）</b><span>配列と「一番上の位置」を表す変数 top を使って、最後に入れたものを最初に取り出す（LIFO）スタックを作ります。</span><em class="mono">push・pop とも O(1)</em></a><a class="b-card" href="to-binary.html"><b>10進数を2進数に変換する</b><span>10進数を 2 で割った余りを記録しながら、商が 0 になるまで割り続けます。余りを下の桁から順に並べたものが2進数です。</span><em class="mono">O(log n)</em></a></div>
+</main>
+
+<footer class="site-foot">
+  <nav aria-label="フッター">
+    <a href="../../terms/index.html">用語一覧</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../privacy.html">プライバシーポリシー・免責事項</a>
+  </nav>
+  <p>基本情報技術者試験は、独立行政法人 情報処理推進機構（IPA）が実施する国家試験です。当サイトはIPAとは関係のない個人の学習サイトです。</p>
+  <p>© 2026 Yuki-fe</p>
+</footer>
+<script src="../../assets/pseudo.js"></script>
+<script src="../../assets/b-data.js"></script>
+<script src="../../assets/b.js"></script>
+</body>
+</html>

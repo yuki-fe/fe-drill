@@ -6,3 +6,6 @@ __pycache__/
 .vscode/
 Thumbs.db
 desktop.ini
+
+# 科目Bの答え確認ページ（ビルドで作られる）
+checks/

@@ -34,6 +34,22 @@ python -m http.server 8000 -d docs    # http://localhost:8000 で確認（Ctrl+C
 - `id` は今ある最大の番号の次にする。**公開後に既存の id を変えたり使い回したりしない**（ページのURLが `terms/0001.html` のように id で決まるため、検索結果やリンクが切れる）
 - 用語名に `（）` を付けると、括弧の中も「書いて答える」で正解になる（例: `排他的論理和（XOR）`）
 
+## 科目B（`data/b/`）
+
+| ファイル | 中身 | ページ |
+|---|---|---|
+| `algorithms.json` | アルゴリズム図鑑（コード・解説・確認用の正解 `expect`） | `b/algorithms/〇〇.html` |
+| `trace.json` | トレース練習（`line` 行目を実行した直後の `vars` を答える。正解の表は自動で作られる） | `b/trace.html` |
+| `fill.json` | 穴埋め問題（コードの `{{a}}` が空欄。`tests` で正解だけが通ることを確かめる） | `b/fill.html` |
+| `security.json` | セキュリティ事例 | `b/security.html` |
+| `notation.json` | 擬似言語の書き方クイズ | `b/notation.html` |
+| `kakomon.json`（任意） | IPA 公開問題の解説。ファイルがあるときだけページができる | `b/kakomon/` |
+
+- `terms` に用語名を書くと、その用語ページに「科目Bで練習する」のリンクが付く（用語名は `data/terms.json` と完全に同じにする）
+- プログラムは `static/assets/pseudo.js`（擬似言語のインタプリタ）で実際に動かしている
+- **問題を追加・修正したら、`python build.py` の後に `checks/b-check.html` をブラウザで開き、「ALL OK」になることを確かめる**。図鑑の結果、穴埋めの正解・不正解、記法クイズの答えを全部動かして確かめる
+- IPA の過去問を使う場合は、IPA の最新の利用条件を確認してから入れる
+
 ## 公開する（GitHub Pages・無料）
 
 1. [GitHub](https://github.com/) のアカウントを作る

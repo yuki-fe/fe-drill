@@ -1,0 +1,430 @@
+[
+ {
+  "id": "f1",
+  "title": "合計を求めるループの終わり",
+  "tags": [
+   "ループ",
+   "配列"
+  ],
+  "terms": [
+   "配列"
+  ],
+  "algo": null,
+  "desc": "関数 total は、整数型の配列 data の要素の合計を返す。",
+  "code": [
+   "○整数型: total(整数型の配列: data)",
+   "  整数型: s ← 0",
+   "  整数型: i",
+   "  for (i を 1 から {{a}} まで 1 ずつ増やす)",
+   "    s ← s + data[i]",
+   "  endfor",
+   "  return s"
+  ],
+  "choices": [
+   "dataの要素数 - 1",
+   "dataの要素数",
+   "dataの要素数 + 1",
+   "0"
+  ],
+  "answer": 1,
+  "explain": "配列の番号は 1 から始まり、最後の要素の番号は「dataの要素数」です。「- 1」だと最後の要素が足されず、「+ 1」だと配列の範囲外を参照してしまいます。",
+  "tests": [
+   {
+    "main": [
+     "print(total({3, 5, 2}))"
+    ],
+    "expect": "10"
+   }
+  ]
+ },
+ {
+  "id": "f2",
+  "title": "最大値を更新する条件",
+  "tags": [
+   "条件分岐",
+   "配列"
+  ],
+  "terms": [
+   "配列"
+  ],
+  "algo": "find-max",
+  "desc": "関数 findMax は、整数型の配列 data の要素のうち最大の値を返す。",
+  "code": [
+   "○整数型: findMax(整数型の配列: data)",
+   "  整数型: max ← data[1]",
+   "  整数型: i",
+   "  for (i を 2 から dataの要素数 まで 1 ずつ増やす)",
+   "    if ({{a}})",
+   "      max ← data[i]",
+   "    endif",
+   "  endfor",
+   "  return max"
+  ],
+  "choices": [
+   "data[i] < max",
+   "data[i] = max",
+   "data[i] > max",
+   "max > data[1]"
+  ],
+  "answer": 2,
+  "explain": "今までの最大値 max より大きい値が出てきたときだけ、max を入れ替えます。「<」にすると最小値を求める関数になります。",
+  "tests": [
+   {
+    "main": [
+     "print(findMax({4, 9, 2, 7}))"
+    ],
+    "expect": "9"
+   }
+  ]
+ },
+ {
+  "id": "f3",
+  "title": "二分探索で範囲を狭める",
+  "tags": [
+   "探索",
+   "ループ"
+  ],
+  "terms": [
+   "二分探索"
+  ],
+  "algo": "binary-search",
+  "desc": "関数 binarySearch は、昇順に並んだ配列 data から target を探し、見つかればその番号を、なければ -1 を返す。",
+  "code": [
+   "○整数型: binarySearch(整数型の配列: data, 整数型: target)",
+   "  整数型: low ← 1",
+   "  整数型: high ← dataの要素数",
+   "  整数型: mid",
+   "  while (low ≦ high)",
+   "    mid ← (low + high) ÷ 2",
+   "    if (data[mid] = target)",
+   "      return mid",
+   "    elseif (data[mid] < target)",
+   "      {{a}}",
+   "    else",
+   "      high ← mid - 1",
+   "    endif",
+   "  endwhile",
+   "  return -1"
+  ],
+  "choices": [
+   "low ← mid + 1",
+   "low ← mid",
+   "high ← mid + 1",
+   "low ← mid - 1"
+  ],
+  "answer": 0,
+  "explain": "data[mid] が target より小さいので、target は mid より右にあります。mid 自体はもう調べたので、low を mid + 1 にします。「low ← mid」だと同じ範囲を探し続けて終わらなくなることがあります。",
+  "tests": [
+   {
+    "main": [
+     "print(binarySearch({2, 5, 8, 12, 16, 23, 38}, 23))"
+    ],
+    "expect": "6"
+   },
+   {
+    "main": [
+     "print(binarySearch({2, 5, 8, 12, 16, 23, 38}, 38))"
+    ],
+    "expect": "7"
+   },
+   {
+    "main": [
+     "print(binarySearch({2, 5, 8, 12, 16, 23, 38}, 4))"
+    ],
+    "expect": "-1"
+   }
+  ]
+ },
+ {
+  "id": "f4",
+  "title": "偶数かどうかの判定",
+  "tags": [
+   "条件分岐",
+   "計算"
+  ],
+  "terms": [],
+  "algo": null,
+  "desc": "関数 countEven は、整数型の配列 data のうち偶数の要素の個数を返す。",
+  "code": [
+   "○整数型: countEven(整数型の配列: data)",
+   "  整数型: count ← 0",
+   "  整数型: i",
+   "  for (i を 1 から dataの要素数 まで 1 ずつ増やす)",
+   "    if ({{a}})",
+   "      count ← count + 1",
+   "    endif",
+   "  endfor",
+   "  return count"
+  ],
+  "choices": [
+   "data[i] ÷ 2 = 0",
+   "data[i] mod 2 = 1",
+   "i mod 2 = 0",
+   "data[i] mod 2 = 0"
+  ],
+  "answer": 3,
+  "explain": "偶数は 2 で割った余りが 0 の数です。余りは mod で求めます。「i mod 2 = 0」は、要素の値ではなく番号が偶数かどうかを調べてしまいます。",
+  "tests": [
+   {
+    "main": [
+     "print(countEven({6, 3, 8, 10, 5}))"
+    ],
+    "expect": "3"
+   }
+  ]
+ },
+ {
+  "id": "f5",
+  "title": "挿入ソートのずらす条件",
+  "tags": [
+   "整列",
+   "ループ"
+  ],
+  "terms": [
+   "挿入ソート"
+  ],
+  "algo": "insertion-sort",
+  "desc": "手続 insertionSort は、整数型の配列 data を昇順に並べ替える。",
+  "code": [
+   "○insertionSort(整数型の配列: data)",
+   "  整数型: i, j, key",
+   "  for (i を 2 から dataの要素数 まで 1 ずつ増やす)",
+   "    key ← data[i]",
+   "    j ← i - 1",
+   "    while ({{a}})",
+   "      data[j + 1] ← data[j]",
+   "      j ← j - 1",
+   "    endwhile",
+   "    data[j + 1] ← key",
+   "  endfor"
+  ],
+  "choices": [
+   "j ≧ 1 and data[j] > key",
+   "j ≧ 1 or data[j] > key",
+   "j > 1 and data[j] > key",
+   "j ≧ 1 and data[j] < key"
+  ],
+  "answer": 0,
+  "explain": "key より大きい値がある間、右へずらします。j が 0 になったら配列の左端を越えるので止めます。「or」だと j = 0 のときに data[0] を参照して範囲外になり、「j > 1」だと先頭の位置に差し込めません。",
+  "tests": [
+   {
+    "main": [
+     "整数型の配列: a ← {5, 3, 8, 1, 4}",
+     "insertionSort(a)",
+     "print(a)"
+    ],
+    "expect": "{1, 3, 4, 5, 8}"
+   }
+  ]
+ },
+ {
+  "id": "f6",
+  "title": "再帰の戻り値",
+  "tags": [
+   "再帰"
+  ],
+  "terms": [
+   "再帰"
+  ],
+  "algo": "factorial",
+  "desc": "関数 factorial は、1 以上の整数 n の階乗 n! を返す。",
+  "code": [
+   "○整数型: factorial(整数型: n)",
+   "  if (n ≦ 1)",
+   "    return 1",
+   "  endif",
+   "  return {{a}}"
+  ],
+  "choices": [
+   "n × factorial(n)",
+   "factorial(n - 1)",
+   "n × factorial(n - 1)",
+   "n × (n - 1)"
+  ],
+  "answer": 2,
+  "explain": "n! = n × (n−1)! なので、自分自身を n − 1 で呼び出した結果に n を掛けます。factorial(n) を呼ぶと引数が小さくならず、再帰が止まりません。",
+  "tests": [
+   {
+    "main": [
+     "print(factorial(4))"
+    ],
+    "expect": "24"
+   },
+   {
+    "main": [
+     "print(factorial(1))"
+    ],
+    "expect": "1"
+   }
+  ]
+ },
+ {
+  "id": "f7",
+  "title": "桁を取り除く処理",
+  "tags": [
+   "ループ",
+   "計算"
+  ],
+  "terms": [],
+  "algo": null,
+  "desc": "関数 digitSum は、正の整数 n の各桁の数字の和を返す（例: 4721 なら 4 + 7 + 2 + 1 = 14）。",
+  "code": [
+   "○整数型: digitSum(整数型: n)",
+   "  整数型: sum ← 0",
+   "  while (n > 0)",
+   "    sum ← sum + (n mod 10)",
+   "    {{a}}",
+   "  endwhile",
+   "  return sum"
+  ],
+  "choices": [
+   "n ← n mod 10",
+   "n ← n ÷ 10",
+   "n ← n - 10",
+   "sum ← sum ÷ 10"
+  ],
+  "answer": 1,
+  "explain": "一の位を足したら、n ÷ 10（商）で一の位を取り除き、次の桁を一の位に持ってきます。「n mod 10」だと n が一の位の数のままになり、ループが終わりません。",
+  "tests": [
+   {
+    "main": [
+     "print(digitSum(4721))"
+    ],
+    "expect": "14"
+   }
+  ]
+ },
+ {
+  "id": "f8",
+  "title": "スタックから取り出す",
+  "tags": [
+   "データ構造"
+  ],
+  "terms": [
+   "スタック"
+  ],
+  "algo": "stack",
+  "desc": "大域変数の配列 stack と、一番上の位置を表す top でスタックを実現する。関数 pop は一番上の値を取り出して返す。",
+  "code": [
+   "大域: 整数型の配列: stack ← {5個の 0}",
+   "大域: 整数型: top ← 0",
+   "",
+   "○push(整数型: x)",
+   "  top ← top + 1",
+   "  stack[top] ← x",
+   "",
+   "○整数型: pop()",
+   "  整数型: x ← stack[top]",
+   "  {{a}}",
+   "  return x"
+  ],
+  "choices": [
+   "top ← top + 1",
+   "stack[top] ← 0",
+   "x ← stack[top - 1]",
+   "top ← top - 1"
+  ],
+  "answer": 3,
+  "explain": "一番上の値を x に取り出したら、top を1つ減らして、次に取り出す位置を1つ下にします。push で top を増やしているので、pop では減らします。",
+  "tests": [
+   {
+    "main": [
+     "push(3)",
+     "push(7)",
+     "push(5)",
+     "print(pop())",
+     "print(pop())"
+    ],
+    "expect": "5\n7"
+   }
+  ],
+  "example": "push(3)、push(7)、push(5) の順に値を入れたあと pop() を2回呼ぶと、5、7 の順に取り出される（最後に入れたものから出てくる）。"
+ },
+ {
+  "id": "f9",
+  "title": "互除法の余り",
+  "tags": [
+   "ループ",
+   "計算"
+  ],
+  "terms": [],
+  "algo": "gcd",
+  "desc": "関数 gcd は、正の整数 a と b の最大公約数を返す。",
+  "code": [
+   "○整数型: gcd(整数型: a, 整数型: b)",
+   "  整数型: r",
+   "  while (b ≠ 0)",
+   "    {{a}}",
+   "    a ← b",
+   "    b ← r",
+   "  endwhile",
+   "  return a"
+  ],
+  "choices": [
+   "r ← a ÷ b",
+   "r ← a mod b",
+   "r ← b mod a",
+   "r ← a - b"
+  ],
+  "answer": 1,
+  "explain": "ユークリッドの互除法では、a を b で割った「余り」を使います。÷ は商なので違います。",
+  "tests": [
+   {
+    "main": [
+     "print(gcd(48, 18))"
+    ],
+    "expect": "6"
+   },
+   {
+    "main": [
+     "print(gcd(7, 3))"
+    ],
+    "expect": "1"
+   }
+  ]
+ },
+ {
+  "id": "f10",
+  "title": "値の入れ替え",
+  "tags": [
+   "配列",
+   "ループ"
+  ],
+  "terms": [
+   "配列"
+  ],
+  "algo": null,
+  "desc": "手続 reverse は、整数型の配列 data の要素の並びを逆順にする。",
+  "code": [
+   "○reverse(整数型の配列: data)",
+   "  整数型: left ← 1",
+   "  整数型: right ← dataの要素数",
+   "  整数型: tmp",
+   "  while (left < right)",
+   "    tmp ← data[left]",
+   "    {{a}}",
+   "    data[right] ← tmp",
+   "    left ← left + 1",
+   "    right ← right - 1",
+   "  endwhile"
+  ],
+  "choices": [
+   "data[right] ← data[left]",
+   "tmp ← data[right]",
+   "data[left] ← data[right]",
+   "data[left] ← tmp"
+  ],
+  "answer": 2,
+  "explain": "2つの値を入れ替えるには、①片方を tmp に逃がす ②もう片方の値で上書きする ③tmp の値を書き戻す、の3手順が必要です。空欄は②です。",
+  "tests": [
+   {
+    "main": [
+     "整数型の配列: a ← {1, 2, 3, 4, 5}",
+     "reverse(a)",
+     "print(a)"
+    ],
+    "expect": "{5, 4, 3, 2, 1}"
+   }
+  ]
+ }
+]

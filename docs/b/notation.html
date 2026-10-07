@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>擬似言語の書き方 早見表｜基本情報技術者試験 科目B｜FE用語ドリル</title>
+<meta name="description" content="基本情報技術者試験 科目Bの擬似言語の書き方を一覧にしました。変数の宣言、演算子の優先順位、配列（番号は1から）、if・while・for、関数の書き方と、確認クイズ13問。">
+<link rel="canonical" href="https://yuki-fe.github.io/fe-drill/b/notation.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="擬似言語の書き方 早見表｜基本情報技術者試験 科目B｜FE用語ドリル">
+<meta property="og:description" content="基本情報技術者試験 科目Bの擬似言語の書き方を一覧にしました。変数の宣言、演算子の優先順位、配列（番号は1から）、if・while・for、関数の書き方と、確認クイズ13問。">
+<meta property="og:url" content="https://yuki-fe.github.io/fe-drill/b/notation.html">
+<meta property="og:site_name" content="FE用語ドリル">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css">
+
+
+
+</head>
+<body class="b-page" data-root="../">
+<header class="site-head">
+  <a class="brand" href="../index.html">FE用語ドリル</a>
+  <nav class="site-nav" aria-label="サイト内">
+    <a href="../index.html">科目A 用語</a>
+    <a href="../b/index.html">科目B</a>
+    <a href="../terms/index.html">用語一覧</a>
+    <a href="../about.html">このサイトについて</a>
+  </nav>
+</header>
+
+<main class="b-wrap">
+  <nav class="crumbs" aria-label="パンくずリスト"><a href="../index.html">ホーム</a><span>›</span><a href="../b/index.html">科目B</a><span>›</span><span>擬似言語の書き方</span></nav>
+  <nav class="b-nav" aria-label="科目Bのメニュー"><a href="index.html">トップ</a><a href="notation.html" aria-current="page">擬似言語の書き方</a><a href="algorithms/index.html">アルゴリズム図鑑</a><a href="trace.html">トレース練習</a><a href="fill.html">穴埋め問題</a><a href="security.html">セキュリティ事例</a><a href="simulator.html">シミュレータ</a></nav>
+  <h1 class="b-title">擬似言語の書き方<small>記号の早見表と確認クイズ</small></h1>
+  <p class="b-intro">科目Bのプログラムは、IPA が決めた「擬似言語」で書かれます。よく出る書き方をまとめました。正式な仕様は、試験の問題冊子に載っている説明で必ず確認してください。</p>
+  <div class="b-cols notation">
+    <section>
+      <h2>変数の宣言と代入</h2>
+      <pre class="code-plain">整数型: x ← 5
+整数型: i, j
+文字列型: name ← &quot;FE&quot;
+x ← x + 1</pre>
+      <p>「型名: 変数名」で宣言し、← で値を入れます（代入）。型には 整数型・実数型・文字型・文字列型・論理型 があります。</p>
+    </section>
+    <section>
+      <h2>演算子と優先順位</h2>
+      <table class="b-table">
+        <tr><th>種類</th><th>演算子</th></tr>
+        <tr><td>単項</td><td><code>not</code> <code>+</code> <code>−</code></td></tr>
+        <tr><td>乗除</td><td><code>×</code> <code>÷</code> <code>mod</code>（余り）</td></tr>
+        <tr><td>加減</td><td><code>+</code> <code>−</code></td></tr>
+        <tr><td>比較</td><td><code>=</code> <code>≠</code> <code>&lt;</code> <code>&gt;</code> <code>≦</code> <code>≧</code></td></tr>
+        <tr><td>論理積</td><td><code>and</code></td></tr>
+        <tr><td>論理和</td><td><code>or</code></td></tr>
+      </table>
+      <p>上ほど先に計算します。and と or は、左側だけで結果が決まると右側を計算しません。</p>
+    </section>
+    <section>
+      <h2>配列</h2>
+      <pre class="code-plain">整数型の配列: a ← {4, 8, 15, 16}
+a[1]          /* 4（番号は 1 から） */
+aの要素数      /* 4 */
+aの末尾に 23 の値を追加する
+整数型の配列: b ← {5個の 0}</pre>
+      <p>番号は <b>1 から</b>始まります。最後の要素は <code>a[aの要素数]</code> です。</p>
+    </section>
+    <section>
+      <h2>条件分岐</h2>
+      <pre class="code-plain">if (x &gt; 0)
+  /* x が正のとき */
+elseif (x = 0)
+  /* x が 0 のとき */
+else
+  /* それ以外 */
+endif</pre>
+    </section>
+    <section>
+      <h2>繰り返し</h2>
+      <pre class="code-plain">while (条件)
+  /* 条件が true の間、繰り返す */
+endwhile
+
+do
+  /* 先に1回実行してから条件を調べる */
+while (条件)
+
+for (i を 1 から n まで 1 ずつ増やす)
+  /* i = 1, 2, …, n */
+endfor</pre>
+      <p>for は「減らす」もあります（例: <code>i を n から 1 まで 1 ずつ減らす</code>）。</p>
+    </section>
+    <section>
+      <h2>関数と手続</h2>
+      <pre class="code-plain">○整数型: add(整数型: a, 整数型: b)
+  return a + b
+
+○show(整数型: x)
+  /* 値を返さない手続 */
+
+大域: 整数型: count ← 0
+/* どの関数からも使える大域変数 */</pre>
+      <p>「○戻り値の型: 名前(引数)」で関数を、戻り値の型を書かずに手続を宣言します。</p>
+    </section>
+  </div>
+  <section class="b-sec">
+    <h2>このサイトでの約束</h2>
+    <ul>
+      <li>整数どうしの <code>÷</code> は、<b>商（小数点以下を切り捨てた値）</b>として計算します。本番では問題文の説明に従ってください。</li>
+      <li><code>print(値)</code> は、値を表示するための<b>このサイト独自の命令</b>です。本番の擬似言語にはありません。</li>
+      <li>関数の中身は、○の行より字下げして書きます。</li>
+    </ul>
+  </section>
+  <section class="b-sec">
+    <h2>確認クイズ</h2>
+    <p>プログラムを実行したときに、print で表示される値を答えてください。</p>
+    <div data-b="notation"><noscript><p>クイズを使うには JavaScript を有効にしてください。</p></noscript></div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <nav aria-label="フッター">
+    <a href="../terms/index.html">用語一覧</a>
+    <a href="../about.html">運営者情報</a>
+    <a href="../privacy.html">プライバシーポリシー・免責事項</a>
+  </nav>
+  <p>基本情報技術者試験は、独立行政法人 情報処理推進機構（IPA）が実施する国家試験です。当サイトはIPAとは関係のない個人の学習サイトです。</p>
+  <p>© 2026 Yuki-fe</p>
+</footer>
+<script src="../assets/pseudo.js"></script>
+<script src="../assets/b-data.js"></script>
+<script src="../assets/b.js"></script>
+</body>
+</html>

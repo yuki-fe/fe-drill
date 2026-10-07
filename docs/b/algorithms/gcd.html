@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ユークリッドの互除法の擬似言語と動き｜基本情報技術者試験 科目B｜FE用語ドリル</title>
+<meta name="description" content="ユークリッドの互除法を基本情報技術者試験 科目Bの擬似言語で解説。2つの整数の最大公約数を求める方法です。「大きいほうを小さいほうで割った余り」で置き換える操作を、余りが 0 になるまで繰り返します。">
+<link rel="canonical" href="https://yuki-fe.github.io/fe-drill/b/algorithms/gcd.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ユークリッドの互除法の擬似言語と動き｜基本情報技術者試験 科目B｜FE用語ドリル">
+<meta property="og:description" content="ユークリッドの互除法を基本情報技術者試験 科目Bの擬似言語で解説。2つの整数の最大公約数を求める方法です。「大きいほうを小さいほうで割った余り」で置き換える操作を、余りが 0 になるまで繰り返します。">
+<meta property="og:url" content="https://yuki-fe.github.io/fe-drill/b/algorithms/gcd.html">
+<meta property="og:site_name" content="FE用語ドリル">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/style.css">
+
+
+
+</head>
+<body class="b-page" data-root="../../">
+<header class="site-head">
+  <a class="brand" href="../../index.html">FE用語ドリル</a>
+  <nav class="site-nav" aria-label="サイト内">
+    <a href="../../index.html">科目A 用語</a>
+    <a href="../../b/index.html">科目B</a>
+    <a href="../../terms/index.html">用語一覧</a>
+    <a href="../../about.html">このサイトについて</a>
+  </nav>
+</header>
+
+<main class="b-wrap">
+  <nav class="crumbs" aria-label="パンくずリスト"><a href="../../index.html">ホーム</a><span>›</span><a href="../../b/index.html">科目B</a><span>›</span><a href="index.html">アルゴリズム図鑑</a><span>›</span><span>ユークリッドの互除法</span></nav>
+  <nav class="b-nav" aria-label="科目Bのメニュー"><a href="../index.html">トップ</a><a href="../notation.html">擬似言語の書き方</a><a href="../algorithms/index.html" aria-current="page">アルゴリズム図鑑</a><a href="../trace.html">トレース練習</a><a href="../fill.html">穴埋め問題</a><a href="../security.html">セキュリティ事例</a><a href="../simulator.html">シミュレータ</a></nav>
+  <p class="eyebrow">アルゴリズム図鑑</p>
+  <h1 class="b-title">ユークリッドの互除法</h1>
+  <p class="lead">2つの整数の最大公約数を求める方法です。「大きいほうを小さいほうで割った余り」で置き換える操作を、余りが 0 になるまで繰り返します。</p>
+  <div data-b="viewer" data-algo="gcd"><noscript><pre class="code-plain">○整数型: gcd(整数型: a, 整数型: b)
+  整数型: r
+  while (b ≠ 0)
+    r ← a mod b
+    a ← b
+    b ← r
+  endwhile
+  return a</pre></noscript></div>
+  <div class="b-cols">
+    <section><h2>考え方</h2><ul><li>a を b で割った余り r を求め、a ← b、b ← r と置き換える</li><li>b が 0 になったときの a が最大公約数</li><li>引き算を繰り返すより、ずっと少ない回数で求まる</li></ul></section>
+    <section><h2>計算量</h2><p class="b-big mono">O(log n)</p></section>
+    <section><h2>試験でのポイント</h2><ul><li>mod は割り算の余りを求める演算子</li><li>代入の順番（a ← b を先、b ← r を後）を入れ替えると正しく動かない</li></ul></section>
+  </div>
+  <section class="b-sec"><h2>この図鑑の問題を解く</h2><ul class="b-links"><li><a href="../trace.html#t8">トレース練習: 最大公約数（互除法）</a></li><li><a href="../fill.html#f9">穴埋め問題: 互除法の余り</a></li></ul></section>
+  
+  <section class="b-sec"><h2>ほかのアルゴリズム</h2><ul class="b-links inline"><li><a href="linear-search.html">線形探索</a></li><li><a href="binary-search.html">二分探索</a></li><li><a href="bubble-sort.html">バブルソート</a></li><li><a href="selection-sort.html">選択ソート</a></li><li><a href="insertion-sort.html">挿入ソート</a></li><li><a href="find-max.html">最大値を求める</a></li><li><a href="factorial.html">階乗（再帰）</a></li><li><a href="stack.html">スタック（配列で作る）</a></li><li><a href="to-binary.html">10進数を2進数に変換する</a></li></ul></section>
+</main>
+
+<footer class="site-foot">
+  <nav aria-label="フッター">
+    <a href="../../terms/index.html">用語一覧</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../privacy.html">プライバシーポリシー・免責事項</a>
+  </nav>
+  <p>基本情報技術者試験は、独立行政法人 情報処理推進機構（IPA）が実施する国家試験です。当サイトはIPAとは関係のない個人の学習サイトです。</p>
+  <p>© 2026 Yuki-fe</p>
+</footer>
+<script src="../../assets/pseudo.js"></script>
+<script src="../../assets/b-data.js"></script>
+<script src="../../assets/b.js"></script>
+</body>
+</html>

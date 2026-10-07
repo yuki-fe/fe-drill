@@ -1,0 +1,259 @@
+[
+ {
+  "id": "t1",
+  "title": "配列の合計",
+  "tags": [
+   "ループ",
+   "配列"
+  ],
+  "terms": [
+   "配列"
+  ],
+  "algo": null,
+  "code": [
+   "○整数型: total(整数型の配列: data)",
+   "  整数型: s ← 0",
+   "  整数型: i",
+   "  for (i を 1 から dataの要素数 まで 1 ずつ増やす)",
+   "    s ← s + data[i]",
+   "  endfor",
+   "  return s"
+  ],
+  "main": [
+   "print(total({3, 5, 2}))"
+  ],
+  "line": 5,
+  "vars": [
+   "i",
+   "s"
+  ],
+  "hint": "for の1回目は i = 1。s には、それまでの合計に data[i] を足した値が入ります。"
+ },
+ {
+  "id": "t2",
+  "title": "偶数の個数を数える",
+  "tags": [
+   "ループ",
+   "条件分岐"
+  ],
+  "terms": [
+   "配列"
+  ],
+  "algo": null,
+  "code": [
+   "○整数型: countEven(整数型の配列: data)",
+   "  整数型: count ← 0",
+   "  整数型: i",
+   "  for (i を 1 から dataの要素数 まで 1 ずつ増やす)",
+   "    if (data[i] mod 2 = 0)",
+   "      count ← count + 1",
+   "    endif",
+   "  endfor",
+   "  return count"
+  ],
+  "main": [
+   "print(countEven({6, 3, 8, 10, 5}))"
+  ],
+  "line": 6,
+  "vars": [
+   "i",
+   "count"
+  ],
+  "hint": "6行目は、data[i] が偶数のときだけ実行されます。奇数の要素の回は表に出てきません。"
+ },
+ {
+  "id": "t3",
+  "title": "各桁の和",
+  "tags": [
+   "ループ",
+   "計算"
+  ],
+  "terms": [],
+  "algo": null,
+  "code": [
+   "○整数型: digitSum(整数型: n)",
+   "  整数型: sum ← 0",
+   "  while (n > 0)",
+   "    sum ← sum + (n mod 10)",
+   "    n ← n ÷ 10",
+   "  endwhile",
+   "  return sum"
+  ],
+  "main": [
+   "print(digitSum(4721))"
+  ],
+  "line": 5,
+  "vars": [
+   "n",
+   "sum"
+  ],
+  "hint": "n mod 10 は一の位の数字、n ÷ 10 は一の位を取り除いた数（商）です。"
+ },
+ {
+  "id": "t4",
+  "title": "二分探索の範囲を追う",
+  "tags": [
+   "探索",
+   "ループ"
+  ],
+  "terms": [
+   "二分探索"
+  ],
+  "algo": "binary-search",
+  "code": [
+   "○整数型: binarySearch(整数型の配列: data, 整数型: target)",
+   "  整数型: low ← 1",
+   "  整数型: high ← dataの要素数",
+   "  整数型: mid",
+   "  while (low ≦ high)",
+   "    mid ← (low + high) ÷ 2",
+   "    if (data[mid] = target)",
+   "      return mid",
+   "    elseif (data[mid] < target)",
+   "      low ← mid + 1",
+   "    else",
+   "      high ← mid - 1",
+   "    endif",
+   "  endwhile",
+   "  return -1"
+  ],
+  "main": [
+   "print(binarySearch({3, 8, 11, 15, 20, 26, 31, 40}, 11))"
+  ],
+  "line": 6,
+  "vars": [
+   "low",
+   "high",
+   "mid"
+  ],
+  "hint": "(1 + 8) ÷ 2 は 4（小数点以下を切り捨て）。data[4] = 15 は 11 より大きいので、次は high が変わります。"
+ },
+ {
+  "id": "t5",
+  "title": "二重ループの回数",
+  "tags": [
+   "二重ループ",
+   "ループ"
+  ],
+  "terms": [],
+  "algo": null,
+  "code": [
+   "○整数型: countPairs(整数型: n)",
+   "  整数型: count ← 0",
+   "  整数型: i, j",
+   "  for (i を 1 から n まで 1 ずつ増やす)",
+   "    for (j を i から n まで 1 ずつ増やす)",
+   "      count ← count + 1",
+   "    endfor",
+   "  endfor",
+   "  return count"
+  ],
+  "main": [
+   "print(countPairs(3))"
+  ],
+  "line": 6,
+  "vars": [
+   "i",
+   "j",
+   "count"
+  ],
+  "hint": "内側の j は、毎回 i の値から始まります。i = 2 のときは j = 2 から。"
+ },
+ {
+  "id": "t6",
+  "title": "再帰で 1 から n までの和",
+  "tags": [
+   "再帰"
+  ],
+  "terms": [
+   "再帰",
+   "スタック"
+  ],
+  "algo": "factorial",
+  "code": [
+   "○整数型: sumTo(整数型: n)",
+   "  整数型: r",
+   "  if (n = 0)",
+   "    return 0",
+   "  endif",
+   "  r ← n + sumTo(n - 1)",
+   "  return r"
+  ],
+  "main": [
+   "print(sumTo(3))"
+  ],
+  "line": 6,
+  "vars": [
+   "n",
+   "r"
+  ],
+  "hint": "sumTo(3) は sumTo(2) の結果が出るまで6行目を終えられません。一番深い sumTo(1) の6行目が最初に終わります。"
+ },
+ {
+  "id": "t7",
+  "title": "配列を逆順にする",
+  "tags": [
+   "配列",
+   "ループ"
+  ],
+  "terms": [
+   "配列"
+  ],
+  "algo": null,
+  "code": [
+   "○reverse(整数型の配列: data)",
+   "  整数型: left ← 1",
+   "  整数型: right ← dataの要素数",
+   "  整数型: tmp",
+   "  while (left < right)",
+   "    tmp ← data[left]",
+   "    data[left] ← data[right]",
+   "    data[right] ← tmp",
+   "    left ← left + 1",
+   "    right ← right - 1",
+   "  endwhile"
+  ],
+  "main": [
+   "整数型の配列: a ← {1, 2, 3, 4, 5}",
+   "reverse(a)",
+   "print(a)"
+  ],
+  "line": 10,
+  "vars": [
+   "left",
+   "right",
+   "tmp"
+  ],
+  "hint": "left と right が両端から1つずつ近づき、left < right でなくなったら終わります。"
+ },
+ {
+  "id": "t8",
+  "title": "最大公約数（互除法）",
+  "tags": [
+   "ループ",
+   "計算"
+  ],
+  "terms": [],
+  "algo": "gcd",
+  "code": [
+   "○整数型: gcd(整数型: a, 整数型: b)",
+   "  整数型: r",
+   "  while (b ≠ 0)",
+   "    r ← a mod b",
+   "    a ← b",
+   "    b ← r",
+   "  endwhile",
+   "  return a"
+  ],
+  "main": [
+   "print(gcd(48, 18))"
+  ],
+  "line": 6,
+  "vars": [
+   "a",
+   "b",
+   "r"
+  ],
+  "hint": "48 mod 18 は 48 を 18 で割った余りで 12。そのあと a と b が1つずつずれていきます。"
+ }
+]
