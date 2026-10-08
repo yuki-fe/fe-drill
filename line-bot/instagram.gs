@@ -135,6 +135,8 @@ function scheduledTime() {
 
 function igAction(action, kind, id) {
   if (!igReady()) return TALK.igOff;
+  if (action === "intro") return igIntroPost();
+  if (action === "introskip") return TALK.igIntroSkipped;
   kind = IG_KINDS[kind] ? kind : "term";
   const K = IG_KINDS[kind];
   const cur = igCurrent(kind);
@@ -170,10 +172,42 @@ function igPublishNow(kind, p) {
   }
 }
 
-function igStartReel(p) {
+function igStartReel(p, kind) {
   if (UrlFetchApp.fetch(p.cover, { muteHttpExceptions: true }).getResponseCode() !== 200) throw new Error("IMAGE_MISSING");
   const c = igCall(`/${prop("IG_USER_ID")}/media`, { media_type: "REELS", video_url: p.video, cover_url: p.cover, caption: p.caption, share_to_feed: "true" }).id;
-  PROPS.setProperty("IG_PENDING", JSON.stringify({ container: c, kind: "reel", id: p.key, label: p.title, at: Date.now() }));
+  PROPS.setProperty("IG_PENDING", JSON.stringify({ container: c, kind: kind || "reel", id: p.key, label: p.title, at: Date.now() }));
+}
+
+/* ---------- 最初の紹介リール（make_intro_media.py が作る ig/intro/intro.json。一度だけ投稿する） ---------- */
+function igIntro() {
+  const res = UrlFetchApp.fetch(CONFIG.siteUrl + "ig/intro/intro.json", { muteHttpExceptions: true });
+  return res.getResponseCode() === 200 ? JSON.parse(res.getContentText()) : null;
+}
+
+/* LINE で「紹介リール」: 動画と投稿文を見せて、「今すぐ投稿」ボタンを出す */
+function igIntroDraft() {
+  if (!igReady()) return TALK.igOff;
+  if (prop("IG_INTRO_DONE")) return TALK.igIntroDone;
+  const p = igIntro();
+  if (!p) return TALK.igIntroMissing;
+  return [
+    { type: "video", originalContentUrl: p.video, previewImageUrl: p.cover },
+    { type: "text", text: [TALK.igIntroHead(Math.round(p.seconds)), "", "―― 投稿文 ――", p.caption].join("\n"),
+      quickReply: { items: [qr("今すぐ投稿", "ig=intro"), qr("やめる", "ig=introskip")] } },
+  ];
+}
+
+function igIntroPost() {
+  if (prop("IG_INTRO_DONE")) return TALK.igIntroDone;
+  if (prop("IG_PENDING")) return TALK.igBusy;
+  const p = igIntro();
+  if (!p) return TALK.igIntroMissing;
+  try {
+    igStartReel(p, "intro");
+    return TALK.igReelProcessing;
+  } catch (e) {
+    return e.message === "IMAGE_MISSING" ? TALK.igIntroMissing : TALK.igPostError(e.message);
+  }
 }
 
 /* 10分ごとにトリガーから呼ばれる: 処理中の動画の投稿と、予約した投稿 */
@@ -191,9 +225,15 @@ function igWorker() {
         const commented = igPinComment(media, pend.kind);
         let url = "https://www.instagram.com/";
         try { url = igCall(`/${media}?fields=permalink`, null, "get").permalink; } catch (e) { /* URL が取れなくても投稿はできている */ }
-        igAdvance(pend.kind);
-        PROPS.setProperty("IG_LAST_REEL", pend.id);
-        const p = igPosts("reel").find((x) => x.key === pend.id);
+        let p;
+        if (pend.kind === "intro") {
+          PROPS.setProperty("IG_INTRO_DONE", String(media));
+          p = igIntro();
+        } else {
+          igAdvance(pend.kind);
+          PROPS.setProperty("IG_LAST_REEL", pend.id);
+          p = igPosts("reel").find((x) => x.key === pend.id);
+        }
         push([TALK.igPosted(url, commented)].concat(p ? ytKitMessages(p) : []));
       } catch (e) {
         push(TALK.igPostError(e.message));

@@ -73,6 +73,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 - ストックはサイトに置いた `ig/posts.json`・`ig/trace-posts.json`・`ig/reels.json`。投稿すると次へ進む。**リールは減りが早い**（16本・週2本で約2か月分）
 - 投稿の直後に、サイトの紹介コメント（`PIN_COMMENTS`）を自動で付ける。**コメントの固定は API でできないので、運営者がアプリで固定する**
 - YouTube ショートは自動投稿しない（未審査のアプリから API で上げた動画は非公開に固定されるため）。リール投稿後にタイトルと説明を LINE に送り、運営者が手で上げる
+- 最初のサイト紹介リールは、LINE の「紹介リール」で投稿する（`ig/intro/intro.json` を読む。一度だけ。投稿済みは `IG_INTRO_DONE`。リールのストックは進めない）
 - ニュースは今は LINE に届くだけ。Instagram の「今週のITニュース」の投稿は未実装
 
 ## 決まりごと

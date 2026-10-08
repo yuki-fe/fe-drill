@@ -5,10 +5,12 @@
   ・reel.mp4 / reel-cover.jpg   リール動画（1080×1920、約25秒、無音）
   ・story-1.jpg / story-2.jpg   ストーリー（1080×1920。2枚目にリンクのスタンプを置く）
   ・captions.txt               投稿文（フィード・リール）とストーリーのリンク
+  ・intro.json                 LINE ボットの「紹介リール」が読むリールの情報（動画・表紙・投稿文・YouTube 用）
 
 使い方:  python build.py            （先にビルドして、docs/assets に最新の問題データを入れる）
          python make_intro_media.py
 """
+import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -382,6 +384,18 @@ def story2():
     return img
 
 
+def intro_post(sec):
+    yt_desc = ("基本情報技術者試験（FE）の無料の学習サイト「FE用語ドリル」の紹介です。\n\n"
+               "・科目A：用語345語をカード・4択・書いて答える・意味から答えるの4つのやり方で\n"
+               "・科目B：擬似言語のプログラムを1行ずつ再生して、変数の動きを見ながらトレース\n\n"
+               f"▶ サイト（無料・登録なし）: {BASE}/?utm_source=youtube&utm_medium=video&utm_campaign=intro\n\n"
+               "#基本情報技術者試験 #基本情報 #IT資格 #情報系学生 #科目B #Shorts")
+    return {"key": "intro", "title": "FE用語ドリルの紹介", "seconds": sec,
+            "video": f"{BASE}/ig/intro/reel.mp4", "cover": f"{BASE}/ig/intro/reel-cover.jpg",
+            "caption": reel_caption(),
+            "youtube": {"title": "【基本情報】用語と科目Bのトレースを無料で練習できるサイトをつくりました #Shorts", "description": yt_desc}}
+
+
 STORY_LINK = BASE + "/?utm_source=instagram&utm_medium=story&utm_campaign=intro"
 
 
@@ -394,6 +408,7 @@ def main():
     story1().save(OUT / "story-1.jpg", "JPEG", quality=88)
     story2().save(OUT / "story-2.jpg", "JPEG", quality=88)
     sec = make_reel(item, mb.find_ffmpeg())
+    (OUT / "intro.json").write_text(json.dumps(intro_post(sec), ensure_ascii=False, indent=1), encoding="utf-8")
     (OUT / "captions.txt").write_text(
         "■ フィード投稿の投稿文\n\n" + feed_caption() +
         "\n\n\n■ リール動画の投稿文\n\n" + reel_caption() +

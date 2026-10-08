@@ -17,7 +17,7 @@ FIRST = ["config.gs", "talk.gs"]
 
 gs = sorted(BOT.glob("*.gs"), key=lambda p: (FIRST.index(p.name) if p.name in FIRST else len(FIRST), p.name))
 code = "\n".join(p.read_text(encoding="utf-8") for p in gs)
-stock = {name: json.loads((SITE / "static" / "ig" / name).read_text(encoding="utf-8")) for name in ["posts.json", "trace-posts.json", "reels.json"]}
+stock = {name: json.loads((SITE / "static" / "ig" / name).read_text(encoding="utf-8")) for name in ["posts.json", "trace-posts.json", "reels.json", "intro/intro.json"]}
 
 MOCKS = r"""
 const sent = [], igCalls = [];
@@ -97,6 +97,21 @@ try {
   check("リールに紹介コメントを付ける", igCalls.some((c) => c.includes("/comments [📌 科目B")));
   check("YouTube のセットも届く", lastMsg().messages.length >= 3);
   check("リールのストックが進む", store.IG_NEXT_REEL === "1");
+
+  // 紹介リール: 下書き → 投稿 → 処理完了。リールのストックは進めない
+  igCalls.length = 0; status = "IN_PROGRESS";
+  t_say("紹介リール"); out.push("--- 紹介リール", t_last());
+  check("紹介リールの下書きに動画とボタン", lastMsg().messages[0].type === "video" && t_text().includes("今すぐ投稿"));
+  t_tap("ig=intro"); out.push("--- 紹介リールを投稿", t_last());
+  check("紹介リールは処理待ちになる", !!store.IG_PENDING && JSON.parse(store.IG_PENDING).kind === "intro");
+  status = "FINISHED"; igCalls.length = 0; igWorker(); out.push("--- 見回り（紹介リール完了）", t_last(), ...igCalls);
+  check("紹介リールを公開して知らせる", t_text().includes("投稿したよ") && lastMsg().messages.length >= 3);
+  check("紹介リールに紹介用のコメント", igCalls.some((c) => c.includes("/comments [📌 サイトはプロフィール")));
+  check("紹介リールではリールのストックを進めない", store.IG_NEXT_REEL === "1" && !!store.IG_INTRO_DONE);
+  t_say("紹介リール");
+  check("紹介リールは二重に投稿しない", t_text().includes("もう投稿してある"));
+  t_tap("ig=intro");
+  check("古いボタンでも二重に投稿しない", t_text().includes("もう投稿してある") && !store.IG_PENDING);
 
   t_say("インスタ トレース");
   check("「インスタ トレース」でトレースの下書き", t_text().includes("トレースクイズ"));

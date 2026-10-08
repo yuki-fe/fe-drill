@@ -61,6 +61,7 @@ function answer(text) {
     return igDraftMessage(undefined, k || kindToday());
   }
   if (/^投稿(する)?$/.test(text)) return igAction("post", kindToday());
+  if (/^紹介リール/.test(text)) return igIntroDraft();
   if (/^紹介コメント/.test(text)) return igReady() ? igPinLatest() : TALK.igOff;
   if (/^(コメント|こめんと)/.test(text)) return igReady() ? igCommentsList() : TALK.igOff;
   if (/^(ユーチューブ|ゆーちゅーぶ|youtube)/i.test(text)) return ytKitReply();
