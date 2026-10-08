@@ -28,6 +28,7 @@
 | `checks/` | ビルドで作られる確認ページ（`b-check.html`）。commit しない |
 | `make_ig_images.py` | 用語クイズの投稿画像（1080×1350 の2枚組）と投稿文を作る |
 | `make_b_media.py` | 科目Bのリール動画（1080×1920、H.264）とトレースクイズの画像を作る。Edge と FFmpeg を使う |
+| `make_intro_media.py` | Instagram の最初の投稿（サイト紹介のフィード5枚・リール・ストーリー2枚と投稿文）を `static/ig/intro/` に作る。一度きり |
 | `line-bot/` | LINE ボットのプログラム。役割ごとの .gs（`config` 設定・setup / `talk` 話し方 / `report` 毎朝のレポート / `news` / `instagram` / `inquiry` お問い合わせ / `line` Webhook と送信）と `appsscript.json`。合言葉（トークン）は入れない |
 | `line-bot/test/run_test.py` | ボットの動作テスト（モックで動かす。Google や LINE には接続しない） |
 | `notes/` | **公開しない**（`.gitignore` 済み）。`pdf/` 手順書の PDF、`src/` その元の HTML、`brand/` アイコン画像 |
@@ -69,7 +70,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 
 - Facebook ログイン方式。API は `https://graph.facebook.com/v23.0`、トークンは Facebook ページのトークン（期限なし）。Facebook ページ「Fe用語ドリル」と連携
 - 投稿の種類は `IG_KINDS`: 用語クイズ（term）・トレースクイズ（trace）・リール動画（reel）。曜日ごとの種類は `CONFIG.rotation`（日〜土: reel, term, term, trace, term, reel, term）
-- ストックはサイトに置いた `ig/posts.json`・`ig/trace-posts.json`・`ig/reels.json`。投稿すると次へ進む。**リールは減りが早い**（8本・週2本）
+- ストックはサイトに置いた `ig/posts.json`・`ig/trace-posts.json`・`ig/reels.json`。投稿すると次へ進む。**リールは減りが早い**（16本・週2本で約2か月分）
 - 投稿の直後に、サイトの紹介コメント（`PIN_COMMENTS`）を自動で付ける。**コメントの固定は API でできないので、運営者がアプリで固定する**
 - YouTube ショートは自動投稿しない（未審査のアプリから API で上げた動画は非公開に固定されるため）。リール投稿後にタイトルと説明を LINE に送り、運営者が手で上げる
 - ニュースは今は LINE に届くだけ。Instagram の「今週のITニュース」の投稿は未実装
