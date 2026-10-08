@@ -110,5 +110,117 @@
    "title": "【基本情報 科目B】再帰で 1 から n までの和｜トレースを1行ずつ再生 #Shorts",
    "description": "【科目B トレース No.6】再帰で 1 から n までの和\n変数 n、r がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t6#t6\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
   }
+ },
+ {
+  "key": "algo-bubble-sort",
+  "kind": "algo",
+  "id": "bubble-sort",
+  "title": "バブルソート",
+  "seconds": 21.7,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-bubble-sort.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-bubble-sort.jpg",
+  "caption": "【科目B アルゴリズム】バブルソート\nこのプログラム、動きを追えた？\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のアルゴリズム図鑑「バブルソート」で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】バブルソート｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B アルゴリズム】バブルソート\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/algorithms/bubble-sort.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-bubble-sort\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t7",
+  "kind": "trace",
+  "id": "t7",
+  "title": "配列を逆順にする",
+  "seconds": 22.3,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t7.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t7.jpg",
+  "caption": "【科目B トレース No.7】配列を逆順にする\nこのプログラム、動きを追えた？\n変数 left、right、tmp がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.7で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】配列を逆順にする｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.7】配列を逆順にする\n変数 left、right、tmp がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t7#t7\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t8",
+  "kind": "trace",
+  "id": "t8",
+  "title": "最大公約数（互除法）",
+  "seconds": 21.4,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t8.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t8.jpg",
+  "caption": "【科目B トレース No.8】最大公約数（互除法）\nこのプログラム、動きを追えた？\n変数 a、b、r がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.8で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】最大公約数（互除法）｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.8】最大公約数（互除法）\n変数 a、b、r がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t8#t8\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "algo-selection-sort",
+  "kind": "algo",
+  "id": "selection-sort",
+  "title": "選択ソート",
+  "seconds": 22.3,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-selection-sort.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-selection-sort.jpg",
+  "caption": "【科目B アルゴリズム】選択ソート\nこのプログラム、動きを追えた？\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のアルゴリズム図鑑「選択ソート」で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】選択ソート｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B アルゴリズム】選択ソート\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/algorithms/selection-sort.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-selection-sort\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t9",
+  "kind": "trace",
+  "id": "t9",
+  "title": "線形探索で見つかるまで",
+  "seconds": 19.6,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t9.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t9.jpg",
+  "caption": "【科目B トレース No.9】線形探索で見つかるまで\nこのプログラム、動きを追えた？\n変数 i がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.9で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】線形探索で見つかるまで｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.9】線形探索で見つかるまで\n変数 i がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t9#t9\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t10",
+  "kind": "trace",
+  "id": "t10",
+  "title": "バブルソートの1周目",
+  "seconds": 22.3,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t10.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t10.jpg",
+  "caption": "【科目B トレース No.10】バブルソートの1周目\nこのプログラム、動きを追えた？\n変数 j、tmp がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.10で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】バブルソートの1周目｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.10】バブルソートの1周目\n変数 j、tmp がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t10#t10\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "algo-insertion-sort",
+  "kind": "algo",
+  "id": "insertion-sort",
+  "title": "挿入ソート",
+  "seconds": 23.4,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-insertion-sort.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/algo-insertion-sort.jpg",
+  "caption": "【科目B アルゴリズム】挿入ソート\nこのプログラム、動きを追えた？\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のアルゴリズム図鑑「挿入ソート」で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】挿入ソート｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B アルゴリズム】挿入ソート\n変数がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/algorithms/insertion-sort.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-insertion-sort\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
+ },
+ {
+  "key": "trace-t11",
+  "kind": "trace",
+  "id": "t11",
+  "title": "最小値の位置を探す",
+  "seconds": 23.2,
+  "video": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t11.mp4",
+  "cover": "https://yuki-fe.github.io/fe-drill/ig/reels/trace-t11.jpg",
+  "caption": "【科目B トレース No.11】最小値の位置を探す\nこのプログラム、動きを追えた？\n変数 i、m がどう変わるか、1行ずつ再生しています。\n\n▶ この問題は「FE用語ドリル」のトレース練習 No.11で、自分のペースで1行ずつ動かしながら解けます（無料）。\nプロフィールのリンク →「科目B」から\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格",
+  "youtube": {
+   "title": "【基本情報 科目B】最小値の位置を探す｜トレースを1行ずつ再生 #Shorts",
+   "description": "【科目B トレース No.11】最小値の位置を探す\n変数 i、m がどう変わるか、1行ずつ再生しています。\n\n▶ 1行ずつ自分で動かして解く（無料）: https://yuki-fe.github.io/fe-drill/b/trace.html?utm_source=youtube&utm_medium=video&utm_campaign=reel-t11#t11\n\n基本情報技術者試験（FE）の科目B対策。擬似言語のプログラムの動きを、変数の変化とあわせて見せています。\n\n#基本情報技術者試験 #科目B #擬似言語 #アルゴリズム #トレース #プログラミング学習 #情報系学生 #IT資格 #Shorts"
+  }
  }
 ]

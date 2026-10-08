@@ -1,0 +1,5 @@
+# サイト用の Python パッケージ（build.py は標準ライブラリだけで動く）
+# 入れ方:  python -m venv .venv
+#          .venv\Scripts\python -m pip install -r requirements.txt
+Pillow>=10.0           # make_ig_images.py・make_b_media.py の画像づくり
+imageio-ffmpeg>=0.5    # make_b_media.py の動画の変換（ffmpeg が一緒に入る）

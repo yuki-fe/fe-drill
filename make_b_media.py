@@ -11,7 +11,7 @@
          python make_b_media.py 16  （リール動画を16本まで作る。動画は1本 1〜3MB なので、少しずつ増やす）
 
 プログラムの動きは、サイトと同じインタプリタ（docs/assets/pseudo.js）を Edge で動かして取り出す。
-動画の変換には ffmpeg を使う（猫動画プロジェクトの .venv にある imageio-ffmpeg、または環境変数 FFMPEG）。
+動画の変換には ffmpeg を使う（requirements.txt の imageio-ffmpeg、または環境変数 FFMPEG）。
 """
 import html
 import json
@@ -58,11 +58,7 @@ def find_ffmpeg():
         import imageio_ffmpeg
         return imageio_ffmpeg.get_ffmpeg_exe()
     except ImportError:
-        pass
-    found = sorted((ROOT.parent.parent / "cat-video" / ".venv").glob("Lib/site-packages/imageio_ffmpeg/binaries/ffmpeg*.exe"))
-    if found:
-        return str(found[0])
-    sys.exit("ffmpeg が見つかりません。環境変数 FFMPEG に ffmpeg.exe の場所を入れてください")
+        sys.exit("ffmpeg が見つかりません。pip install -r requirements.txt で imageio-ffmpeg を入れてください")
 
 
 def export_runs():

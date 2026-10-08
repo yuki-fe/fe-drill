@@ -28,7 +28,7 @@
 | `checks/` | ビルドで作られる確認ページ（`b-check.html`）。commit しない |
 | `make_ig_images.py` | 用語クイズの投稿画像（1080×1350 の2枚組）と投稿文を作る |
 | `make_b_media.py` | 科目Bのリール動画（1080×1920、H.264）とトレースクイズの画像を作る。Edge と FFmpeg を使う |
-| `line-bot/` | LINE ボットのプログラム（`Code.gs`、`appsscript.json`）。合言葉（トークン）は入れない |
+| `line-bot/` | LINE ボットのプログラム。役割ごとの .gs（`config` 設定・setup / `talk` 話し方 / `report` 毎朝のレポート / `news` / `instagram` / `inquiry` お問い合わせ / `line` Webhook と送信）と `appsscript.json`。合言葉（トークン）は入れない |
 | `line-bot/test/run_test.py` | ボットの動作テスト（モックで動かす。Google や LINE には接続しない） |
 | `notes/` | **公開しない**（`.gitignore` 済み）。`pdf/` 手順書の PDF、`src/` その元の HTML、`brand/` アイコン画像 |
 
@@ -44,7 +44,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 ```
 
 - Windows のコンソールは cp932 なので、日本語を出力するスクリプトは `PYTHONIOENCODING=utf-8` を付けて動かす
-- FFmpeg は `imageio-ffmpeg` から取る。サイト専用の `.venv` を作るまでは、猫動画プロジェクト（`C:\Users\admin\cat-video\.venv`）のものを借りている
+- Python のパッケージは `requirements.txt`（Pillow・imageio-ffmpeg）。サイト専用の `.venv` に入れて、`.venv\Scripts\python` で動かす。FFmpeg は `imageio-ffmpeg` に入っているもの（環境変数 `FFMPEG` で別のものも指定できる）
 - Bash の長いヒアドキュメントは失敗しやすい。長い内容は Write でファイルに書いてから実行する
 
 ## 公開までの流れ
@@ -87,6 +87,4 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 ## 未決定・これからの候補
 
 - Instagram の「今週のITニュース」投稿（ボットがニュースを選ぶボタンと表紙を出す）
-- サイト専用の Python 環境（`requirements.txt`、`.venv`）
-- `Code.gs` を役割ごとの .gs（config / talk / report / news / instagram / inquiry / line）に分ける。テストは `line-bot/*.gs` を全部読み込むので、分けてもそのまま使える
 - AdSense（独自ドメインが必要）、サブスク
