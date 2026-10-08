@@ -22,7 +22,10 @@ const CONFIG = {
   reportHour: 8,                                          // 毎朝のレポートを送る時刻（0〜23時）
   chartWeekday: 1,                                        // 先週のグラフを送る曜日（0=日曜, 1=月曜, … 6=土曜）
   newsPerGenre: 2,                                        // 毎朝のレポートに載せる、ジャンルごとのニュースの数
-  instagramApi: "https://graph.instagram.com/v23.0",      // Instagram API（バージョンは Meta の案内に合わせて変える）
+  // Instagram API（バージョンは Meta の案内に合わせて変える）
+  //   Facebook ログインで作った合言葉（Facebook ページのトークン）: https://graph.facebook.com/v23.0
+  //   Instagram ログインで作った合言葉:                           https://graph.instagram.com/v23.0
+  instagramApi: "https://graph.facebook.com/v23.0",
   // 曜日ごとの投稿の種類（日・月・火・水・木・金・土）。term=用語クイズ、trace=トレースクイズ、reel=リール動画
   rotation: ["reel", "term", "term", "trace", "term", "reel", "term"],
   scheduleHour: 20,                                       // 「〇時に投稿」ボタンで投稿する時刻
@@ -35,6 +38,30 @@ const IG_KINDS = {
   trace: { file: "ig/trace-posts.json", next: "IG_NEXT_TRACE", label: "トレースクイズ", maker: "make_b_media.py" },
   reel: { file: "ig/reels.json", next: "IG_NEXT_REEL", label: "リール動画", maker: "make_b_media.py" },
 };
+
+/* ========== 投稿に付ける、サイトの紹介コメント ==========
+ * 投稿した直後に、自分のアカウントからコメントする（固定はアプリで手作業）。
+ * コメントのリンクは押せないので、プロフィールのリンクへ案内する。空にすると付けない。 */
+const PIN_COMMENTS = {
+  term: [
+    "📌 この問題は、無料の学習サイト「FE用語ドリル」から出しています",
+    "・基本情報の用語345語を、4択・書いて答える・意味から答えるの3通りで",
+    "・間違えた用語だけ集めて、まとめて復習",
+    "・科目Bは、プログラムが1行ずつ動いて変数の変化が見える「トレース練習」つき",
+    "登録なし・スマホでそのまま使えます",
+    "▶ プロフィールのリンクから",
+  ].join("\n"),
+  trace: [
+    "📌 科目Bのトレースは、無料の学習サイト「FE用語ドリル」で練習できます",
+    "・プログラムが1行ずつ動いて、変数がどう変わるかを目で追える",
+    "・穴埋め問題は、選んだ答えでプログラムを動かして「なぜ違うか」まで確かめられる",
+    "・自分で書いた擬似言語をそのまま動かせるシミュレータつき",
+    "・基本情報の用語345語の単語帳も",
+    "登録なし・スマホでそのまま使えます",
+    "▶ プロフィールのリンクから",
+  ].join("\n"),
+};
+PIN_COMMENTS.reel = PIN_COMMENTS.trace;
 
 /* ========== ニュースのジャンル ==========
  * 「ジャンル 追加 〇〇」で、ここにない言葉もそのまま検索の言葉として追加できる。 */
@@ -103,7 +130,10 @@ const TALK = {
   genreTooMany: "ジャンルは5つまでにしとこう。多すぎると朝のレポートが長くなるからね。",
 
   igHead: (label, title) => `今日のインスタの下書きだよ（${label}「${title}」）。中身を確認してね。`,
-  igPosted: (url) => `インスタに投稿したよ！\n${url}\nコメントが来てたら返してあげてね。`,
+  igPosted: (url, commented) => `インスタに投稿したよ！\n${url}\n` +
+    (commented ? "サイトの紹介コメントも付けといた。アプリでそのコメントを長押し→「固定」してね（固定はアプリでしかできないんだ）。" : "コメントが来てたら返してあげてね。"),
+  igPinDone: (url) => `いちばん新しい投稿に、サイトの紹介コメントを付けたよ。\n${url}\nアプリでそのコメントを長押し→「固定」してね。`,
+  igPinError: (why) => `紹介コメントを付けられなかった…（${why}）。`,
   igPostError: (why) => `投稿できなかった…（${why}）。「ニュースとInstagramの設定」の「困ったとき」を見てみて。`,
   igImageMissing: "画像がまだ公開されてないみたい。make_ig_images.py を実行して、GitHub に Push した？",
   igSkipped: "了解、今日はお休みね。",
@@ -144,6 +174,7 @@ const TALK = {
     "・ジャンル … ニュースのジャンルを見る・変える",
     "・インスタ … 今日の Instagram の下書き（「インスタ リール」「インスタ トレース」「インスタ 用語」で種類を選べる）",
     "・コメント … 最近の Instagram のコメント",
+    "・紹介コメント … いちばん新しい投稿に、サイトの紹介コメントを付ける",
     "・ユーチューブ … 最近のリール動画を YouTube ショートに出すためのタイトルと説明",
     "・反応 … 最近の Instagram の投稿のリーチ・保存",
     "・リンク … プロフィールに入れる目印付きのURL",
@@ -547,7 +578,7 @@ function igCall(path, params, method) {
 }
 
 /* 2枚組（カルーセル）で投稿し、投稿の URL を返す */
-function igPublish(p) {
+function igPublish(p, kind) {
   for (const url of p.images) {
     if (UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getResponseCode() !== 200) throw new Error("IMAGE_MISSING");
   }
@@ -562,7 +593,36 @@ function igPublish(p) {
   }
   const media = igCall(`/${user}/media_publish`, { creation_id: container }).id;
   rememberPost(media, p.term);
-  try { return igCall(`/${media}?fields=permalink`, null, "get").permalink; } catch (e) { return "https://www.instagram.com/"; }
+  const commented = igPinComment(media, kind);
+  let url = "https://www.instagram.com/";
+  try { url = igCall(`/${media}?fields=permalink`, null, "get").permalink; } catch (e) { /* URL が取れなくても投稿はできている */ }
+  return { url, commented };
+}
+
+/* サイトの紹介コメントを付ける。付けられたら true */
+function igPinComment(mediaId, kind) {
+  const text = PIN_COMMENTS[kind];
+  if (!text) return false;
+  try {
+    igCall(`/${mediaId}/comments`, { message: text });
+    return true;
+  } catch (e) {
+    console.warn("紹介コメント: " + e.message);
+    return false;
+  }
+}
+
+/* LINE で「紹介コメント」: いちばん新しい投稿に付ける（前に投稿したものや、アプリで投稿したもの用） */
+function igPinLatest() {
+  try {
+    const m = (igCall(`/${prop("IG_USER_ID")}/media?fields=id,media_type,permalink&limit=1`, null, "get").data || [])[0];
+    if (!m) return TALK.igNoPost;
+    const kind = m.media_type === "VIDEO" ? "reel" : "term";
+    igCall(`/${m.id}/comments`, { message: PIN_COMMENTS[kind] });
+    return TALK.igPinDone(m.permalink || "https://www.instagram.com/");
+  } catch (e) {
+    return TALK.igPinError(e.message);
+  }
 }
 
 /* 「〇時に投稿」の時刻。もう過ぎていたら次の日 */
@@ -601,9 +661,9 @@ function igAction(action, kind, id) {
 function igPublishNow(kind, p) {
   try {
     if (kind === "reel") { igStartReel(p); return TALK.igReelProcessing; }
-    const url = igPublish(p);
+    const r = igPublish(p, kind);
     igAdvance(kind);
-    return TALK.igPosted(url);
+    return TALK.igPosted(r.url, r.commented);
   } catch (e) {
     return e.message === "IMAGE_MISSING" ? TALK.igImageMissing : TALK.igPostError(e.message);
   }
@@ -627,12 +687,13 @@ function igWorker() {
       try {
         const media = igCall(`/${prop("IG_USER_ID")}/media_publish`, { creation_id: pend.container }).id;
         rememberPost(media, pend.label);
+        const commented = igPinComment(media, pend.kind);
         let url = "https://www.instagram.com/";
         try { url = igCall(`/${media}?fields=permalink`, null, "get").permalink; } catch (e) { /* URL が取れなくても投稿はできている */ }
         igAdvance(pend.kind);
         PROPS.setProperty("IG_LAST_REEL", pend.id);
         const p = igPosts("reel").find((x) => x.key === pend.id);
-        push([TALK.igPosted(url)].concat(p ? ytKitMessages(p) : []));
+        push([TALK.igPosted(url, commented)].concat(p ? ytKitMessages(p) : []));
       } catch (e) {
         push(TALK.igPostError(e.message));
       }
@@ -670,10 +731,20 @@ function igComments(sinceMs) {
   list.forEach((m) => {
     (igCall(`/${m.id}/comments?fields=id,text,username,timestamp&limit=20`, null, "get").data || []).forEach((c) => {
       const t = new Date(c.timestamp).getTime();
-      if (t > sinceMs) out.push({ user: c.username || "?", text: String(c.text || ""), label: postLabel(m), t });
+      if (t > sinceMs && c.username !== igUsername()) out.push({ user: c.username || "?", text: String(c.text || ""), label: postLabel(m), t });
     });
   });
   return out.sort((a, b) => b.t - a.t);
+}
+
+/* 自分のアカウント名（一度取ったら覚えておく）。自分の紹介コメントを「新しいコメント」に数えないため */
+function igUsername() {
+  let u = prop("IG_USERNAME");
+  if (!u) {
+    u = igCall(`/${prop("IG_USER_ID")}?fields=username`, null, "get").username || "";
+    if (u) PROPS.setProperty("IG_USERNAME", u);
+  }
+  return u;
 }
 
 const clip = (t, n) => (t.length > n ? t.slice(0, n) + "…" : t);
@@ -704,9 +775,10 @@ function igCommentsList() {
   }
 }
 
-/* Instagram の長期トークン（60日で切れる）を毎週のばす。トリガーから呼ばれる */
+/* Instagram ログインの長期トークン（60日で切れる）を毎週のばす。トリガーから呼ばれる。
+ * Facebook ログインで作った「Facebook ページのトークン」は期限がないので、何もしない */
 function refreshInstagramToken() {
-  if (!prop("IG_TOKEN")) return;
+  if (!prop("IG_TOKEN") || CONFIG.instagramApi.indexOf("graph.facebook.com") >= 0) return;
   const res = UrlFetchApp.fetch("https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=" + encodeURIComponent(prop("IG_TOKEN")), { muteHttpExceptions: true });
   const json = JSON.parse(res.getContentText() || "{}");
   if (json.access_token) PROPS.setProperty("IG_TOKEN", json.access_token);
@@ -974,6 +1046,7 @@ function answer(text) {
     return igDraftMessage(undefined, k || kindToday());
   }
   if (/^投稿(する)?$/.test(text)) return igAction("post", kindToday());
+  if (/^紹介コメント/.test(text)) return igReady() ? igPinLatest() : TALK.igOff;
   if (/^(コメント|こめんと)/.test(text)) return igReady() ? igCommentsList() : TALK.igOff;
   if (/^(ユーチューブ|ゆーちゅーぶ|youtube)/i.test(text)) return ytKitReply();
   if (/^(反応|はんのう|インサイト)/.test(text)) return igReady() ? igRecentText() : TALK.igOff;
