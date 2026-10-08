@@ -1,11 +1,16 @@
-# 手元用の資料（公開しない）
+# 手元用の資料（公開しない）: 手順書の PDF とその元、アイコンの元画像
 *.pdf
+notes/
 
 # Python や エディタが作るファイル
 __pycache__/
+.venv/
 .vscode/
 Thumbs.db
 desktop.ini
 
 # 科目Bの答え確認ページ（ビルドで作られる）
 checks/
+
+# LINE ボットのテストで作られるページ
+line-bot/test/test.html
