@@ -5,12 +5,14 @@
   ・reel.mp4 / reel-cover.jpg   リール動画（1080×1920、約25秒、無音）
   ・story-1.jpg / story-2.jpg   ストーリー（1080×1920。2枚目にリンクのスタンプを置く）
   ・captions.txt               投稿文（フィード・リール）とストーリーのリンク
+  ・friend-1・2.jpg / friend-story.jpg / friend-captions.txt  運営者の個人のアカウントで紹介する投稿（--friends）
   ・intro.json                 LINE ボットの「紹介リール」が読むリールの情報（動画・表紙・投稿文・YouTube 用）
 
 使い方:  python build.py            （先にビルドして、docs/assets に最新の問題データを入れる）
          python make_intro_media.py
 """
 import json
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -399,7 +401,104 @@ def intro_post(sec):
 STORY_LINK = BASE + "/?utm_source=instagram&utm_medium=story&utm_campaign=intro"
 
 
+# ---------- 運営者の個人のアカウント（友だち向け）で、このアカウントを紹介する ----------
+
+HANDLE = "@it_senpai_lab"
+
+
+def friend_frame(no, label):
+    img, d = canvas(FH)
+    d.rounded_rectangle((48, 48, W - 48, FH - 48), radius=36, fill=PAPER, outline=LINE, width=2)
+    pill(d, 96, 100, label, MARK, 32)
+    t = f"{no} / 2"
+    d.text((W - 96 - font(30, mono=True).getlength(t), FH - 126), t, font=font(30, mono=True), fill=MUTED)
+    return img, d
+
+
+def handle_box(img, d, y, size=150):
+    """アイコンとユーザーネームを並べた枠。"""
+    d.rounded_rectangle((96, y, W - 96, y + size + 60), radius=28, fill=BG)
+    paste_icon(img, 126, y + 30, size)
+    d.text((126 + size + 36, y + 30 + size / 2 - 64), HANDLE, font=font(54, True), fill=INK)
+    d.text((126 + size + 36, y + 30 + size / 2 + 10), "FE用語ドリル", font=font(34), fill=MARK)
+    return y + size + 60
+
+
+def friend1():
+    img, d = friend_frame(1, "ちょっとお知らせ")
+    y = text_lines(d, 96, 220, ["インスタ、", "もう1つ始めました"], font(84, True), INK, 1.3) + 40
+    y = handle_box(img, d, y) + 50
+    y = text_lines(d, 96, y, ["基本情報技術者試験（FE）の", "勉強用のアカウントです"], font(44, True), INK, 1.45) + 24
+    text_lines(d, 96, y, ["勉強用の無料サイトも作りました"], font(36), MUTED)
+    t = "どんなアカウントか → "
+    d.text((W - 96 - font(32, True).getlength(t), FH - 200), t, font=font(32, True), fill=MARK)
+    return img
+
+
+def friend2():
+    img, d = friend_frame(2, "こんなことを投稿します")
+    y = bullet_rows(d, 96, 220, [
+        ("IT用語の4択クイズ", "スキマ時間に1問ずつ"),
+        ("プログラムが動く動画", "科目B のトレースを1行ずつ再生"),
+        ("今週のITニュース", "試験の用語とあわせて紹介"),
+    ], W - 192, 44) + 20
+    d.rounded_rectangle((96, y, W - 96, y + 330), radius=24, fill=MARK_SOFT)
+    center(d, y + 44, "情報系の人・基本情報を受ける人・", font(36, True), INK)
+    center(d, y + 98, "IT にちょっと興味がある人", font(36, True), INK)
+    center(d, y + 166, "フォローしてくれたらうれしいです", font(44, True), MARK)
+    center(d, y + 246, HANDLE, font(44, True), INK)
+    return img
+
+
+def friend_story():
+    img, d = canvas(RH)
+    d.rounded_rectangle((60, 220, W - 60, 1640), radius=40, fill=PAPER, outline=LINE, width=2)
+    center(d, 300, "ちょっとお知らせ", font(44, True), MARK)
+    center(d, 380, "インスタ、", font(84, True), INK)
+    center(d, 490, "もう1つ始めました", font(84, True), INK)
+    paste_icon(img, (W - 240) // 2, 650, 240)
+    center(d, 930, "基本情報技術者試験の勉強アカウント", font(40, True), INK)
+    center(d, 995, "IT用語クイズ・プログラムが動く動画など", font(34), MUTED)
+    y = 1110
+    center(d, y, "↓ フォローしてくれたらうれしい ↓", font(44, True), MARK)
+    y += 90
+    x0, x1, y1 = 160, W - 160, y + 200  # メンションのスタンプを置く場所
+    for x in range(x0, x1, 38):
+        d.line((x, y, min(x + 20, x1), y), fill=MARK, width=4)
+        d.line((x, y1, min(x + 20, x1), y1), fill=MARK, width=4)
+    for yy in range(y, y1, 38):
+        d.line((x0, yy, x0, min(yy + 20, y1)), fill=MARK, width=4)
+        d.line((x1, yy, x1, min(yy + 20, y1)), fill=MARK, width=4)
+    return img
+
+
+def friend_caption():
+    return ("ちょっとお知らせ！\n"
+            "基本情報技術者試験（FE）の勉強用に、無料の学習サイト「FE用語ドリル」を作りました📚\n"
+            f"それにあわせて、インスタのアカウントも始めました → {HANDLE}\n\n"
+            "・IT用語の4択クイズ\n"
+            "・プログラムが1行ずつ動く、科目B対策の動画\n"
+            "・今週のITニュース\n"
+            "を投稿していきます。\n\n"
+            "情報系の人、これから基本情報を受ける人、IT にちょっと興味がある人、よかったらフォローしてもらえるとうれしいです🙏\n"
+            "まわりに受験する人がいたら、教えてあげてね。")
+
+
+def make_friends():
+    OUT.mkdir(parents=True, exist_ok=True)
+    friend1().save(OUT / "friend-1.jpg", "JPEG", quality=88, optimize=True, progressive=True)
+    friend2().save(OUT / "friend-2.jpg", "JPEG", quality=88, optimize=True, progressive=True)
+    friend_story().save(OUT / "friend-story.jpg", "JPEG", quality=88)
+    (OUT / "friend-captions.txt").write_text(
+        "■ 個人のアカウントのフィード投稿の投稿文（friend-1・friend-2 の2枚組）\n\n" + friend_caption() +
+        f"\n\n\n■ ストーリー（friend-story）\nスタンプ「メンション」で {HANDLE} を入れて、点線の枠に置く\n", encoding="utf-8")
+    print("static/ig/intro/ に、個人のアカウント用（フィード2枚・ストーリー1枚）を書き出しました")
+
+
 def main():
+    if "--friends" in sys.argv:
+        make_friends()
+        return
     OUT.mkdir(parents=True, exist_ok=True)
     items = mb.export_runs()
     item = next(it for it in items if it["kind"] == "trace" and it["id"] == "t1")

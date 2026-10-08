@@ -47,6 +47,11 @@ function answer(text) {
   if (/^(人気|ランキング|にんき)/.test(text)) return rankingText();
   if (/^(問い合わせ|問合せ|といあわせ|お問い合わせ)/.test(text)) return listText();
   if ((m = text.match(/^(済|対応済み?|done)\s*(\d+)/i))) return markDone(Number(m[2]));
+  if ((m = text.match(/^ニュース\s*投稿\s*([\d\s、,]*)$/))) {
+    if (!igReady()) return TALK.igOff;
+    const nums = (m[1].match(/\d+/g) || []).map(Number);
+    return nums.length ? newsChoose(nums) : newsDraftMessage();
+  }
   if ((m = text.match(/^ニュース\s*(.*)$/))) {
     const g = m[1].trim();
     return g ? newsText([g], 5, TALK.newsGenreHead(g)) : newsText(selectedGenres(), 3, TALK.newsHead);
@@ -61,7 +66,8 @@ function answer(text) {
     return igDraftMessage(undefined, k || kindToday());
   }
   if (/^投稿(する)?$/.test(text)) return igAction("post", kindToday());
-  if (/^紹介リール/.test(text)) return igIntroDraft();
+  if (/^(素材|そざい)/.test(text)) return igAction("kit", kindToday());
+  if (/^紹介リール/.test(text)) return igIntroKit();
   if (/^紹介コメント/.test(text)) return igReady() ? igPinLatest() : TALK.igOff;
   if (/^(コメント|こめんと)/.test(text)) return igReady() ? igCommentsList() : TALK.igOff;
   if (/^(ユーチューブ|ゆーちゅーぶ|youtube)/i.test(text)) return ytKitReply();

@@ -29,6 +29,8 @@
 | `make_ig_images.py` | 用語クイズの投稿画像（1080×1350 の2枚組）と投稿文を作る |
 | `make_b_media.py` | 科目Bのリール動画（1080×1920、H.264）とトレースクイズの画像を作る。Edge と FFmpeg を使う |
 | `make_intro_media.py` | Instagram の最初の投稿（サイト紹介のフィード5枚・リール・ストーリー2枚と投稿文）を `static/ig/intro/` に作る。一度きり |
+| `make_news_image.py` | 「今週のITニュース」の画像（見出し・用語の解説）を `static/ig/news/` に作る。ふだんは GitHub の自動実行が動かす。`--cover` で合言葉なしのとき用の表紙 |
+| `.github/workflows/news-image.yml` | ボットの合図（repository_dispatch: news-image）で `make_news_image.py` を動かし、画像を commit して公開する |
 | `line-bot/` | LINE ボットのプログラム。役割ごとの .gs（`config` 設定・setup / `talk` 話し方 / `report` 毎朝のレポート / `news` / `instagram` / `inquiry` お問い合わせ / `line` Webhook と送信）と `appsscript.json`。合言葉（トークン）は入れない |
 | `line-bot/test/run_test.py` | ボットの動作テスト（モックで動かす。Google や LINE には接続しない） |
 | `notes/` | **公開しない**（`.gitignore` 済み）。`pdf/` 手順書の PDF、`src/` その元の HTML、`brand/` アイコン画像 |
@@ -62,19 +64,22 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 - 直したら必ず `python line-bot/test/run_test.py` を動かす。新しい機能にはテストのシナリオも足す
 - キャラクターは **先輩エンジニア**。返事は AI ではなく `TALK` の決まった文（費用をかけないため）。口調をそろえる
 - 運営者だけが使う（`登録 合言葉` で `OWNER_USER_ID` を登録）。返信（reply）は無料、プッシュは月 200 通まで（吹き出し5個で1通）なので、プッシュは増やしすぎない
-- スクリプト プロパティ: `LINE_TOKEN` `WEBHOOK_KEY` `SETUP_CODE` `OWNER_USER_ID` `NEWS_GENRES` `GA_PROPERTY_ID` `IG_TOKEN` `IG_USER_ID` ほか、`IG_` で始まる状態の記録
+- スクリプト プロパティ: `LINE_TOKEN` `WEBHOOK_KEY` `SETUP_CODE` `OWNER_USER_ID` `NEWS_GENRES` `GA_PROPERTY_ID` `IG_TOKEN` `IG_USER_ID` `GITHUB_TOKEN`（ニュースの画像を頼む。fe-drill の Contents 読み書きだけ）ほか、`IG_` で始まる状態の記録
 - トリガー: `onFormSubmit`、`dailyReport`（毎朝8時）、`igWorker`（10分ごと）、`refreshInstagramToken`（毎週）。関数名を変えるとトリガーが切れる
 - GCP は標準プロジェクト「fe-drill-line」（Search Console API・Analytics Data API を有効化済み）
 
 ### Instagram
 
 - Facebook ログイン方式。API は `https://graph.facebook.com/v23.0`、トークンは Facebook ページのトークン（期限なし）。Facebook ページ「Fe用語ドリル」と連携
-- 投稿の種類は `IG_KINDS`: 用語クイズ（term）・トレースクイズ（trace）・リール動画（reel）。曜日ごとの種類は `CONFIG.rotation`（日〜土: reel, term, term, trace, term, reel, term）
+- 投稿の種類は `IG_KINDS`: 用語クイズ（term）・トレースクイズ（trace）・リール動画（reel）・今週のITニュース（news）。曜日ごとの種類は `CONFIG.rotation`（日〜土: reel, term, term, trace, term, reel, news）
 - ストックはサイトに置いた `ig/posts.json`・`ig/trace-posts.json`・`ig/reels.json`。投稿すると次へ進む。**リールは減りが早い**（16本・週2本で約2か月分）
+- 毎朝の下書きの「素材を受け取る」（LINE で「素材」でも同じ）で、画像・動画・投稿文・紹介コメントが届く。運営者がアプリで投稿（BGM を付けたいとき）し、「投稿した」を押すとストックが進む
 - 投稿の直後に、サイトの紹介コメント（`PIN_COMMENTS`）を自動で付ける。**コメントの固定は API でできないので、運営者がアプリで固定する**
 - YouTube ショートは自動投稿しない（未審査のアプリから API で上げた動画は非公開に固定されるため）。リール投稿後にタイトルと説明を LINE に送り、運営者が手で上げる
-- 最初のサイト紹介リールは、LINE の「紹介リール」で投稿する（`ig/intro/intro.json` を読む。一度だけ。投稿済みは `IG_INTRO_DONE`。リールのストックは進めない）
-- ニュースは今は LINE に届くだけ。Instagram の「今週のITニュース」の投稿は未実装
+- 最初のサイト紹介リールは、LINE の「紹介リール」で動画・表紙・投稿文・紹介コメントを受け取り、運営者がアプリで手動投稿する（BGM を Instagram の音楽で付けるため。API では付けられない）。`ig/intro/intro.json` を読む
+- 今週のITニュース（土曜、`news.gs`）: ボットが1週間の候補を LINE に出し、運営者が「ニュース投稿 1 4 6」か「おまかせ」で選ぶ → ボットが GitHub の自動実行に画像を頼む → 画像がサイトに出たら igWorker が下書きを送る。状態は `IG_NEWS`、投稿済みは `IG_NEWS_DONE`。`GITHUB_TOKEN` がなければ決まった表紙（`ig/news/cover.jpg`）で作る
+- Google ニュースの RSS は「個人で読むため」の条件付き。自動で選んでそのまま Instagram に載せない（運営者が選ぶ形を守る）
+- GitHub の自動実行が main に commit するので、運営者は push の前に GitHub Desktop の「Pull origin」が要ることがある
 
 ## 決まりごと
 
@@ -88,5 +93,4 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 
 ## 未決定・これからの候補
 
-- Instagram の「今週のITニュース」投稿（ボットがニュースを選ぶボタンと表紙を出す）
 - AdSense（独自ドメインが必要）、サブスク

@@ -1,0 +1,67 @@
+# Instagram の「今週のITニュース」の画像を作って、サイト（GitHub Pages）に置く。
+# LINE ボットで運営者がニュースを選ぶと、ボットがここを動かす（repository_dispatch: news-image）。
+# 試しに手で動かすときは、GitHub の Actions → この名前 → Run workflow に、ニュースの中身（JSON）を入れる。
+name: 今週のITニュースの画像
+
+on:
+  repository_dispatch:
+    types: [news-image]
+  workflow_dispatch:
+    inputs:
+      payload:
+        description: 'ニュースの中身（JSON。例: {"no":"2026-10-10-1","range":"10/3〜10/9","items":[{"title":"見出し","source":"媒体名","genre":"AI","term":""}]}）'
+        required: true
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: news-image
+  cancel-in-progress: false
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pillow を入れる
+        run: pip install Pillow
+
+      - name: フォント（BIZ UDPゴシック、Google Fonts の OFL 版）を用意する
+        run: |
+          mkdir -p "$RUNNER_TEMP/fonts"
+          curl -fsSL -o "$RUNNER_TEMP/fonts/R.ttf" https://github.com/google/fonts/raw/main/ofl/bizudpgothic/BIZUDPGothic-Regular.ttf
+          curl -fsSL -o "$RUNNER_TEMP/fonts/B.ttf" https://github.com/google/fonts/raw/main/ofl/bizudpgothic/BIZUDPGothic-Bold.ttf
+
+      - name: 画像を作る
+        env:
+          # 中身は環境変数で渡す（コマンドの中に直接埋め込まない）
+          NEWS_PAYLOAD: ${{ github.event_name == 'repository_dispatch' && toJson(github.event.client_payload) || inputs.payload }}
+          FONT_R: ${{ runner.temp }}/fonts/R.ttf
+          FONT_B: ${{ runner.temp }}/fonts/B.ttf
+          PYTHONIOENCODING: utf-8
+        run: python make_news_image.py
+
+      - name: docs/ に写して公開する
+        run: |
+          mkdir -p docs/ig/news
+          rsync -a --delete static/ig/news/ docs/ig/news/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add static/ig/news docs/ig/news
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -m "今週のITニュースの画像（自動）"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: サイトの公開を始める（念のため）
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "公開はふだんの仕組みに任せます"

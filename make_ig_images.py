@@ -7,6 +7,7 @@
 用語を追加・修正したときだけ、もう一度実行する。
 """
 import json
+import os
 import random
 import sys
 from pathlib import Path
@@ -19,14 +20,16 @@ OUT = Path(__file__).parent / "static" / "ig"
 W, H = 1080, 1350
 PAPER, BG, INK, MUTED, LINE = "#fbfcfa", "#f1f4f1", "#1d2a2e", "#5d6c6e", "#d5ddd8"
 MARK, MARK_SOFT, OK, OK_SOFT = "#c0435a", "#f6dfe3", "#2b7a68", "#d9eee8"
-FONT_R = "C:/Windows/Fonts/BIZ-UDGothicR.ttc"
-FONT_B = "C:/Windows/Fonts/BIZ-UDGothicB.ttc"
+# GitHub の自動実行（Linux）では、環境変数 FONT_R・FONT_B で BIZ UDPゴシックの .ttf を渡す
+FONT_R = os.environ.get("FONT_R", "C:/Windows/Fonts/BIZ-UDGothicR.ttc")
+FONT_B = os.environ.get("FONT_B", "C:/Windows/Fonts/BIZ-UDGothicB.ttc")
 HASHTAGS = "#基本情報技術者試験 #基本情報 #IT資格 #情報系学生 #IT用語 #プログラミング学習 #資格勉強 #勉強垢"
 
 
 def font(size, bold=False):
-    # index=1 は BIZ UDPゴシック（文字幅が文字ごとに変わる版）
-    return ImageFont.truetype(FONT_B if bold else FONT_R, size, index=1)
+    # .ttc の index=1 は BIZ UDPゴシック（文字幅が文字ごとに変わる版）。.ttf はその1つだけ
+    path = FONT_B if bold else FONT_R
+    return ImageFont.truetype(path, size, index=1 if path.endswith(".ttc") else 0)
 
 
 def wrap(text, f, width):

@@ -20,7 +20,8 @@ code = "\n".join(p.read_text(encoding="utf-8") for p in gs)
 stock = {name: json.loads((SITE / "static" / "ig" / name).read_text(encoding="utf-8")) for name in ["posts.json", "trace-posts.json", "reels.json", "intro/intro.json"]}
 
 MOCKS = r"""
-const sent = [], igCalls = [];
+const sent = [], igCalls = [], dispatches = [];
+let newsReady = false;
 const store = { LINE_TOKEN: "t", WEBHOOK_KEY: "key", OWNER_USER_ID: "U1", IG_TOKEN: "ig", IG_USER_ID: "1789" };
 const PropertiesService = { getScriptProperties: () => ({ getProperty: (k) => store[k] ?? null, setProperty: (k, v) => { store[k] = String(v); }, deleteProperty: (k) => { delete store[k]; } }) };
 const grid = [["タイムスタンプ", "お問い合わせの種類"]];
@@ -40,11 +41,25 @@ const Utilities = { getUuid: () => "k", sleep: () => {}, formatDate: (d, tz, f) 
   return { "yyyy-MM-dd": `${y}-${t_pad(M)}-${t_pad(D)}`, "yyyy/MM/dd": `${y}/${t_pad(M)}/${t_pad(D)}`, "M/d": `${M}/${D}`, "yyyyMMdd": `${y}${t_pad(M)}${t_pad(D)}` }[f] || d.toISOString();
 } };
 const ContentService = { createTextOutput: (s) => s };
-const XmlService = { getNamespace: () => ({}), parse: () => { throw new Error("skip"); } };
+// Google ニュースの RSS は、テストでは JSON で返して、XmlService の形にくるむ
+const XmlService = { getNamespace: () => ({}), parse: (text) => {
+  const items = JSON.parse(text);
+  return { getRootElement: () => ({ getChild: () => ({ getChildren: () => items.map((it) => ({ getChildText: (k) => it[k] })) }) }) };
+} };
 const t_resp = (code, body) => ({ getResponseCode: () => code, getContentText: () => body });
 let status = "IN_PROGRESS", mediaN = 500;
 const UrlFetchApp = { fetch: (url, o) => {
   if (url.includes("api.line.me")) { sent.push(JSON.parse(o.payload)); return t_resp(200, "{}"); }
+  if (url.includes("news.google.com")) {
+    const w = decodeURIComponent(url.match(/q=([^&]*)/)[1]).split(" ")[0];
+    const titles = [`${w}の話題その1`, `${w}の話題その2`, `${w}の話題その3`];
+    if (w.includes("サイバー")) titles.unshift("工場でランサムウェア被害、生産が一時停止");
+    if (w.includes("AI")) titles.unshift("IPO を目指すAIスタートアップ");
+    return t_resp(200, JSON.stringify(titles.map((t, i) => ({ title: t + " - 媒体" + i, source: "媒体" + i, link: "https://example.com/" + i }))));
+  }
+  if (url.includes("assets/terms.js")) return t_resp(200, 'window.FE_TERMS = [{"id": "0167", "f": "T", "sub": "セキュリティ", "term": "ランサムウェア", "desc": "身代金を要求するマルウェア。"}, {"id": "0100", "f": "T", "sub": "ネットワーク", "term": "IP", "desc": "x"}];');
+  if (url.includes("api.github.com")) { dispatches.push(JSON.parse(o.payload)); return t_resp(204, ""); }
+  if (url.includes("/ig/news/")) return t_resp(newsReady || url.endsWith("cover.jpg") ? 200 : 404, "img");
   for (const name in STOCK) if (url.endsWith("/ig/" + name)) return t_resp(200, JSON.stringify(STOCK[name]));
   if (url.includes("graph.facebook.com") || url.includes("graph.instagram.com")) {
     const path = url.replace(/^https:\/\/graph\.(facebook|instagram)\.com\/v[0-9.]+/, "").replace(/[?&]access_token=[^&]*/, "");
@@ -98,20 +113,14 @@ try {
   check("YouTube のセットも届く", lastMsg().messages.length >= 3);
   check("リールのストックが進む", store.IG_NEXT_REEL === "1");
 
-  // 紹介リール: 下書き → 投稿 → 処理完了。リールのストックは進めない
-  igCalls.length = 0; status = "IN_PROGRESS";
+  // 紹介リール: 素材を LINE に送るだけ（投稿はアプリで手動）
+  igCalls.length = 0;
   t_say("紹介リール"); out.push("--- 紹介リール", t_last());
-  check("紹介リールの下書きに動画とボタン", lastMsg().messages[0].type === "video" && t_text().includes("今すぐ投稿"));
-  t_tap("ig=intro"); out.push("--- 紹介リールを投稿", t_last());
-  check("紹介リールは処理待ちになる", !!store.IG_PENDING && JSON.parse(store.IG_PENDING).kind === "intro");
-  status = "FINISHED"; igCalls.length = 0; igWorker(); out.push("--- 見回り（紹介リール完了）", t_last(), ...igCalls);
-  check("紹介リールを公開して知らせる", t_text().includes("投稿したよ") && lastMsg().messages.length >= 3);
-  check("紹介リールに紹介用のコメント", igCalls.some((c) => c.includes("/comments [📌 サイトはプロフィール")));
-  check("紹介リールではリールのストックを進めない", store.IG_NEXT_REEL === "1" && !!store.IG_INTRO_DONE);
-  t_say("紹介リール");
-  check("紹介リールは二重に投稿しない", t_text().includes("もう投稿してある"));
-  t_tap("ig=intro");
-  check("古いボタンでも二重に投稿しない", t_text().includes("もう投稿してある") && !store.IG_PENDING);
+  const kit = lastMsg().messages;
+  check("紹介リールは動画・表紙・手順・投稿文・紹介コメントの5つ", kit.length === 5 && kit[0].type === "video" && kit[1].type === "image");
+  check("紹介リールの手順に音楽の付け方", kit[2].text.includes("音楽"));
+  check("紹介リールの投稿文と紹介コメント", kit[3].text.includes("FE用語ドリル") && kit[4].text.startsWith("📌 サイトはプロフィール"));
+  check("紹介リールでは Instagram に投稿しない", igCalls.length === 0 && store.IG_NEXT_REEL === "1");
 
   t_say("インスタ トレース");
   check("「インスタ トレース」でトレースの下書き", t_text().includes("トレースクイズ"));
@@ -130,6 +139,26 @@ try {
   t_tap("ig=post&k=term&id=" + term.no);
   check("古い下書きのボタンでは投稿しない", !t_text().includes("投稿したよ"));
 
+  // 素材を受け取って、自分でアプリから投稿する
+  igCalls.length = 0;
+  const term2 = STOCK["posts.json"][1];
+  t_tap("ig=kit&k=term&id=" + term2.no); out.push("--- 素材を受け取る（用語クイズ）", t_last());
+  const km = lastMsg().messages;
+  check("素材は画像2枚・手順・投稿文・紹介コメント", km.length === 5 && km[0].type === "image" && km[1].type === "image" && km[3].text === term2.caption && km[4].text.startsWith("📌"));
+  check("素材の最後に「投稿した」ボタン", km[4].quickReply.items[0].action.label === "投稿した");
+  check("素材を送っても投稿しない・進めない", igCalls.length === 0 && store.IG_NEXT === "1");
+  t_tap("ig=done&k=term&id=" + term2.no); out.push("--- 投稿した", t_last());
+  check("「投稿した」で次の下書きに進む", store.IG_NEXT === "2" && t_text().includes("おつかれ"));
+  t_tap("ig=done&k=term&id=" + term2.no);
+  check("「投稿した」を2回押しても1つしか進まない", store.IG_NEXT === "2");
+  const reel2 = STOCK["reels.json"][1];
+  t_say("インスタ リール");
+  check("下書きに「素材を受け取る」ボタン", lastMsg().messages[lastMsg().messages.length - 1].quickReply.items.some((q) => q.action.label === "素材を受け取る"));
+  t_say("素材"); out.push("--- 素材（リール）", t_last());
+  check("「素材」で今日のリールの動画と表紙", lastMsg().messages[0].type === "video" && lastMsg().messages[1].type === "image" && lastMsg().messages.length === 5);
+  t_tap("ig=done&k=reel&id=" + reel2.key);
+  check("リールを手で投稿したら次へ進んで YouTube のセット", store.IG_NEXT_REEL === "2" && lastMsg().messages.length >= 3 && igCalls.length === 0);
+
   t_say("紹介コメント"); out.push("--- 紹介コメント", t_last());
   check("「紹介コメント」で最新の投稿に付ける", t_text().includes("紹介コメントを付けたよ"));
   t_say("コメント"); out.push("--- コメント", t_last());
@@ -138,6 +167,46 @@ try {
   check("反応", t_text().includes("リーチ"));
   t_say("使い方");
   check("使い方に「紹介コメント」がある", t_text().includes("紹介コメント"));
+  // 今週のITニュース（土曜）: 候補 → 番号で選ぶ → GitHub に画像を頼む → できたら下書き → 投稿
+  NOW = new Date("2026-10-10T08:00:00+09:00").getTime();
+  check("土曜は今週のITニュースの日", kindToday() === "news");
+  const sat = toMessages(morningMessages());
+  const pick = sat[sat.length - 1];
+  out.push("--- 土曜の朝（ニュースの候補）", t_show({ messages: [pick] }));
+  check("候補の一覧と「おまかせで作る」ボタン", pick.text.includes("ニュース投稿") && pick.quickReply.items[0].action.label === "おまかせで作る");
+  check("用語が出てくる候補に印", pick.text.includes("試験の用語「ランサムウェア」"));
+  check("IP は IPO に一致させない", !pick.text.includes("試験の用語「IP」"));
+  t_say("ニュース投稿 1 9");
+  check("番号の間違いを知らせる", t_text().includes("番号は"));
+  store.GITHUB_TOKEN = "gh";
+  t_say("ニュース投稿 1 2"); out.push("--- ニュース投稿 1 2", t_last());
+  check("GitHub に画像を頼む", dispatches.length === 1 && dispatches[0].event_type === "news-image" && dispatches[0].client_payload.items.length === 2);
+  check("画像を作っている間は待つ", t_text().includes("画像を作ってる"));
+  const before2 = sent.length; igWorker();
+  check("画像ができるまでは知らせない", sent.length === before2);
+  newsReady = true; igWorker(); out.push("--- 見回り（ニュースの画像ができた）", t_last());
+  const nd = lastMsg().messages;
+  check("画像ができたら画像つきの下書きを送る", !!lastMsg().to && nd[1].type === "image" && nd[nd.length - 1].quickReply.items[0].action.label === "今すぐ投稿");
+  const st = JSON.parse(store.IG_NEWS);
+  check("投稿文に見出し・媒体名・ひとこと", st.caption.includes("（媒体") && st.caption.includes("→ ") && st.caption.includes("見出しと媒体名を紹介"));
+  check("投稿文に使わない言葉がない", !/公式|IPA|必ず合格|ここだけ/.test(st.caption));
+  igCalls.length = 0;
+  t_tap("ig=post&k=news&id=" + st.no); out.push("--- ニュースを今すぐ投稿", t_last(), ...igCalls);
+  check("ニュースを投稿して紹介コメント", t_text().includes("投稿したよ") && igCalls.some((c) => c.includes("/comments [📌 ニュースに出てきた")));
+  check("投稿済みにする", store.IG_NEWS_DONE === "2026-10-10");
+  t_say("インスタ ニュース");
+  check("投稿済みなら二重に出さない", t_text().includes("もう投稿してある"));
+  // 合言葉 GITHUB_TOKEN がないときは、決まった表紙で作る
+  NOW = new Date("2026-10-17T08:00:00+09:00").getTime(); delete store.GITHUB_TOKEN;
+  t_say("インスタ ニュース");
+  t_tap("ig=newsauto&k=news"); out.push("--- おまかせ（合言葉なし）", t_last());
+  const st2 = JSON.parse(store.IG_NEWS);
+  check("合言葉なしは表紙の画像で、すぐ下書き", st2.images.length === 1 && st2.images[0].endsWith("cover.jpg") && lastMsg().messages.some((m) => m.type === "image"));
+  check("おまかせは用語の出てくるものを先に、ジャンルを分けて", st2.items[0].term === "ランサムウェア" && new Set(st2.items.map((i) => i.genre)).size === st2.items.length);
+  check("表紙1枚のときは投稿文に「2枚目」と書かない", !st2.caption.includes("2枚目") && st.caption.includes("2枚目"));
+  t_tap("ig=newsrepick&k=news&id=" + st2.no);
+  check("選び直すと候補に戻る", t_text().includes("ニュース投稿"));
+
   NOW = new Date("2026-10-12T08:00:00+09:00").getTime();
   check("月曜は用語クイズの日", kindToday() === "term");
 } catch (e) { out.push("ERROR " + e.stack); fails.push("例外"); }

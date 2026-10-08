@@ -35,8 +35,10 @@ const CONFIG = {
   //   Facebook ログインで作った合言葉（Facebook ページのトークン）: https://graph.facebook.com/v23.0
   //   Instagram ログインで作った合言葉:                           https://graph.instagram.com/v23.0
   instagramApi: "https://graph.facebook.com/v23.0",
-  // 曜日ごとの投稿の種類（日・月・火・水・木・金・土）。term=用語クイズ、trace=トレースクイズ、reel=リール動画
-  rotation: ["reel", "term", "term", "trace", "term", "reel", "term"],
+  // 曜日ごとの投稿の種類（日・月・火・水・木・金・土）。term=用語クイズ、trace=トレースクイズ、reel=リール動画、news=今週のITニュース
+  rotation: ["reel", "term", "term", "trace", "term", "reel", "news"],
+  newsCandidates: 8,                                      // 今週のITニュース: LINE に出す候補の数
+  newsPostCount: 3,                                       // 今週のITニュース: 1回の投稿に載せるニュースの数（3まで）
   scheduleHour: 20,                                       // 「〇時に投稿」ボタンで投稿する時刻
 };
 
@@ -46,6 +48,8 @@ const IG_KINDS = {
   term: { file: "ig/posts.json", next: "IG_NEXT", label: "用語クイズ", maker: "make_ig_images.py" },
   trace: { file: "ig/trace-posts.json", next: "IG_NEXT_TRACE", label: "トレースクイズ", maker: "make_b_media.py" },
   reel: { file: "ig/reels.json", next: "IG_NEXT_REEL", label: "リール動画", maker: "make_b_media.py" },
+  // ストックではなく、その週に運営者が LINE で選ぶ（news.gs）。画像は GitHub の自動実行が作る
+  news: { file: null, next: "IG_NEWS_DONE", label: "今週のITニュース", maker: "" },
 };
 
 /* ========== 投稿に付ける、サイトの紹介コメント ==========
@@ -71,6 +75,13 @@ const PIN_COMMENTS = {
   ].join("\n"),
 };
 PIN_COMMENTS.reel = PIN_COMMENTS.trace;
+PIN_COMMENTS.news = [
+  "📌 ニュースに出てきた用語の意味は、無料の学習サイト「FE用語ドリル」で確かめられます",
+  "・基本情報の用語345語を、カード・4択・書いて答えるで",
+  "・用語ごとの解説ページつき",
+  "登録なし・スマホでそのまま使えます",
+  "▶ プロフィールのリンクから",
+].join("\n");
 // 最初の紹介リール（LINE の「紹介リール」）用
 PIN_COMMENTS.intro = [
   "📌 サイトはプロフィールのリンクから開けます",
@@ -94,6 +105,16 @@ const NEWS_GENRES = {
   "ゲーム": "ゲーム業界 OR ゲーム開発",
 };
 const DEFAULT_GENRES = ["AI", "セキュリティ", "IT資格"];
+
+/* 今週のITニュースの投稿文で、試験の用語が見つからなかったニュースに付けるひとこと（ジャンルごと） */
+const NEWS_NOTES = {
+  "AI": "機械学習など、AI の用語を思い出しながら読んでみよう。",
+  "セキュリティ": "攻撃の手口と対策は、試験のセキュリティの知識で読み解ける。",
+  "クラウド": "クラウドの仕組み（IaaS・PaaS・SaaS）とあわせて押さえよう。",
+  "プログラミング": "開発の進め方や手法の話は、マネジメント系の用語にもつながる。",
+  "IT資格": "資格や試験の動きは、受験の計画を立てるときの参考に。",
+  "": "IT の今の動きとして押さえておきたいニュース。",
+};
 
 /* ========== ここから下は、ふだん変えなくてよい部分 ========== */
 
