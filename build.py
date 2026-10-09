@@ -101,6 +101,9 @@ def page(path, title, desc, body, rel, body_class="", jsonld=None, scripts="", i
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
 <link rel="stylesheet" href="{rel}assets/style.css">
+<link rel="icon" href="{rel}favicon.ico" sizes="48x48">
+<link rel="icon" href="{rel}favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{rel}apple-touch-icon.png">
 {'' if index else '<meta name="robots" content="noindex">'}
 {head_extras()}
 {ld}

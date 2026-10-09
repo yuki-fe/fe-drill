@@ -13,6 +13,7 @@
 - **SNS**: Instagram（情報系の学生向けに、IT の知識とニュースを発信）と YouTube ショート
 - お問い合わせ: Google フォーム https://forms.gle/s4yB1xMbcoRqZps2A （回答のスプレッドシートにボットがつながっている）
 - アクセス解析: GA4（測定ID `G-4FY1CNV38B`）、Google Search Console
+- 姉妹サイト **「ITパスポート用語ドリル」** は別のリポジトリ（デスクトップの `ip-drill`、`yuki-fe/ip-drill`）。この build.py をもとに作った。くわしくはそちらの CLAUDE.md
 
 ## フォルダ構成
 
@@ -44,6 +45,7 @@ python make_ig_images.py 120            # 用語クイズのストックを 120 
 python make_b_media.py 16               # リール動画を 16 本まで作る（先に build.py を実行）
 python line-bot/test/run_test.py        # ボットのテスト。最後に ALL OK
 python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/pdf/名前.pdf を作る
+.venv\Scripts\python notes/src/make_book.py   # 手順書を表紙・目次つきの1冊（notes/pdf/FE用語ドリル 機能と手順のまとめ.pdf）に。入れる手順書は PARTS で決める（pypdf が必要）
 ```
 
 - Windows のコンソールは cp932 なので、日本語を出力するスクリプトは `PYTHONIOENCODING=utf-8` を付けて動かす
@@ -84,7 +86,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 ## 決まりごと
 
 - ユーザーへの回答は **日本語**。運営者は初心者寄りなので、手順は画面のボタン名まで具体的に書く
-- 手順書・計画などの資料は **PDF** で作る: `notes/src/〇〇.html` を書く → `python notes/src/make_pdf.py 〇〇` → PDF を開いて崩れを確認。PDF のファイル名は日本語のタイトル
+- 手順書・計画などの資料は **PDF** で作る: `notes/src/〇〇.html` を書く → `python notes/src/make_pdf.py 〇〇` → PDF を開いて崩れを確認。PDF のファイル名は日本語のタイトル。機能や運用の手順書を作ったら `make_book.py` の PARTS に足して、まとめの1冊も作り直す。古くなった手順書は `notes/pdf/古い/`・`notes/src/古い/` へ
 - 「公式」「IPA」など試験の主催者と関係があるように見える言葉、「必ず合格」「ここだけ」など確かめられない言い切りは、サイト・投稿・資料のどれにも使わない
 - ニュースは見出し・媒体名・自分の言葉のひとことまで。記事の本文や画像は載せない
 - 広告は「PR」の表示を消さない（ステルスマーケティング規制）
