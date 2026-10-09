@@ -124,6 +124,19 @@ const pick = (a) => (Array.isArray(a) ? a[Math.floor(Math.random() * a.length)] 
 const fmt = (d, f) => Utilities.formatDate(d, "Asia/Tokyo", f);
 const jsonProp = (k, d) => { try { return JSON.parse(prop(k)) || d; } catch (e) { return d; } };
 
+/* いくつかの URL を、まとめて同時に取りに行く（1つずつ順番より速い）。reqs は { url, method, ... } の配列 */
+function fetchAll(reqs) {
+  return reqs.length ? UrlFetchApp.fetchAll(reqs.map((r) => Object.assign({ muteHttpExceptions: true }, r))) : [];
+}
+
+/* fetchAll の名前付き版: { 名前: リクエスト } → { 名前: 返事 }。うまくいかなければ空（それぞれが自分で取り直す） */
+function fetchNamed(reqs) {
+  const keys = Object.keys(reqs);
+  const out = {};
+  try { fetchAll(keys.map((k) => reqs[k])).forEach((res, i) => { out[keys[i]] = res; }); } catch (e) { console.warn(e); }
+  return out;
+}
+
 /* ---------- 最初に1回だけ実行する（設定を変えたときも、もう一度実行してよい） ---------- */
 function setup() {
   if (!prop("LINE_TOKEN")) throw new Error("スクリプト プロパティに LINE_TOKEN を入れてから、もう一度実行してください。");

@@ -21,7 +21,7 @@ stock = {name: json.loads((SITE / "static" / "ig" / name).read_text(encoding="ut
 
 MOCKS = r"""
 const sent = [], igCalls = [], dispatches = [];
-let newsReady = false;
+let newsReady = false, insightsDenied = false;
 const store = { LINE_TOKEN: "t", WEBHOOK_KEY: "key", OWNER_USER_ID: "U1", IG_TOKEN: "ig", IG_USER_ID: "1789" };
 const PropertiesService = { getScriptProperties: () => ({ getProperty: (k) => store[k] ?? null, setProperty: (k, v) => { store[k] = String(v); }, deleteProperty: (k) => { delete store[k]; } }) };
 const grid = [["タイムスタンプ", "お問い合わせの種類"]];
@@ -72,12 +72,15 @@ const UrlFetchApp = { fetch: (url, o) => {
       { id: "c1", text: "トレースの動き、わかりやすい！", username: "it_student", timestamp: new RealDate(NOW - 3600e3).toISOString() },
       { id: "c2", text: "📌 紹介コメント", username: "it_senpai_lab", timestamp: new RealDate(NOW - 3000e3).toISOString() } ] }));
     if (path.includes("followers_count")) return t_resp(200, '{"followers_count": 152}');
+    if (path.includes("/insights") && insightsDenied) return t_resp(400, '{"error":{"message":"(#10) Application does not have permission for this action"}}');
     if (path.includes("/insights")) return t_resp(200, JSON.stringify({ data: [{ name: "reach", values: [{ value: 340 }] }, { name: "saved", values: [{ value: 28 }] }] }));
     if (path.includes("/media?fields")) return t_resp(200, JSON.stringify({ data: [{ id: "m1", caption: "【科目B トレース No.4】二分探索", timestamp: new RealDate(NOW - 86400e3).toISOString(), like_count: 30, comments_count: 1 }] }));
     return t_resp(200, JSON.stringify({ id: String(mediaN++) }));
   }
   return t_resp(200, "ok");
 } };
+let fetchAllCalls = 0;
+UrlFetchApp.fetchAll = (reqs) => { fetchAllCalls++; return reqs.map((r) => UrlFetchApp.fetch(r.url, r)); };
 """
 
 SCENARIO = r"""
@@ -165,6 +168,16 @@ try {
   check("コメント一覧に自分のコメントを出さない", t_text().includes("it_student") && !t_text().includes("📌"));
   t_say("反応");
   check("反応", t_text().includes("リーチ"));
+  igMediaCache = null; fetchAllCalls = 0;
+  const igBefore = igCalls.length;
+  t_say("状況");
+  check("「状況」はまとめて取りに行く（Instagram の一覧は1回だけ）", t_text().includes("【インスタ】") && fetchAllCalls <= 4 &&
+    igCalls.slice(igBefore).filter((c) => c.includes("/media?fields")).length === 1);
+  insightsDenied = true;
+  check("数字が取れないときは理由も出す", igStatsText().includes("理由: (#10)") && igStatsText().includes("instagram_manage_insights"));
+  check("リーチが取れなくても、いいねとフォロワーは出す", igStatsText().includes("いいね 30") && igStatsText().includes("フォロワー 152"));
+  check("「反応」もリーチが取れなくても、いいねは出す", igRecentText().includes("いいね 30") && igRecentText().includes("理由: (#10)"));
+  insightsDenied = false;
   t_say("使い方");
   check("使い方に「紹介コメント」がある", t_text().includes("紹介コメント"));
   // 今週のITニュース（土曜）: 候補 → 番号で選ぶ → GitHub に画像を頼む → できたら下書き → 投稿

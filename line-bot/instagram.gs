@@ -98,11 +98,29 @@ function igManualDone(kind, p) {
 function igCall(path, params, method) {
   const opts = { method: method || "post", muteHttpExceptions: true };
   if (params) opts.payload = Object.assign({ access_token: prop("IG_TOKEN") }, params);
+  return igParse(UrlFetchApp.fetch(params ? CONFIG.instagramApi + path : igUrl(path), opts));
+}
+
+/* 読み取り用の URL（合言葉付き）。fetchAll でまとめて取りに行くときにも使う */
+function igUrl(path) {
   const sep = path.indexOf("?") >= 0 ? "&" : "?";
-  const url = CONFIG.instagramApi + path + (params ? "" : sep + "access_token=" + encodeURIComponent(prop("IG_TOKEN")));
-  const json = JSON.parse(UrlFetchApp.fetch(url, opts).getContentText() || "{}");
+  return CONFIG.instagramApi + path + sep + "access_token=" + encodeURIComponent(prop("IG_TOKEN"));
+}
+
+function igParse(res) {
+  const json = JSON.parse(res.getContentText() || "{}");
   if (json.error) throw new Error(json.error.message || "Instagram API エラー");
   return json;
+}
+
+/* 最近の投稿の一覧。数字とコメントの両方で使うので、1回の実行の中では取り直さない */
+let igMediaCache = null;
+function igMediaList(count) {
+  if (!igMediaCache || igMediaCache.count < count) {
+    const list = igCall(`/${prop("IG_USER_ID")}/media?fields=id,caption,timestamp,like_count,comments_count&limit=${count}`, null, "get").data || [];
+    igMediaCache = { count, list };
+  }
+  return igMediaCache.list.slice(0, count);
 }
 
 /* 画像で投稿し、投稿の URL を返す。2枚以上はカルーセル（今週のITニュースは1枚のこともある） */
@@ -288,12 +306,15 @@ function ytKitReply() {
 
 /* ---------- Instagram のコメント ---------- */
 function igComments(sinceMs) {
-  const list = igCall(`/${prop("IG_USER_ID")}/media?fields=id,caption,timestamp&limit=5`, null, "get").data || [];
+  const list = igMediaList(5);
+  const me = igUsername();
+  // 投稿ごとのコメントは、まとめて同時に取りに行く
+  const res = fetchAll(list.map((m) => ({ url: igUrl(`/${m.id}/comments?fields=id,text,username,timestamp&limit=20`) })));
   const out = [];
-  list.forEach((m) => {
-    (igCall(`/${m.id}/comments?fields=id,text,username,timestamp&limit=20`, null, "get").data || []).forEach((c) => {
+  list.forEach((m, i) => {
+    (igParse(res[i]).data || []).forEach((c) => {
       const t = new Date(c.timestamp).getTime();
-      if (t > sinceMs && c.username !== igUsername()) out.push({ user: c.username || "?", text: String(c.text || ""), label: postLabel(m), t });
+      if (t > sinceMs && c.username !== me) out.push({ user: c.username || "?", text: String(c.text || ""), label: postLabel(m), t });
     });
   });
   return out.sort((a, b) => b.t - a.t);
@@ -354,15 +375,22 @@ function igProfileLink() {
   return CONFIG.siteUrl + "?utm_source=instagram&utm_medium=social&utm_campaign=profile";
 }
 
-/* Instagram から来た閲覧者（参照元に instagram を含むもの。目印付きリンクと、アプリ内ブラウザの l.instagram.com の両方） */
-function igVisitorStats() {
+/* Instagram から来た閲覧者（参照元に instagram を含むものか「ig」。目印付きリンク、アプリ内ブラウザの l.instagram.com、Instagram が自分で付ける目印のどれも） */
+const IG_VISITORS_QUERY = {
+  dateRanges: [{ startDate: "14daysAgo", endDate: "yesterday" }],
+  dimensions: [{ name: "date" }],
+  metrics: [{ name: "activeUsers" }],
+  // Instagram はプロフィールのリンクに自分で utm_source=ig を付けるので、「ig」ちょうども数える
+  dimensionFilter: { orGroup: { expressions: [
+    { filter: { fieldName: "sessionSource", stringFilter: { matchType: "CONTAINS", value: "instagram", caseSensitive: false } } },
+    { filter: { fieldName: "sessionSource", stringFilter: { matchType: "EXACT", value: "ig", caseSensitive: false } } },
+  ] } },
+};
+
+/* res: 先にまとめて取ってあれば、その返事（なければここで取りに行く） */
+function igVisitorStats(res) {
   if (!gaReady()) return null;
-  const r = gaReport({
-    dateRanges: [{ startDate: "14daysAgo", endDate: "yesterday" }],
-    dimensions: [{ name: "date" }],
-    metrics: [{ name: "activeUsers" }],
-    dimensionFilter: { filter: { fieldName: "sessionSource", stringFilter: { matchType: "CONTAINS", value: "instagram", caseSensitive: false } } },
-  });
+  const r = res ? gaParse(res) : gaReport(IG_VISITORS_QUERY);
   if (!r) return null;
   const byDate = {};
   (r.rows || []).forEach((row) => { byDate[row.dimensionValues[0].value] = Number(row.metricValues[0].value); });
@@ -388,30 +416,39 @@ function postLabel(m) {
   return first.length > 18 ? first.slice(0, 18) + "…" : first || "（投稿文なし）";
 }
 
-/* 1投稿の数字。API のバージョンによって使える指標が違うので、だめなら少ない指標で取り直す */
-function igMediaStats(m) {
-  const tryMetrics = ["reach,saved,likes,comments,shares", "reach,saved"];
-  for (const metrics of tryMetrics) {
-    try {
-      const data = igCall(`/${m.id}/insights?metric=${metrics}`, null, "get").data || [];
-      const v = {};
-      data.forEach((x) => { v[x.name] = x.values && x.values[0] ? Number(x.values[0].value) : Number(x.total_value && x.total_value.value) || 0; });
-      return {
-        reach: v.reach || 0, saved: v.saved || 0,
-        likes: v.likes !== undefined ? v.likes : m.like_count || 0,
-        comments: v.comments !== undefined ? v.comments : m.comments_count || 0,
-      };
-    } catch (e) {
-      console.warn("Instagram insights: " + e.message);
-    }
+/* 投稿ごとの数字。全部の投稿をまとめて同時に取りに行く。API のバージョンによって使える指標が違うので、
+ * だめだった投稿だけ少ない指標で取り直す。取れなかった投稿は null にし、理由を igInsightsError に残す（LINE の知らせに出す） */
+let igInsightsError = "";
+function igMediaStatsAll(list) {
+  const out = list.map(() => null);
+  for (const metrics of ["reach,saved,likes,comments,shares", "reach,saved"]) {
+    const todo = list.map((m, i) => i).filter((i) => !out[i]);
+    if (!todo.length) break;
+    const res = fetchAll(todo.map((i) => ({ url: igUrl(`/${list[i].id}/insights?metric=${metrics}`) })));
+    todo.forEach((i, j) => {
+      try {
+        const v = {};
+        (igParse(res[j]).data || []).forEach((x) => { v[x.name] = x.values && x.values[0] ? Number(x.values[0].value) : Number(x.total_value && x.total_value.value) || 0; });
+        const m = list[i];
+        out[i] = {
+          reach: v.reach || 0, saved: v.saved || 0,
+          likes: v.likes !== undefined ? v.likes : m.like_count || 0,
+          comments: v.comments !== undefined ? v.comments : m.comments_count || 0,
+        };
+      } catch (e) {
+        console.warn("Instagram insights: " + e.message);
+        igInsightsError = e.message;
+      }
+    });
   }
-  return null;
+  return out;
 }
 
 /* 最近の投稿（新しい順）と、それぞれの数字 */
 function igRecent(count) {
-  const list = igCall(`/${prop("IG_USER_ID")}/media?fields=id,caption,timestamp,like_count,comments_count&limit=${count}`, null, "get").data || [];
-  return list.map((m) => ({ m, stats: igMediaStats(m) }));
+  const list = igMediaList(count);
+  const stats = igMediaStatsAll(list);
+  return list.map((m, i) => ({ m, stats: stats[i] }));
 }
 
 /* フォロワー数を1日1回記録して、前の記録との差を出す */
@@ -435,10 +472,12 @@ function igStatsText() {
     if (!recent.length) lines.push(TALK.igNoPost);
     else {
       const latest = recent[0];
-      if (!latest.stats) return TALK.igStatsError;
-      lines.push(TALK.igStatsPost(fmt(new Date(latest.m.timestamp), "M/d"), postLabel(latest.m), latest.stats));
+      const date = fmt(new Date(latest.m.timestamp), "M/d");
+      // リーチ・保存（insights）が取れなくても、いいね・コメントとフォロワーは出す
+      if (latest.stats) lines.push(TALK.igStatsPost(date, postLabel(latest.m), latest.stats));
+      else lines.push(TALK.igStatsBasic(date, postLabel(latest.m), latest.m.like_count || 0, latest.m.comments_count || 0), TALK.igStatsError(igInsightsError));
       const others = recent.slice(1).filter((x) => x.stats);
-      if (others.length >= 3) {
+      if (latest.stats && others.length >= 3) {
         const avg = others.reduce((t, x) => t + x.stats.saved, 0) / others.length;
         if (avg > 0 && latest.stats.saved >= avg * 1.5) lines.push(TALK.igSavedHigh);
         else if (avg >= 4 && latest.stats.saved <= avg * 0.5) lines.push(TALK.igSavedLow);
@@ -449,7 +488,7 @@ function igStatsText() {
     return lines.join("\n");
   } catch (e) {
     console.warn(e);
-    return TALK.igStatsError;
+    return TALK.igStatsError(e.message);
   }
 }
 
@@ -461,10 +500,10 @@ function igRecentText() {
     return [TALK.igRecentHead, ""].concat(recent.map((x) => {
       const s = x.stats;
       return `■ ${fmt(new Date(x.m.timestamp), "M/d")}「${postLabel(x.m)}」\n` +
-        (s ? `リーチ ${s.reach}／いいね ${s.likes}／保存 ${s.saved}／コメント ${s.comments}` : "数字を取れなかった");
-    })).join("\n");
+        (s ? `リーチ ${s.reach}／いいね ${s.likes}／保存 ${s.saved}／コメント ${s.comments}` : `いいね ${x.m.like_count || 0}／コメント ${x.m.comments_count || 0}（リーチ・保存は取れなかった）`);
+    })).concat(recent.some((x) => !x.stats) ? ["", TALK.igStatsError(igInsightsError)] : []).join("\n");
   } catch (e) {
     console.warn(e);
-    return TALK.igStatsError;
+    return TALK.igStatsError(e.message);
   }
 }

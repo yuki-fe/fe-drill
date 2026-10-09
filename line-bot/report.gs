@@ -28,14 +28,18 @@ function morningMessages() {
 
 function buildReport(morning) {
   const lines = [pick(morning ? TALK.morning : TALK.now), ""];
+  // 時間のかかる問い合わせは、先にまとめて同時に取りに行く
+  const reqs = { search: searchRequest(), update: updateRequest() };
+  if (gaReady()) Object.assign(reqs, { visitors: gaRequest(VISITORS_QUERY), igVisitors: gaRequest(IG_VISITORS_QUERY) });
+  const pre = fetchNamed(reqs);
   if (gaReady()) {
-    const st = visitorStats();
+    const st = visitorStats(pre.visitors);
     lines.push("【閲覧者】");
     if (!st) lines.push(TALK.gaError);
     else {
       const y = st.days[st.days.length - 1];
       lines.push(TALK.visitorsDay(y.users, y.views), TALK.visitorsWeek(st.week, st.week - st.prevWeek));
-      const ig = igVisitorStats();
+      const ig = igVisitorStats(pre.igVisitors);
       if (ig) lines.push(TALK.visitorsIg(ig.yesterday, ig.week, ig.week - ig.prevWeek));
       lines.push(st.week > st.prevWeek ? TALK.visitorsUp : st.week < st.prevWeek ? TALK.visitorsDown : TALK.visitorsSame);
     }
@@ -47,7 +51,7 @@ function buildReport(morning) {
     if (c) lines.push(c);
     lines.push("");
   }
-  const s = searchStats();
+  const s = searchStats(pre.search);
   lines.push("【検索】");
   if (s.error) lines.push(TALK.searchError);
   else if (!s.latest) lines.push(TALK.searchNone);
@@ -61,7 +65,7 @@ function buildReport(morning) {
   }
   const h = siteHealth();
   lines.push("", "【サイト】", h.ok ? TALK.siteOk(h.sec) : TALK.siteNg(h.why));
-  const u = lastUpdate();
+  const u = lastUpdate(pre.update);
   lines.push("", "【最後の更新】", u ? TALK.updated(u.date, u.message) : TALK.updatedUnknown);
   const n = openInquiries().length;
   lines.push("", "【お問い合わせ】", n ? TALK.inquirySome(n) : TALK.inquiryNone);
@@ -73,13 +77,17 @@ function gaReady() {
   return !!prop("GA_PROPERTY_ID");
 }
 
-function gaReport(body) {
+function gaRequest(body) {
+  return {
+    url: "https://analyticsdata.googleapis.com/v1beta/properties/" + prop("GA_PROPERTY_ID") + ":runReport",
+    method: "post", contentType: "application/json",
+    headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify(body),
+  };
+}
+
+function gaParse(res) {
   try {
-    const res = UrlFetchApp.fetch("https://analyticsdata.googleapis.com/v1beta/properties/" + prop("GA_PROPERTY_ID") + ":runReport", {
-      method: "post", contentType: "application/json", muteHttpExceptions: true,
-      headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
-      payload: JSON.stringify(body),
-    });
     if (res.getResponseCode() !== 200) {
       console.warn("Analytics: " + res.getResponseCode() + " " + res.getContentText().slice(0, 300));
       return null;
@@ -91,13 +99,25 @@ function gaReport(body) {
   }
 }
 
-/* 直近14日（昨日まで）の日ごとの閲覧者数。データのない日は 0 で埋める */
-function visitorStats() {
-  const r = gaReport({
-    dateRanges: [{ startDate: "14daysAgo", endDate: "yesterday" }],
-    dimensions: [{ name: "date" }],
-    metrics: [{ name: "activeUsers" }, { name: "screenPageViews" }],
-  });
+function gaReport(body) {
+  try {
+    return gaParse(fetchAll([gaRequest(body)])[0]);
+  } catch (e) {
+    console.warn(e);
+    return null;
+  }
+}
+
+const VISITORS_QUERY = {
+  dateRanges: [{ startDate: "14daysAgo", endDate: "yesterday" }],
+  dimensions: [{ name: "date" }],
+  metrics: [{ name: "activeUsers" }, { name: "screenPageViews" }],
+};
+
+/* 直近14日（昨日まで）の日ごとの閲覧者数。データのない日は 0 で埋める。
+ * res: 先にまとめて取ってあれば、その返事（なければここで取りに行く） */
+function visitorStats(res) {
+  const r = res ? gaParse(res) : gaReport(VISITORS_QUERY);
   if (!r) return null;
   const byDate = {};
   (r.rows || []).forEach((row) => {
@@ -166,15 +186,19 @@ function rankingText() {
 }
 
 /* Search Console: 直近10日分を日ごとに取り、データがある最新の日と前の日を比べる */
-function searchStats() {
+function searchRequest() {
+  const day = (n) => fmt(new Date(Date.now() - n * 86400000), "yyyy-MM-dd");
+  return {
+    url: "https://searchconsole.googleapis.com/webmasters/v3/sites/" + encodeURIComponent(CONFIG.siteUrl) + "/searchAnalytics/query",
+    method: "post", contentType: "application/json",
+    headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify({ startDate: day(10), endDate: day(1), dimensions: ["date"] }),
+  };
+}
+
+function searchStats(res) {
   try {
-    const url = "https://searchconsole.googleapis.com/webmasters/v3/sites/" + encodeURIComponent(CONFIG.siteUrl) + "/searchAnalytics/query";
-    const day = (n) => fmt(new Date(Date.now() - n * 86400000), "yyyy-MM-dd");
-    const res = UrlFetchApp.fetch(url, {
-      method: "post", contentType: "application/json", muteHttpExceptions: true,
-      headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
-      payload: JSON.stringify({ startDate: day(10), endDate: day(1), dimensions: ["date"] }),
-    });
+    res = res || fetchAll([searchRequest()])[0];
     if (res.getResponseCode() !== 200) {
       console.warn("Search Console: " + res.getResponseCode() + " " + res.getContentText().slice(0, 300));
       return { error: true };
@@ -203,9 +227,13 @@ function siteHealth() {
 }
 
 /* 最後の更新: GitHub の更新フィード（Atom）を読む。API は Apps Script からだと回数制限にかかりやすいため */
-function lastUpdate() {
+function updateRequest() {
+  return { url: "https://github.com/" + CONFIG.githubRepo + "/commits/main.atom" };
+}
+
+function lastUpdate(res) {
   try {
-    const res = UrlFetchApp.fetch("https://github.com/" + CONFIG.githubRepo + "/commits/main.atom", { muteHttpExceptions: true });
+    res = res || fetchAll([updateRequest()])[0];
     if (res.getResponseCode() !== 200) return null;
     const ns = XmlService.getNamespace("http://www.w3.org/2005/Atom");
     const entry = XmlService.parse(res.getContentText()).getRootElement().getChild("entry", ns);

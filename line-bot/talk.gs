@@ -110,11 +110,13 @@ const TALK = {
 
   visitorsIg: (y, w, d) => `うちインスタから: 昨日 ${y} 人／直近7日 ${w} 人（その前の7日より ${d >= 0 ? "+" : ""}${d} 人）`,
   igStatsPost: (date, label, s) => `最新の投稿（${date}「${label}」）: リーチ ${s.reach}、いいね ${s.likes}、保存 ${s.saved}、コメント ${s.comments}`,
+  igStatsBasic: (date, label, likes, comments) => `最新の投稿（${date}「${label}」）: いいね ${likes}、コメント ${comments}`,
   igFollowers: (n, d) => `フォロワー ${n} 人` + (d === null ? "" : `（前の記録より ${d >= 0 ? "+" : ""}${d}）`),
   igSavedHigh: "保存がいつもの1.5倍以上。この形式、刺さってるね。",
   igSavedLow: "保存はいつもより少なめ。テーマや画像の見せ方を変えてみてもいいかも。",
   igNoPost: "まだ投稿がないみたい。",
-  igStatsError: "インスタの数字は取れなかった。トークンに「インサイト」の権限があるか確かめてみて（「リール動画とYouTube・反応の設定」参照）。",
+  igStatsError: (why) => "インスタの数字は取れなかった。合言葉に instagram_manage_insights の権限があるか確かめてみて（「Instagramの数字が取れないとき.pdf」参照）。" +
+    (why ? `\n理由: ${String(why).slice(0, 120)}` : ""),
   igRecentHead: "最近の投稿の反応だよ（新しい順）。",
   igLink: (url) => `プロフィールのリンクには、これを入れてね。インスタから来た人を数えられるよ。\n${url}`,
 
