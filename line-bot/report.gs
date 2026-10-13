@@ -32,6 +32,7 @@ function buildReport(morning) {
   const reqs = { search: searchRequest(), update: updateRequest() };
   if (gaReady()) Object.assign(reqs, { visitors: gaRequest(VISITORS_QUERY), igVisitors: gaRequest(IG_VISITORS_QUERY) });
   if (ytReady()) Object.assign(reqs, ytRequests(5));
+  if (CONFIG.ipGaPropertyId) reqs.ipVisitors = gaRequest(VISITORS_QUERY, CONFIG.ipGaPropertyId);
   const pre = fetchNamed(reqs);
   if (gaReady()) {
     const st = visitorStats(pre.visitors);
@@ -45,6 +46,11 @@ function buildReport(morning) {
       lines.push(st.week > st.prevWeek ? TALK.visitorsUp : st.week < st.prevWeek ? TALK.visitorsDown : TALK.visitorsSame);
     }
     lines.push("");
+  }
+  if (CONFIG.ipGaPropertyId) {
+    const ip = visitorStats(pre.ipVisitors, CONFIG.ipGaPropertyId);
+    const y = ip && ip.days[ip.days.length - 1];
+    lines.push("【ITパスポート】", ip ? TALK.visitorsIp(y.users, y.views, ip.week, ip.week - ip.prevWeek) : TALK.ipGaError, "");
   }
   if (igReady()) {
     lines.push("【インスタ】", igStatsText());
@@ -79,9 +85,10 @@ function gaReady() {
   return !!prop("GA_PROPERTY_ID");
 }
 
-function gaRequest(body) {
+/* propertyId: 別のサイト（ITパスポート）の数字を取るとき。なければ FE の GA_PROPERTY_ID */
+function gaRequest(body, propertyId) {
   return {
-    url: "https://analyticsdata.googleapis.com/v1beta/properties/" + prop("GA_PROPERTY_ID") + ":runReport",
+    url: "https://analyticsdata.googleapis.com/v1beta/properties/" + (propertyId || prop("GA_PROPERTY_ID")) + ":runReport",
     method: "post", contentType: "application/json",
     headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
     payload: JSON.stringify(body),
@@ -101,9 +108,9 @@ function gaParse(res) {
   }
 }
 
-function gaReport(body) {
+function gaReport(body, propertyId) {
   try {
-    return gaParse(fetchAll([gaRequest(body)])[0]);
+    return gaParse(fetchAll([gaRequest(body, propertyId)])[0]);
   } catch (e) {
     console.warn(e);
     return null;
@@ -117,9 +124,9 @@ const VISITORS_QUERY = {
 };
 
 /* 直近14日（昨日まで）の日ごとの閲覧者数。データのない日は 0 で埋める。
- * res: 先にまとめて取ってあれば、その返事（なければここで取りに行く） */
-function visitorStats(res) {
-  const r = res ? gaParse(res) : gaReport(VISITORS_QUERY);
+ * res: 先にまとめて取ってあれば、その返事（なければここで取りに行く）。propertyId: ITパスポートのサイトのとき */
+function visitorStats(res, propertyId) {
+  const r = res ? gaParse(res) : gaReport(VISITORS_QUERY, propertyId);
   if (!r) return null;
   const byDate = {};
   (r.rows || []).forEach((row) => {

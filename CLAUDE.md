@@ -13,7 +13,7 @@
 - **SNS**: Instagram（情報系の学生向けに、IT の知識とニュースを発信）と YouTube ショート
 - お問い合わせ: Google フォーム https://forms.gle/s4yB1xMbcoRqZps2A （回答のスプレッドシートにボットがつながっている）
 - アクセス解析: GA4（測定ID `G-4FY1CNV38B`）、Google Search Console
-- 姉妹サイト **「ITパスポート用語ドリル」** は別のリポジトリ（デスクトップの `ip-drill`、`yuki-fe/ip-drill`）。この build.py をもとに作った。くわしくはそちらの CLAUDE.md
+- 姉妹サイト **「ITパスポート用語ドリル」** は別のリポジトリ（デスクトップの `ip-drill`、`yuki-fe/ip-drill`、https://yuki-fe.github.io/ip-drill/ で公開中。GA4 は別プロパティ）。この build.py をもとに作った。くわしくはそちらの CLAUDE.md
 
 ## フォルダ構成
 
@@ -68,6 +68,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 - 運営者だけが使う（`登録 合言葉` で `OWNER_USER_ID` を登録）。返信（reply）は無料、プッシュは月 200 通まで（吹き出し5個で1通）なので、プッシュは増やしすぎない
 - スクリプト プロパティ: `LINE_TOKEN` `WEBHOOK_KEY` `SETUP_CODE` `OWNER_USER_ID` `NEWS_GENRES` `GA_PROPERTY_ID` `IG_TOKEN` `IG_USER_ID` `GITHUB_TOKEN`（ニュースの画像を頼む。fe-drill の Contents 読み書きだけ）`YT_CHANNEL_ID`（setup が自動で入れる）`YT_API_KEY`（YouTube のコメントを読む API キー。YouTube Data API v3 だけに制限）ほか、`IG_`・`YT_` で始まる状態の記録
 - トリガー: `onFormSubmit`、`dailyReport`（毎朝8時）、`igWorker`（10分ごと）、`refreshInstagramToken`（毎週）。関数名を変えるとトリガーが切れる
+- 毎朝のレポートの【ITパスポート】の欄: 姉妹サイトの閲覧者（GA4 のプロパティ ID は `CONFIG.ipGaPropertyId`、空にすると出さない）
 - GCP は標準プロジェクト「fe-drill-line」（Search Console API・Analytics Data API・YouTube Data API v3 を有効化）
 - YouTube（`youtube.gs`）は **読むだけ**: 毎朝のレポートの【YouTube】の欄（最新の動画の数字・登録者の増減・新しいコメント）と、LINE の「ユーチューブ 反応」「ユーチューブ コメント」。スクリプトの持ち主の権限（`youtube.readonly`、`ScriptApp.getOAuthToken()`）で読む。コメント（commentThreads）は youtube.readonly では 403 になるので API キーで読む（`youtube.force-ssl` は管理の権限まで付くので使わない）。エディタで `testYouTube` を実行すると問い合わせごとの結果が出る。手順は「YouTubeの数字とコメントの設定.pdf」
 

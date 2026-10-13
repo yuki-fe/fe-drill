@@ -24,6 +24,7 @@ const sent = [], igCalls = [], dispatches = [];
 let newsReady = false, insightsDenied = false;
 let ytDenied = false, ytHidden = false, ytSubsN = 35;
 const ytCalls = [];
+let gaDeniedIp = false;
 const store = { LINE_TOKEN: "t", WEBHOOK_KEY: "key", OWNER_USER_ID: "U1", IG_TOKEN: "ig", IG_USER_ID: "1789", YT_API_KEY: "ytkey" };
 const PropertiesService = { getScriptProperties: () => ({ getProperty: (k) => store[k] ?? null, setProperty: (k, v) => { store[k] = String(v); }, deleteProperty: (k) => { delete store[k]; } }) };
 const grid = [["タイムスタンプ", "お問い合わせの種類"]];
@@ -52,6 +53,19 @@ const t_resp = (code, body) => ({ getResponseCode: () => code, getContentText: (
 let status = "IN_PROGRESS", mediaN = 500;
 const UrlFetchApp = { fetch: (url, o) => {
   if (url.includes("api.line.me")) { sent.push(JSON.parse(o.payload)); return t_resp(200, "{}"); }
+  if (url.includes("analyticsdata.googleapis.com")) {
+    // 閲覧者: 直近14日分。FE は1日 10 人、ITパスポート（558662911）は1日 5 人、インスタから来た人は1日 2 人
+    const ip = url.includes("/558662911:");
+    if (ip && gaDeniedIp) return t_resp(403, '{"error":{"message":"User does not have sufficient permissions for this property."}}');
+    const ig = String(o.payload || "").includes("instagram");
+    const rows = [];
+    for (let n = 14; n >= 1; n--) {
+      const d = new RealDate(NOW - n * 86400e3), ymd = Utilities.formatDate(d, "", "yyyyMMdd");
+      const u = ig ? 2 : ip ? 5 : 10;
+      rows.push({ dimensionValues: [{ value: ymd }], metricValues: [{ value: String(u) }, { value: String(u * 2) }] });
+    }
+    return t_resp(200, JSON.stringify({ rows }));
+  }
   if (url.includes("googleapis.com/youtube/")) {
     ytCalls.push(url);
     if (ytDenied) return t_resp(403, '{"error":{"code":403,"message":"YouTube Data API v3 has not been used in project 123 before or it is disabled."}}');
@@ -220,6 +234,15 @@ try {
   const rd = buildReport(false);
   check("YouTube が取れなくても理由を出して、ほかの欄は出す", rd.includes("YouTube の数字は取れなかった（チャンネル: YouTube Data API v3 has not been used") && rd.includes("【検索】"));
   ytDenied = false;
+  const ipr = buildReport(false); out.push("--- 【ITパスポート】の欄", ipr.slice(ipr.indexOf("【ITパスポート】"), ipr.indexOf("【インスタ】")).trim());
+  check("ITパスポートのサイトの閲覧者（FE のアナリティクスがなくても出す）", ipr.includes("【ITパスポート】\n閲覧者 昨日: 5 人（ページ 10 回）／直近7日: 35 人（その前の7日より +0 人）") && !ipr.includes("【閲覧者】"));
+  store.GA_PROPERTY_ID = "111";
+  const both = buildReport(false);
+  check("FE と ITパスポートの閲覧者を分けて出す", both.includes("【閲覧者】\n昨日: 10 人（ページ 20 回）") && both.includes("うちインスタから: 昨日 2 人") && both.includes("閲覧者 昨日: 5 人"));
+  gaDeniedIp = true;
+  const den = buildReport(false);
+  check("ITパスポートの数字が取れなくても、FE の数字は出す", den.includes("ITパスポートのサイトの閲覧者は取れなかった") && den.includes("昨日: 10 人"));
+  gaDeniedIp = false; delete store.GA_PROPERTY_ID;
   const ytId = store.YT_CHANNEL_ID; delete store.YT_CHANNEL_ID; const ytN = ytCalls.length;
   t_say("ユーチューブ 反応");
   check("YouTube の設定がないときは知らせるだけ", t_text().includes("まだつながってない") && !buildReport(false).includes("【YouTube】") && ytCalls.length === ytN);

@@ -41,6 +41,8 @@ const CONFIG = {
   newsCandidates: 8,                                      // 今週のITニュース: LINE に出す候補の数
   newsPostCount: 3,                                       // 今週のITニュース: 1回の投稿に載せるニュースの数（3まで）
   scheduleHour: 20,                                       // 「〇時に投稿」ボタンで投稿する時刻
+  // 姉妹サイト「ITパスポート用語ドリル」の閲覧者も、毎朝のレポートに出す（GA4 のプロパティ ID。空にすると出さない）
+  ipGaPropertyId: "558662911",
 };
 
 /* ========== Instagram の投稿の種類 ==========
