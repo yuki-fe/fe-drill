@@ -22,7 +22,9 @@ stock = {name: json.loads((SITE / "static" / "ig" / name).read_text(encoding="ut
 MOCKS = r"""
 const sent = [], igCalls = [], dispatches = [];
 let newsReady = false, insightsDenied = false;
-const store = { LINE_TOKEN: "t", WEBHOOK_KEY: "key", OWNER_USER_ID: "U1", IG_TOKEN: "ig", IG_USER_ID: "1789" };
+let ytDenied = false, ytHidden = false, ytSubsN = 35;
+const ytCalls = [];
+const store = { LINE_TOKEN: "t", WEBHOOK_KEY: "key", OWNER_USER_ID: "U1", IG_TOKEN: "ig", IG_USER_ID: "1789", YT_API_KEY: "ytkey" };
 const PropertiesService = { getScriptProperties: () => ({ getProperty: (k) => store[k] ?? null, setProperty: (k, v) => { store[k] = String(v); }, deleteProperty: (k) => { delete store[k]; } }) };
 const grid = [["タイムスタンプ", "お問い合わせの種類"]];
 const range = (r, c, nr, nc) => ({ getValue: () => (grid[r - 1] || [])[c - 1] ?? "", setValue: (v) => { grid[r - 1][c - 1] = v; }, getValues: () => Array.from({ length: nr || 1 }, (_, i) => Array.from({ length: nc || 1 }, (_, j) => (grid[r - 1 + i] || [])[c - 1 + j] ?? "")) });
@@ -50,6 +52,28 @@ const t_resp = (code, body) => ({ getResponseCode: () => code, getContentText: (
 let status = "IN_PROGRESS", mediaN = 500;
 const UrlFetchApp = { fetch: (url, o) => {
   if (url.includes("api.line.me")) { sent.push(JSON.parse(o.payload)); return t_resp(200, "{}"); }
+  if (url.includes("googleapis.com/youtube/")) {
+    ytCalls.push(url);
+    if (ytDenied) return t_resp(403, '{"error":{"code":403,"message":"YouTube Data API v3 has not been used in project 123 before or it is disabled."}}');
+    if (url.includes("mine=true")) return t_resp(200, '{"items":[{"id":"UCtest","snippet":{"title":"FE用語ドリル"}}]}');
+    if (url.includes("/channels?")) return t_resp(200, JSON.stringify({ items: [{ statistics: { subscriberCount: String(ytSubsN), hiddenSubscriberCount: ytHidden } }] }));
+    if (url.includes("/playlistItems?")) return t_resp(200, url.includes("playlistId=UUtest") ? '{"items":[{"contentDetails":{"videoId":"v1"}},{"contentDetails":{"videoId":"v2"}}]}' : '{"items":[]}');
+    const ago = (h) => new RealDate(NOW - h * 3600e3).toISOString();
+    const c = (id, vid, name, text, h, ch) => ({ id, snippet: { videoId: vid, topLevelComment: { snippet: { videoId: vid, authorDisplayName: name, authorChannelId: { value: ch }, textOriginal: text, publishedAt: ago(h) } } } });
+    // 本物と同じく、コメントは持ち主の権限（youtube.readonly）では読めず、API キーなら読める
+    if (url.includes("/commentThreads?") && !url.includes("key=ytkey")) return t_resp(403, '{"error":{"code":403,"message":"Request had insufficient authentication scopes."}}');
+    if (url.includes("/commentThreads?")) return t_resp(200, JSON.stringify({ items: [
+      c("y1", "v1", "@fe_student", "変数の動きが見えてわかりやすい", 1, "UCviewer"),
+      c("y2", "v1", "@fe_drill", "📌 サイトはプロフィールから", 0.5, "UCtest"),
+      c("y3", "v3", "@old_viewer", "前の動画へのコメント", 240, "UCold") ] }));
+    if (url.includes("/videos?")) {
+      const v = { v1: ["二分探索を1行ずつ #shorts #基本情報", 24, 1234, 20, 2], v2: ["バブルソート", 96, 800, 11, 0], v3: ["線形探索", 400, 300, 3, 1] };
+      const ids = decodeURIComponent(url.match(/id=([^&]*)/)[1]).split(",");
+      return t_resp(200, JSON.stringify({ items: ids.filter((i) => v[i]).map((i) => ({ id: i, snippet: { title: v[i][0], publishedAt: ago(v[i][1]) },
+        statistics: { viewCount: String(v[i][2]), likeCount: String(v[i][3]), commentCount: String(v[i][4]) } })) }));
+    }
+    return t_resp(404, '{"error":{"message":"not found"}}');
+  }
   if (url.includes("news.google.com")) {
     const w = decodeURIComponent(url.match(/q=([^&]*)/)[1]).split(" ")[0];
     const titles = [`${w}の話題その1`, `${w}の話題その2`, `${w}の話題その3`];
@@ -96,11 +120,17 @@ const check = (name, cond) => { out.push((cond ? "  OK  " : "  NG  ") + name); i
 try {
   setup();
   check("トリガーを作る", triggers.length >= 3);
+  check("setup で YouTube のチャンネルを見つける", store.YT_CHANNEL_ID === "UCtest");
   check("金曜はリールの日", kindToday() === "reel");
   const mm = toMessages(morningMessages());
   out.push("--- 毎朝のレポート（吹き出し " + mm.length + " 個）", t_show({ messages: mm }));
   check("毎朝の吹き出しは5個まで", mm.length <= 5);
   check("自分の紹介コメントは新しいコメントに数えない", !JSON.stringify(mm).includes("📌 紹介コメント"));
+  const mt = mm[0].text;
+  out.push("--- 【YouTube】の欄", mt.slice(mt.indexOf("【YouTube】"), mt.indexOf("【検索】")).trim());
+  check("毎朝のレポートに【YouTube】の欄", mt.includes("【YouTube】") && mt.includes("最新の動画（10/8「二分探索を1行ずつ」）: 再生 1234、高く評価 20、コメント 2") && mt.includes("登録者 35 人"));
+  check("YouTube の新しいコメント（自分のと古いのは出さない）", mt.includes("@fe_student（二分探索を1行ずつ）") && !mt.includes("📌 サイトはプロフィールから") && !mt.includes("old_viewer"));
+  check("同じコメントを次の朝には出さない", !ytStatsText(true).includes("fe_student"));
 
   igCalls.length = 0;
   const reel = STOCK["reels.json"][0];
@@ -168,6 +198,32 @@ try {
   check("コメント一覧に自分のコメントを出さない", t_text().includes("it_student") && !t_text().includes("📌"));
   t_say("反応");
   check("反応", t_text().includes("リーチ"));
+  t_say("ユーチューブ 反応"); out.push("--- ユーチューブ 反応", t_last());
+  check("「ユーチューブ 反応」で最近の動画の数字", t_text().includes("■ 10/8「二分探索を1行ずつ」\n再生 1234／高く評価 20／コメント 2") && t_text().includes("バブルソート"));
+  t_say("ユーチューブ コメント"); out.push("--- ユーチューブ コメント", t_last());
+  check("「ユーチューブ コメント」で1週間のコメント", t_text().includes("fe_student") && !t_text().includes("📌") && !t_text().includes("old_viewer"));
+  t_say("ユーチューブ");
+  check("「ユーチューブ」だけなら今までどおりショートのセット", t_text().includes("YouTube ショートにも出そう"));
+  NOW += 86400e3; ytSubsN = 37;
+  check("登録者の増減", ytStatsText(false).includes("登録者 37 人（前の記録より +2）"));
+  ytHidden = true;
+  check("登録者数が非公開のとき", ytStatsText(false).includes("非公開"));
+  delete store.YT_API_KEY;
+  const nk = ytStatsText(false);
+  check("コメントが取れなくても、再生数と登録者は出す", nk.includes("再生 1234") && nk.includes("登録者") && nk.includes("コメントは取れなかった（コメント: Request had insufficient"));
+  t_say("ユーチューブ 反応");
+  check("コメントが取れなくても「ユーチューブ 反応」は出す", t_text().includes("再生 1234"));
+  t_say("ユーチューブ コメント");
+  check("「ユーチューブ コメント」は取れない理由を出す", t_text().includes("コメントを読むとき"));
+  store.YT_API_KEY = "ytkey";
+  ytHidden = false; ytDenied = true;
+  const rd = buildReport(false);
+  check("YouTube が取れなくても理由を出して、ほかの欄は出す", rd.includes("YouTube の数字は取れなかった（チャンネル: YouTube Data API v3 has not been used") && rd.includes("【検索】"));
+  ytDenied = false;
+  const ytId = store.YT_CHANNEL_ID; delete store.YT_CHANNEL_ID; const ytN = ytCalls.length;
+  t_say("ユーチューブ 反応");
+  check("YouTube の設定がないときは知らせるだけ", t_text().includes("まだつながってない") && !buildReport(false).includes("【YouTube】") && ytCalls.length === ytN);
+  store.YT_CHANNEL_ID = ytId; NOW -= 86400e3;
   igMediaCache = null; fetchAllCalls = 0;
   const igBefore = igCalls.length;
   t_say("状況");
@@ -180,6 +236,7 @@ try {
   insightsDenied = false;
   t_say("使い方");
   check("使い方に「紹介コメント」がある", t_text().includes("紹介コメント"));
+  check("使い方に「ユーチューブ 反応」がある", t_text().includes("ユーチューブ 反応"));
   // 今週のITニュース（土曜）: 候補 → 番号で選ぶ → GitHub に画像を頼む → できたら下書き → 投稿
   NOW = new Date("2026-10-10T08:00:00+09:00").getTime();
   check("土曜は今週のITニュースの日", kindToday() === "news");

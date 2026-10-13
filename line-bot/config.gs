@@ -19,6 +19,7 @@
  *   report.gs     毎朝のレポート・アクセス解析・Search Console・サイトの状態
  *   news.gs       ITニュース
  *   instagram.gs  Instagram の下書き・投稿・コメント・反応
+ *   youtube.gs    YouTube の数字とコメント（読むだけ）
  *   inquiry.gs    お問い合わせ（フォームの回答シート）
  *   line.gs       LINE から届いたメッセージ（Webhook）と、LINE へ送る処理
  */
@@ -156,4 +157,8 @@ function setup() {
   Logger.log("Instagram: " + (igReady() ? "つながっています" : "まだ設定されていません（IG_TOKEN と IG_USER_ID）"));
   Logger.log("Instagram のプロフィールに入れるリンク: " + igProfileLink());
   Logger.log("アナリティクス: " + (gaReady() ? "プロパティ " + prop("GA_PROPERTY_ID") : "まだ設定されていません（GA_PROPERTY_ID）"));
+  if (!ytReady()) {
+    try { Logger.log("YouTube: チャンネル「" + ytFindChannel() + "」を見つけました"); }
+    catch (e) { Logger.log("YouTube: まだ設定されていません（" + e.message + "）。チャンネルが別のアカウントなら YT_CHANNEL_ID を入れてください"); }
+  } else Logger.log("YouTube: チャンネル " + prop("YT_CHANNEL_ID"));
 }

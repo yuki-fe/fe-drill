@@ -70,6 +70,10 @@ function answer(text) {
   if (/^紹介リール/.test(text)) return igIntroKit();
   if (/^紹介コメント/.test(text)) return igReady() ? igPinLatest() : TALK.igOff;
   if (/^(コメント|こめんと)/.test(text)) return igReady() ? igCommentsList() : TALK.igOff;
+  if ((m = text.match(/^(ユーチューブ|ゆーちゅーぶ|youtube)\s*(反応|はんのう|数字|コメント|こめんと)/i))) {
+    if (!ytReady()) return TALK.ytOff;
+    return /コメント|こめんと/.test(m[2]) ? ytCommentsList() : ytRecentText();
+  }
   if (/^(ユーチューブ|ゆーちゅーぶ|youtube)/i.test(text)) return ytKitReply();
   if (/^(反応|はんのう|インサイト)/.test(text)) return igReady() ? igRecentText() : TALK.igOff;
   if (/^(リンク|りんく)/.test(text)) return TALK.igLink(igProfileLink());

@@ -32,7 +32,7 @@
 | `make_intro_media.py` | Instagram の最初の投稿（サイト紹介のフィード5枚・リール・ストーリー2枚と投稿文）を `static/ig/intro/` に作る。一度きり |
 | `make_news_image.py` | 「今週のITニュース」の画像（見出し・用語の解説）を `static/ig/news/` に作る。ふだんは GitHub の自動実行が動かす。`--cover` で合言葉なしのとき用の表紙 |
 | `.github/workflows/news-image.yml` | ボットの合図（repository_dispatch: news-image）で `make_news_image.py` を動かし、画像を commit して公開する |
-| `line-bot/` | LINE ボットのプログラム。役割ごとの .gs（`config` 設定・setup / `talk` 話し方 / `report` 毎朝のレポート / `news` / `instagram` / `inquiry` お問い合わせ / `line` Webhook と送信）と `appsscript.json`。合言葉（トークン）は入れない |
+| `line-bot/` | LINE ボットのプログラム。役割ごとの .gs（`config` 設定・setup / `talk` 話し方 / `report` 毎朝のレポート / `news` / `instagram` / `youtube` 数字とコメント / `inquiry` お問い合わせ / `line` Webhook と送信）と `appsscript.json`。合言葉（トークン）は入れない |
 | `line-bot/test/run_test.py` | ボットの動作テスト（モックで動かす。Google や LINE には接続しない） |
 | `notes/` | **公開しない**（`.gitignore` 済み）。`pdf/` 手順書の PDF、`src/` その元の HTML、`brand/` アイコン画像 |
 
@@ -66,9 +66,10 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 - 直したら必ず `python line-bot/test/run_test.py` を動かす。新しい機能にはテストのシナリオも足す
 - キャラクターは **先輩エンジニア**。返事は AI ではなく `TALK` の決まった文（費用をかけないため）。口調をそろえる
 - 運営者だけが使う（`登録 合言葉` で `OWNER_USER_ID` を登録）。返信（reply）は無料、プッシュは月 200 通まで（吹き出し5個で1通）なので、プッシュは増やしすぎない
-- スクリプト プロパティ: `LINE_TOKEN` `WEBHOOK_KEY` `SETUP_CODE` `OWNER_USER_ID` `NEWS_GENRES` `GA_PROPERTY_ID` `IG_TOKEN` `IG_USER_ID` `GITHUB_TOKEN`（ニュースの画像を頼む。fe-drill の Contents 読み書きだけ）ほか、`IG_` で始まる状態の記録
+- スクリプト プロパティ: `LINE_TOKEN` `WEBHOOK_KEY` `SETUP_CODE` `OWNER_USER_ID` `NEWS_GENRES` `GA_PROPERTY_ID` `IG_TOKEN` `IG_USER_ID` `GITHUB_TOKEN`（ニュースの画像を頼む。fe-drill の Contents 読み書きだけ）`YT_CHANNEL_ID`（setup が自動で入れる）`YT_API_KEY`（YouTube のコメントを読む API キー。YouTube Data API v3 だけに制限）ほか、`IG_`・`YT_` で始まる状態の記録
 - トリガー: `onFormSubmit`、`dailyReport`（毎朝8時）、`igWorker`（10分ごと）、`refreshInstagramToken`（毎週）。関数名を変えるとトリガーが切れる
-- GCP は標準プロジェクト「fe-drill-line」（Search Console API・Analytics Data API を有効化済み）
+- GCP は標準プロジェクト「fe-drill-line」（Search Console API・Analytics Data API・YouTube Data API v3 を有効化）
+- YouTube（`youtube.gs`）は **読むだけ**: 毎朝のレポートの【YouTube】の欄（最新の動画の数字・登録者の増減・新しいコメント）と、LINE の「ユーチューブ 反応」「ユーチューブ コメント」。スクリプトの持ち主の権限（`youtube.readonly`、`ScriptApp.getOAuthToken()`）で読む。コメント（commentThreads）は youtube.readonly では 403 になるので API キーで読む（`youtube.force-ssl` は管理の権限まで付くので使わない）。エディタで `testYouTube` を実行すると問い合わせごとの結果が出る。手順は「YouTubeの数字とコメントの設定.pdf」
 
 ### Instagram
 

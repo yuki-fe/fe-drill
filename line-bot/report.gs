@@ -31,6 +31,7 @@ function buildReport(morning) {
   // 時間のかかる問い合わせは、先にまとめて同時に取りに行く
   const reqs = { search: searchRequest(), update: updateRequest() };
   if (gaReady()) Object.assign(reqs, { visitors: gaRequest(VISITORS_QUERY), igVisitors: gaRequest(IG_VISITORS_QUERY) });
+  if (ytReady()) Object.assign(reqs, ytRequests(5));
   const pre = fetchNamed(reqs);
   if (gaReady()) {
     const st = visitorStats(pre.visitors);
@@ -51,6 +52,7 @@ function buildReport(morning) {
     if (c) lines.push(c);
     lines.push("");
   }
+  if (ytReady()) lines.push("【YouTube】", ytStatsText(morning, pre), "");
   const s = searchStats(pre.search);
   lines.push("【検索】");
   if (s.error) lines.push(TALK.searchError);
