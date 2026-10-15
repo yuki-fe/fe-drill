@@ -6,14 +6,16 @@
 
 基本情報技術者試験（FE）の学習サイト **「FE用語ドリル」** と、その運用の仕組み。運営者は Yuki-fe（個人・副業）。
 
-- **サイト**: https://yuki-fe.github.io/fe-drill/ （GitHub Pages。リポジトリ `yuki-fe/fe-drill` の `main` ブランチの `/docs`）
+- **サイト**: https://fe.yogo-drill.com/ （独自ドメイン。旧 https://yuki-fe.github.io/fe-drill/ は GitHub Pages が自動で転送。GitHub Pages。リポジトリ `yuki-fe/fe-drill` の `main` ブランチの `/docs`）
   - 科目A: 用語 345語の単語帳（カード・4択・書いて答える・意味から答える、間違えた用語の復習）と、用語ごとの解説ページ
   - 科目B: 擬似言語のプログラムを **1行ずつ再生して変数の変化を見せる** のが売り。トレース練習・穴埋め・アルゴリズム図鑑・セキュリティ事例・記法クイズ・シミュレータ
 - **LINE 運用ボット**（`line-bot/`、Google Apps Script）: 運営者だけが使う。毎朝のレポート、ニュース、お問い合わせ、Instagram の投稿
 - **SNS**: Instagram（情報系の学生向けに、IT の知識とニュースを発信）と YouTube ショート
 - お問い合わせ: Google フォーム https://forms.gle/s4yB1xMbcoRqZps2A （回答のスプレッドシートにボットがつながっている）
 - アクセス解析: GA4（測定ID `G-4FY1CNV38B`）、Google Search Console
-- 姉妹サイト **「ITパスポート用語ドリル」** は別のリポジトリ（デスクトップの `ip-drill`、`yuki-fe/ip-drill`、https://yuki-fe.github.io/ip-drill/ で公開中。GA4 は別プロパティ）。この build.py をもとに作った。くわしくはそちらの CLAUDE.md
+- 姉妹サイト **「ITパスポート用語ドリル」** は別のリポジトリ（デスクトップの `ip-drill`、`yuki-fe/ip-drill`、https://ip.yogo-drill.com/ で公開中。GA4 は別プロパティ）。この build.py をもとに作った。くわしくはそちらの CLAUDE.md
+- 3つ目のサイト **「クラウド用語ドリル」**（AWS 認定クラウドプラクティショナー CLF-C02）はデスクトップの `cloud-drill`（`yuki-fe/cloud-drill`、未公開）。ip-drill の build.py をもとに作った。サイト名に「AWS」を入れない（AWS の商標の決まり）
+- 4つ目のサイト **「国内旅行業務用語ドリル」**（国内旅行業務取扱管理者試験）はデスクトップの `travel-drill`（`yuki-fe/travel-drill`、未公開）。cloud-drill の build.py をもとに作った。数字は元の文書で確かめたものだけを書く
 
 ## フォルダ構成
 
@@ -97,4 +99,5 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 
 ## 未決定・これからの候補
 
-- AdSense（独自ドメインが必要）、サブスク
+- 独自ドメイン **yogo-drill.com** を Xserverドメインで取得済み（2026年10月、ドメインのみ・自動更新）。サブドメインで fe. / ip. / cloud. / travel. に移す途中。手順は「独自ドメインに移す手順.pdf」
+- AdSense（独自ドメインに移したあと）、サブスク

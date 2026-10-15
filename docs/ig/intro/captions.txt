@@ -32,5 +32,5 @@
 
 ■ ストーリー2枚目のリンク（スタンプ「リンク」に貼る）
 
-https://yuki-fe.github.io/fe-drill/?utm_source=instagram&utm_medium=story&utm_campaign=intro
+https://fe.yogo-drill.com/?utm_source=instagram&utm_medium=story&utm_campaign=intro
 スタンプの文字: FE用語ドリル（無料）

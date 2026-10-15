@@ -27,7 +27,7 @@
 /* ========== サイトの設定（公開されても困らない値） ========== */
 const CONFIG = {
   siteName: "FE用語ドリル",
-  siteUrl: "https://yuki-fe.github.io/fe-drill/",        // サイトのURL（Search Console に登録したものと同じ）
+  siteUrl: "https://fe.yogo-drill.com/",        // サイトのURL（Search Console に登録したものと同じ）
   githubRepo: "yuki-fe/fe-drill",                         // 最後の更新を調べるリポジトリ
   reportHour: 8,                                          // 毎朝のレポートを送る時刻（0〜23時）
   chartWeekday: 1,                                        // 先週のグラフを送る曜日（0=日曜, 1=月曜, … 6=土曜）
