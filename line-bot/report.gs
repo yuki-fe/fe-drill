@@ -36,7 +36,7 @@ function buildReport(morning) {
   const pre = fetchNamed(reqs);
   if (gaReady()) {
     const st = visitorStats(pre.visitors);
-    lines.push("【閲覧者】");
+    lines.push("【閲覧者：基本情報（FE用語ドリル）】");
     if (!st) lines.push(TALK.gaError);
     else {
       const y = st.days[st.days.length - 1];
@@ -50,7 +50,7 @@ function buildReport(morning) {
   if (CONFIG.ipGaPropertyId) {
     const ip = visitorStats(pre.ipVisitors, CONFIG.ipGaPropertyId);
     const y = ip && ip.days[ip.days.length - 1];
-    lines.push("【ITパスポート】", ip ? TALK.visitorsIp(y.users, y.views, ip.week, ip.week - ip.prevWeek) : TALK.ipGaError, "");
+    lines.push("【閲覧者：ITパスポート】", ...(ip ? [TALK.visitorsDay(y.users, y.views), TALK.visitorsWeek(ip.week, ip.week - ip.prevWeek)] : [TALK.ipGaError]), "");
   }
   if (igReady()) {
     lines.push("【インスタ】", igStatsText());

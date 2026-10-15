@@ -1,7 +1,7 @@
 """LINE ボットの動作テスト。Google や LINE には接続せず、まねした相手（モック）で動かす。
 
 使い方:  python line-bot/test/run_test.py
-         Microsoft Edge でテストのページを開き、結果を表示する。最後に「ALL OK」と出れば成功。
+         Microsoft Edge（動かないときは Chrome）でテストのページを開き、結果を表示する。最後に「ALL OK」と出れば成功。
          line-bot/ の .gs ファイルを全部読み込む（config.gs・talk.gs があれば先に読む）。
 """
 import json
@@ -12,7 +12,9 @@ from pathlib import Path
 HERE = Path(__file__).parent
 BOT = HERE.parent
 SITE = BOT.parent
-EDGE = Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
+# PDF などを作るブラウザ。Edge が動かないとき（自動更新の途中など）は Chrome を使う
+BROWSERS = [p for p in (Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+                        Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")) if p.exists()]
 FIRST = ["config.gs", "talk.gs"]
 
 gs = sorted(BOT.glob("*.gs"), key=lambda p: (FIRST.index(p.name) if p.name in FIRST else len(FIRST), p.name))
@@ -234,11 +236,11 @@ try {
   const rd = buildReport(false);
   check("YouTube が取れなくても理由を出して、ほかの欄は出す", rd.includes("YouTube の数字は取れなかった（チャンネル: YouTube Data API v3 has not been used") && rd.includes("【検索】"));
   ytDenied = false;
-  const ipr = buildReport(false); out.push("--- 【ITパスポート】の欄", ipr.slice(ipr.indexOf("【ITパスポート】"), ipr.indexOf("【インスタ】")).trim());
-  check("ITパスポートのサイトの閲覧者（FE のアナリティクスがなくても出す）", ipr.includes("【ITパスポート】\n閲覧者 昨日: 5 人（ページ 10 回）／直近7日: 35 人（その前の7日より +0 人）") && !ipr.includes("【閲覧者】"));
+  const ipr = buildReport(false); out.push("--- 【閲覧者：ITパスポート】の欄", ipr.slice(ipr.indexOf("【閲覧者：ITパスポート】"), ipr.indexOf("【インスタ】")).trim());
+  check("ITパスポートのサイトの閲覧者（FE のアナリティクスがなくても出す）", ipr.includes("【閲覧者：ITパスポート】\n昨日: 5 人（ページ 10 回）\n直近7日: 35 人（その前の7日より +0 人）") && !ipr.includes("基本情報（FE用語ドリル）"));
   store.GA_PROPERTY_ID = "111";
   const both = buildReport(false);
-  check("FE と ITパスポートの閲覧者を分けて出す", both.includes("【閲覧者】\n昨日: 10 人（ページ 20 回）") && both.includes("うちインスタから: 昨日 2 人") && both.includes("閲覧者 昨日: 5 人"));
+  check("FE と ITパスポートの閲覧者を分けて出す", both.includes("【閲覧者：基本情報（FE用語ドリル）】\n昨日: 10 人（ページ 20 回）") && both.includes("うちインスタから: 昨日 2 人") && both.includes("【閲覧者：ITパスポート】\n昨日: 5 人"));
   gaDeniedIp = true;
   const den = buildReport(false);
   check("ITパスポートの数字が取れなくても、FE の数字は出す", den.includes("ITパスポートのサイトの閲覧者は取れなかった") && den.includes("昨日: 10 人"));
@@ -313,8 +315,12 @@ html = ("<!doctype html><meta charset='utf-8'><body><pre id='out'>running</pre>\
 page = HERE / "test.html"
 page.write_text(html, encoding="utf-8")
 
-dom = subprocess.run([str(EDGE), "--headless=new", "--disable-gpu", "--allow-file-access-from-files", "--virtual-time-budget=5000",
-                      "--dump-dom", page.as_uri()], capture_output=True, encoding="utf-8", errors="replace").stdout
+dom = ""
+for browser in BROWSERS:
+    dom = subprocess.run([str(browser), "--headless=new", "--disable-gpu", "--allow-file-access-from-files", "--virtual-time-budget=5000",
+                          "--dump-dom", page.as_uri()], capture_output=True, encoding="utf-8", errors="replace").stdout
+    if '<pre id="out">' in dom:
+        break
 start, end = dom.find("<pre id=\"out\">"), dom.find("</pre>")
 result = dom[start + len("<pre id=\"out\">"):end] if start >= 0 else "結果を読めませんでした: " + dom[:300]
 result = result.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"')

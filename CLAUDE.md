@@ -16,6 +16,8 @@
 - 姉妹サイト **「ITパスポート用語ドリル」** は別のリポジトリ（デスクトップの `ip-drill`、`yuki-fe/ip-drill`、https://ip.yogo-drill.com/ で公開中。GA4 は別プロパティ）。この build.py をもとに作った。くわしくはそちらの CLAUDE.md
 - 3つ目のサイト **「クラウド用語ドリル」**（AWS 認定クラウドプラクティショナー CLF-C02）はデスクトップの `cloud-drill`（`yuki-fe/cloud-drill`、未公開）。ip-drill の build.py をもとに作った。サイト名に「AWS」を入れない（AWS の商標の決まり）
 - 4つ目のサイト **「国内旅行業務用語ドリル」**（国内旅行業務取扱管理者試験）はデスクトップの `travel-drill`（`yuki-fe/travel-drill`、未公開）。cloud-drill の build.py をもとに作った。数字は元の文書で確かめたものだけを書く
+- 5つ目のサイト **「生成AI用語ドリル」**（生成AIパスポート試験、2027年2月試験からの新シラバス）はデスクトップの `genai-drill`（`yuki-fe/genai-drill`、未公開、genai.yogo-drill.com の予定）。cloud-drill の build.py をもとに作った
+- 6つ目のサイト **「ディープラーニング用語ドリル」**（JDLA の G検定、シラバス 2024）はデスクトップの `dl-drill`（`yuki-fe/dl-drill`、未公開、dl.yogo-drill.com の予定）。genai-drill の build.py をもとに作った。サイト名に「G検定」を入れない
 
 ## フォルダ構成
 
@@ -50,6 +52,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 .venv\Scripts\python notes/src/make_book.py   # 手順書を表紙・目次つきの1冊（notes/pdf/FE用語ドリル 機能と手順のまとめ.pdf）に。入れる手順書は PARTS で決める（pypdf が必要）
 ```
 
+- PDF 作り・ボットのテストは Edge の見えないモードを使う。Edge が動かないとき（自動更新の途中など）は、自動で Chrome に切り替わる
 - Windows のコンソールは cp932 なので、日本語を出力するスクリプトは `PYTHONIOENCODING=utf-8` を付けて動かす
 - Python のパッケージは `requirements.txt`（Pillow・imageio-ffmpeg）。サイト専用の `.venv` に入れて、`.venv\Scripts\python` で動かす。FFmpeg は `imageio-ffmpeg` に入っているもの（環境変数 `FFMPEG` で別のものも指定できる）
 - Bash の長いヒアドキュメントは失敗しやすい。長い内容は Write でファイルに書いてから実行する
@@ -70,7 +73,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 - 運営者だけが使う（`登録 合言葉` で `OWNER_USER_ID` を登録）。返信（reply）は無料、プッシュは月 200 通まで（吹き出し5個で1通）なので、プッシュは増やしすぎない
 - スクリプト プロパティ: `LINE_TOKEN` `WEBHOOK_KEY` `SETUP_CODE` `OWNER_USER_ID` `NEWS_GENRES` `GA_PROPERTY_ID` `IG_TOKEN` `IG_USER_ID` `GITHUB_TOKEN`（ニュースの画像を頼む。fe-drill の Contents 読み書きだけ）`YT_CHANNEL_ID`（setup が自動で入れる）`YT_API_KEY`（YouTube のコメントを読む API キー。YouTube Data API v3 だけに制限）ほか、`IG_`・`YT_` で始まる状態の記録
 - トリガー: `onFormSubmit`、`dailyReport`（毎朝8時）、`igWorker`（10分ごと）、`refreshInstagramToken`（毎週）。関数名を変えるとトリガーが切れる
-- 毎朝のレポートの【ITパスポート】の欄: 姉妹サイトの閲覧者（GA4 のプロパティ ID は `CONFIG.ipGaPropertyId`、空にすると出さない）
+- 毎朝のレポートの閲覧者は【閲覧者：基本情報（FE用語ドリル）】と【閲覧者：ITパスポート】の2つの欄（同じ形）。ITパスポートは姉妹サイトの閲覧者（GA4 のプロパティ ID は `CONFIG.ipGaPropertyId`、空にすると出さない）
 - GCP は標準プロジェクト「fe-drill-line」（Search Console API・Analytics Data API・YouTube Data API v3 を有効化）
 - YouTube（`youtube.gs`）は **読むだけ**: 毎朝のレポートの【YouTube】の欄（最新の動画の数字・登録者の増減・新しいコメント）と、LINE の「ユーチューブ 反応」「ユーチューブ コメント」。スクリプトの持ち主の権限（`youtube.readonly`、`ScriptApp.getOAuthToken()`）で読む。コメント（commentThreads）は youtube.readonly では 403 になるので API キーで読む（`youtube.force-ssl` は管理の権限まで付くので使わない）。エディタで `testYouTube` を実行すると問い合わせごとの結果が出る。手順は「YouTubeの数字とコメントの設定.pdf」
 

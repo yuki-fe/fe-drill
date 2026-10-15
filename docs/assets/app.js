@@ -17,7 +17,7 @@
   function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   let known = load("fe-drill-v1", {});
   let weak = load("fe-drill-weak", {});
-  const prefs = Object.assign({ mode: "card", field: "all", cardDir: "t2d", quizDir: "d2t", reviewKind: "card" }, load("fe-drill-prefs", {}));
+  const prefs = Object.assign({ mode: "card", field: "all", cardDir: "d2t", quizDir: "d2t", reviewKind: "card" }, load("fe-drill-prefs", {}));
   const hashMode = location.hash.slice(1);
   if (MODES.some((m) => m.id === hashMode)) prefs.mode = hashMode;
   if (!MODES.some((m) => m.id === prefs.mode)) prefs.mode = "card";
@@ -105,8 +105,8 @@
     } else if (mode === "card" || mode === "quiz") {
       const key = mode === "card" ? "cardDir" : "quizDir";
       seg = `<div class="seg" role="group" aria-label="出題の向き">
-        <button type="button" data-dir="t2d" data-key="${key}" aria-pressed="${prefs[key] === "t2d"}">用語 → 意味</button>
         <button type="button" data-dir="d2t" data-key="${key}" aria-pressed="${prefs[key] === "d2t"}">意味 → 用語</button>
+        <button type="button" data-dir="t2d" data-key="${key}" aria-pressed="${prefs[key] === "t2d"}">用語 → 意味</button>
       </div>`;
     }
     $("#toolbar").innerHTML = `<h2>${m.title}<small>${m.sub}</small></h2>${seg}`;
