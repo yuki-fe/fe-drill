@@ -321,17 +321,18 @@ def make_reel(item, ffmpeg):
               (r_b_title(), 2.0)]
     fn, args = mb.args_of(item)
     steps, last = mb.reel_frames(item)
-    prev, cover = None, None
-    for i, s in enumerate(steps):
-        img = mb.draw_step(item, 1, s, prev, i, len(steps), fn, args)
-        frames.append((img, 0.7))
-        if cover is None and i >= len(steps) * 0.5:
-            cover = img
-        prev = s
+    shots, _, _ = mb.step_shots(item, 1, fn, args, steps, 0.7)
+    head = len(frames)   # トレースの前の画面の数（7）
+    frames += shots
     frames.append((r_outro(), 4.0))
-    mb.encode(frames, OUT / "reel.mp4", ffmpeg)
+    st = mb.starts(frames)
+    # 効果音: 場面の切り替えに「シュッ」、カードをめくると「パタッ」、4択の正解に「ピンポン」、トレースは1行ごとに「カチッ」
+    sounds = [(0.0, "idea", 0.7)] + [(st[k], "whoosh", 0.6) for k in (1, 2, 4, 6, head, len(frames) - 1)]
+    sounds += [(st[3], "flip", 1.0), (st[5], "correct", 1.0), (st[-1] + 0.3, "fanfare", 1.0)]
+    sounds += mb.step_sounds(steps, st[head:head + len(shots)])
+    mb.encode(frames, OUT / "reel.mp4", ffmpeg, sounds)
     r_title().save(OUT / "reel-cover.jpg", "JPEG", quality=88)
-    return sum(round(s * mb.FPS) for _, s in frames) / mb.FPS
+    return mb.seconds_of(frames)
 
 
 def reel_caption():

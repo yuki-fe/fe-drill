@@ -29,7 +29,7 @@ OUT = ROOT / "static" / "ig"
 CONFIG = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
 BASE = CONFIG["base_url"].rstrip("/")
 
-W, H, FPS = 1080, 1920, 10
+W, H, FPS = 1080, 1920, 60   # Instagram のリールは 23〜60fps まで受け付ける
 PAPER, BG, INK, MUTED, LINE = "#fbfcfa", "#f1f4f1", "#1d2a2e", "#5d6c6e", "#d5ddd8"
 MARK, MARK_SOFT, OK, OK_SOFT, HL = "#c0435a", "#f6dfe3", "#2b7a68", "#d9eee8", "#fff1b8"
 FONT_R = "C:/Windows/Fonts/BIZ-UDGothicR.ttc"
@@ -44,11 +44,17 @@ def font(size, bold=False, mono=False):
 
 # ---------- プログラムの動きを取り出す（Edge でサイトのインタプリタを動かす） ----------
 
+def find_browsers():
+    """見えないモードで使うブラウザ。Edge が動かないとき（自動更新の途中など）は Chrome を使う。"""
+    found = [p for p in [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+                         r"C:\Program Files\Google\Chrome\Application\chrome.exe"] if Path(p).exists()]
+    if not found:
+        sys.exit("Microsoft Edge も Google Chrome も見つかりません")
+    return found
+
+
 def find_edge():
-    for p in [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe", r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"]:
-        if Path(p).exists():
-            return p
-    sys.exit("Microsoft Edge が見つかりません")
+    return find_browsers()[0]
 
 
 def find_ffmpeg():
@@ -79,11 +85,18 @@ items.forEach((it) => {
 });
 document.getElementById("out").textContent = JSON.stringify(items);
 </script>""", encoding="utf-8")
-    with tempfile.TemporaryDirectory() as prof:
-        res = subprocess.run([find_edge(), "--headless=new", "--disable-gpu", f"--user-data-dir={prof}",
-                              "--allow-file-access-from-files", "--virtual-time-budget=20000", "--dump-dom", page.resolve().as_uri()],
-                             capture_output=True, timeout=120)
-    m = re.search(r'<pre id="out">(.*?)</pre>', res.stdout.decode("utf-8", "replace"), re.S)
+    m = None
+    for browser in find_browsers():
+        with tempfile.TemporaryDirectory() as prof:
+            try:
+                res = subprocess.run([browser, "--headless=new", "--disable-gpu", f"--user-data-dir={prof}",
+                                      "--allow-file-access-from-files", "--virtual-time-budget=20000", "--dump-dom", page.resolve().as_uri()],
+                                     capture_output=True, timeout=120)
+            except subprocess.TimeoutExpired:
+                continue
+        m = re.search(r'<pre id="out">(.*?)</pre>', res.stdout.decode("utf-8", "replace"), re.S)
+        if m and m.group(1).strip():
+            break
     if not m or not m.group(1).strip():
         sys.exit("プログラムの動きを取り出せませんでした。先に python build.py を実行してください")
     items = json.loads(html.unescape(m.group(1)))
@@ -134,17 +147,19 @@ def wrap(text, f, width):
     return lines + ([cur] if cur else [])
 
 
-def draw_code(d, code, x, y, w, cur=None, mark=None, size=30):
+def draw_code(d, code, x, y, w, cur=None, mark=None, size=30, cur_pos=None):
+    """cur_pos: いま実行する行の帯の位置（小数で、行と行の間も置ける。動画で帯をすべらせる）。"""
     f, fn = font(size, mono=True), font(size - 8, mono=True)
     lh = int(size * 1.62)
     rows = [ln for ln in code]
     d.rounded_rectangle((x, y, x + w, y + lh * len(rows) + 36), radius=18, fill=PAPER, outline=LINE, width=2)
     yy = y + 18
+    if mark:
+        d.rectangle((x + 2, yy + (mark - 1) * lh, x + w - 2, yy + mark * lh), fill=MARK_SOFT)
+    pos = cur_pos if cur_pos is not None else cur
+    if pos:
+        d.rectangle((x + 2, round(yy + (pos - 1) * lh), x + w - 2, round(yy + pos * lh)), fill=HL)
     for i, ln in enumerate(rows, 1):
-        if i == cur:
-            d.rectangle((x + 2, yy, x + w - 2, yy + lh), fill=HL)
-        elif i == mark:
-            d.rectangle((x + 2, yy, x + w - 2, yy + lh), fill=MARK_SOFT)
         d.text((x + 58 - fn.getlength(str(i)), yy + (lh - fn.size) // 2), str(i), font=fn, fill=INK if i == cur else MUTED)
         text = ln
         while f.getlength(text) > w - 96 and len(text) > 4:
@@ -197,7 +212,7 @@ def code_size(code, width, height):
     return 22
 
 
-def draw_step(it, no, step, prev, idx, total, fn, args):
+def draw_step(it, no, step, prev, idx, total, fn, args, cur_pos=None):
     img = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(img)
     label = f"科目B トレース No.{no}" if it["kind"] == "trace" else "科目B アルゴリズム図鑑"
@@ -214,7 +229,7 @@ def draw_step(it, no, step, prev, idx, total, fn, args):
     y += 12
     size = code_size(it["code"], W - 120 - 96, 1440 - y - 300)
     cur = step["line"] if step else None
-    y = draw_code(d, it["code"], 60, y, W - 120, cur=cur, mark=it.get("line"), size=size)
+    y = draw_code(d, it["code"], 60, y, W - 120, cur=cur, mark=it.get("line"), size=size, cur_pos=cur_pos)
     legend_f = font(26)
     lx = 60
     d.rectangle((lx, y + 14, lx + 28, y + 42), fill=HL)
@@ -298,20 +313,91 @@ def draw_outro(it, no, output):
     return img
 
 
-def encode(frames, path, ffmpeg):
-    """frames: [(PIL.Image, 秒数)] を、無音の音声付き MP4（H.264 / yuv420p）にする。"""
+def ease(x):
+    """0〜1 を、なめらかに減速する動きにする。"""
+    x = min(1.0, max(0.0, x))
+    return 1 - (1 - x) ** 3
+
+
+def starts(frames):
+    """各画面が始まる秒（効果音を置くのに使う）。"""
+    out, t = [], 0.0
+    for _, sec in frames:
+        out.append(t)
+        t += max(1, round(sec * FPS)) / FPS
+    return out
+
+
+def encode(frames, path, ffmpeg, sounds=(), music=True):
+    """frames: [(画像 または 画像を返す関数(t), 秒数)] を、60fps の MP4（H.264 / yuv420p）にする。
+    場面の間は、前の画面からふわっと切り替える（短い場面ほど短く）。
+    音: sounds の効果音 [(秒, 名前, 音量)] と、music=True なら BGM（どちらも media_fx.py がプログラムで作る）。"""
+    import media_fx as fx
+    wav = path.with_suffix(".wav")
+    fx.write_track(wav, seconds_of(frames), list(sounds), music=music)
+    # Instagram が受け取ったあとにもう一度圧縮するので、元はきれいに（CRF 16）作っておく
     cmd = [ffmpeg, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-           "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100", "-shortest",
-           "-c:v", "libx264", "-preset", "medium", "-crf", "24", "-pix_fmt", "yuv420p", "-r", "30",
-           "-c:a", "aac", "-b:a", "64k", "-movflags", "+faststart", str(path)]
+           "-i", str(wav), "-shortest",
+           "-c:v", "libx264", "-preset", "slow", "-tune", "animation", "-crf", "16", "-profile:v", "high", "-level", "4.2",
+           "-pix_fmt", "yuv420p", "-g", str(FPS * 2),
+           "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(path)]
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-    for img, sec in frames:
-        data = img.tobytes()
-        for _ in range(max(1, round(sec * FPS))):
-            p.stdin.write(data)
+    prev_last = None
+    for shot, sec in frames:
+        n = max(1, round(sec * FPS))
+        fade = min(0.3, sec * 0.25)
+        still = None if callable(shot) else shot.convert("RGB")
+        for i in range(n):
+            t = i / FPS
+            img = still if still is not None else shot(t).convert("RGB")
+            if prev_last is not None and t < fade:
+                img = Image.blend(prev_last, img, ease(t / fade))
+            p.stdin.write(img.tobytes())
+        prev_last = still if still is not None else shot(sec).convert("RGB")
     p.stdin.close()
-    if p.wait() != 0:
+    ok = p.wait() == 0
+    wav.unlink(missing_ok=True)
+    if not ok:
         sys.exit(f"動画の変換に失敗しました: {path.name}")
+
+
+def seconds_of(frames):
+    return sum(max(1, round(s * FPS)) for _, s in frames) / FPS
+
+
+def step_shots(it, no, fn, args, steps, per):
+    """1行ずつの画面。いま実行する行の帯は、前の行から次の行へすべって動く。
+    返り値: ([(画像を返す関数, 秒数)], 表紙にする画像)"""
+    total = len(steps)
+    slide = min(0.25, per * 0.5)
+    shots, cover, prev = [], None, None
+    for i, s in enumerate(steps):
+        final = draw_step(it, no, s, prev, i, total, fn, args)
+        if cover is None and i >= total * 0.4:
+            cover = final
+        start = prev["line"] if prev and prev.get("line") else None
+
+        def shot(t, s=s, prev=prev, i=i, final=final, start=start):
+            if start is None or start == s["line"] or t >= slide:
+                return final
+            pos = start + (s["line"] - start) * ease(t / slide)
+            return draw_step(it, no, s, prev, i, total, fn, args, cur_pos=pos)
+        shots.append((shot, per))
+        prev = s
+    return shots, cover, prev
+
+
+def step_sounds(steps, times):
+    """1行ずつの画面の効果音。行ごとに「カチッ」、変数の値が変わった行は小さく「ポッ」も。"""
+    out, prev = [], None
+    for s, t in zip(steps, times):
+        out.append((t, "tick", 0.8))
+        if prev is not None and prev["fn"] == s["fn"] and prev["depth"] == s["depth"]:
+            pv, cv = prev.get("vars") or {}, s.get("vars") or {}
+            if any(k in pv and fmt(pv[k]) != fmt(v) for k, v in cv.items()):
+                out.append((t + 0.03, "pop", 0.35))
+        prev = s
+    return out
 
 
 def make_reel(it, no, ffmpeg):
@@ -320,23 +406,20 @@ def make_reel(it, no, ffmpeg):
     total = len(steps)
     per = min(0.9, max(0.2, 16 / max(1, total)))
     frames = [(draw_intro(it, no, fn, args), 2.5)]
-    prev = None
-    cover = None
-    for i, s in enumerate(steps):
-        img = draw_step(it, no, s, prev, i, total, fn, args)
-        frames.append((img, per))
-        if cover is None and i >= total * 0.4:
-            cover = img
-        prev = s
+    shots, cover, prev = step_shots(it, no, fn, args, steps, per)
+    frames += shots
     frames.append((draw_step(it, no, None if not last else dict(last, line=0), prev, total - 1, total, fn, args), 1.0))
     frames.append((draw_outro(it, no, it["output"]), 3.5))
     key = f"{it['kind']}-{it['id']}"
     (OUT / "reels").mkdir(parents=True, exist_ok=True)
     mp4 = OUT / "reels" / f"{key}.mp4"
-    encode(frames, mp4, ffmpeg)
+    st = starts(frames)
+    n = len(shots)
+    sounds = [(0.0, "idea", 0.7), (st[1], "whoosh", 0.6)] + step_sounds(steps, st[1:1 + n])
+    sounds += [(st[1 + n], "idea", 0.8), (st[2 + n], "whoosh", 0.6), (st[2 + n] + 0.3, "fanfare", 1.0)]
+    encode(frames, mp4, ffmpeg, sounds)
     (cover or frames[0][0]).convert("RGB").save(OUT / "reels" / f"{key}.jpg", "JPEG", quality=85)
-    seconds = sum(round(s * FPS) for _, s in frames) / FPS
-    return key, seconds
+    return key, seconds_of(frames)
 
 
 def reel_post(it, no, key, seconds):

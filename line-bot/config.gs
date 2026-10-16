@@ -40,7 +40,10 @@ const CONFIG = {
   rotation: ["reel", "term", "term", "trace", "term", "reel", "news"],
   newsCandidates: 8,                                      // 今週のITニュース: LINE に出す候補の数
   newsPostCount: 3,                                       // 今週のITニュース: 1回の投稿に載せるニュースの数（3まで）
-  scheduleHour: 20,                                       // 「〇時に投稿」ボタンで投稿する時刻
+  // Instagram にボットが投稿するか（API で投稿）。false: 「今すぐ投稿」「〇時に投稿」を出さず、
+  //   「素材を受け取る」でもらった画像・動画を自分でアプリから投稿する。2026-10-16 から止めている。また使うときは true に
+  igAutoPost: false,
+  scheduleHour: 20,                                       // 「〇時に投稿」ボタンで投稿する時刻（igAutoPost が true のとき）
   // 姉妹サイト「ITパスポート用語ドリル」の閲覧者も、毎朝のレポートに出す（GA4 のプロパティ ID。空にすると出さない）
   ipGaPropertyId: "558662911",
 };

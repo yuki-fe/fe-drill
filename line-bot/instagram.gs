@@ -56,14 +56,11 @@ function igDraftMessage(prefix, kind) {
   const text = {
     type: "text",
     text: [prefix, TALK.igHead(K.label, postTitle(p)), ""].concat(media, ["", "―― 投稿文 ――", preview]).filter((x) => x !== undefined).join("\n"),
-    quickReply: { items: [
-      qr("今すぐ投稿", "ig=post&" + d),
-      qr("素材を受け取る", "ig=kit&" + d),
-      qr(`${CONFIG.scheduleHour}時に投稿`, "ig=sched&" + d),
+    quickReply: { items: igPostButtons(d).concat([
       qr("別のにする", "ig=next&" + d),
       qr("種類を変える", "ig=kind&" + d),
       qr("今日はやめる", "ig=skip&" + d),
-    ] },
+    ]) },
   };
   // クイックリプライは最後の吹き出しに付ける必要があるので、動画は先に置く
   return kind === "reel" ? [{ type: "video", originalContentUrl: p.video, previewImageUrl: p.cover }, text] : text;
@@ -71,6 +68,12 @@ function igDraftMessage(prefix, kind) {
 
 function qr(label, data) {
   return { type: "action", action: { type: "postback", label, data, displayText: label } };
+}
+
+/* 下書きの投稿のボタン。自動投稿を止めている（CONFIG.igAutoPost が false）ときは「素材を受け取る」だけ */
+function igPostButtons(d) {
+  if (!CONFIG.igAutoPost) return [qr("素材を受け取る", "ig=kit&" + d)];
+  return [qr("今すぐ投稿", "ig=post&" + d), qr("素材を受け取る", "ig=kit&" + d), qr(`${CONFIG.scheduleHour}時に投稿`, "ig=sched&" + d)];
 }
 
 /* 「素材を受け取る」: 自分でアプリから投稿する（音楽を付けるなど）ための一式を、保存・コピーしやすいように別々の吹き出しで送る。
@@ -205,6 +208,7 @@ function igAction(action, kind, id) {
     setKindToday(nk);
     return igDraftMessage(TALK.igKindChanged(IG_KINDS[nk].label), nk);
   }
+  if (!CONFIG.igAutoPost) return TALK.igAutoOff;   // 「今すぐ投稿」「〇時に投稿」（古いボタンや「投稿」のことば）
   if (prop("IG_PENDING")) return TALK.igBusy;
   if (action === "sched") {
     const t = scheduledTime();
@@ -284,6 +288,10 @@ function igWorker() {
     return;
   }
   const sch = jsonProp("IG_SCHEDULE", null);
+  if (sch && !CONFIG.igAutoPost) {   // 自動投稿を止める前に予約していたものは、投稿せずに取り消す
+    PROPS.deleteProperty("IG_SCHEDULE");
+    return;
+  }
   if (sch && Date.now() >= sch.at) {
     PROPS.deleteProperty("IG_SCHEDULE");
     const cur = igCurrent(sch.kind);

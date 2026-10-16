@@ -232,13 +232,10 @@ function newsReadyDraft(st, prefix) {
   const text = {
     type: "text",
     text: [prefix, TALK.igHead(IG_KINDS.news.label, st.term), "", "―― 投稿文 ――", preview].filter((x) => x !== undefined).join("\n"),
-    quickReply: { items: [
-      qr("今すぐ投稿", "ig=post&" + d),
-      qr("素材を受け取る", "ig=kit&" + d),
-      qr(`${CONFIG.scheduleHour}時に投稿`, "ig=sched&" + d),
+    quickReply: { items: igPostButtons(d).concat([
       qr("選び直す", "ig=newsrepick&" + d),
       qr("今日はやめる", "ig=skip&" + d),
-    ] },
+    ]) },
   };
   return st.images.map((u) => ({ type: "image", originalContentUrl: u, previewImageUrl: u })).concat(text);
 }

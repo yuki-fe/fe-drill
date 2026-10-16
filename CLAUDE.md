@@ -18,6 +18,8 @@
 - 4つ目のサイト **「国内旅行業務用語ドリル」**（国内旅行業務取扱管理者試験）はデスクトップの `travel-drill`（`yuki-fe/travel-drill`、未公開）。cloud-drill の build.py をもとに作った。数字は元の文書で確かめたものだけを書く
 - 5つ目のサイト **「生成AI用語ドリル」**（生成AIパスポート試験、2027年2月試験からの新シラバス）はデスクトップの `genai-drill`（`yuki-fe/genai-drill`、未公開、genai.yogo-drill.com の予定）。cloud-drill の build.py をもとに作った
 - 6つ目のサイト **「ディープラーニング用語ドリル」**（JDLA の G検定、シラバス 2024）はデスクトップの `dl-drill`（`yuki-fe/dl-drill`、未公開、dl.yogo-drill.com の予定）。genai-drill の build.py をもとに作った。サイト名に「G検定」を入れない
+- 7つ目のサイト **「簿記用語ドリル」**（簿記検定3級、2027年4月施行の出題区分表）はデスクトップの `boki-drill`（`yuki-fe/boki-drill`、未公開、boki.yogo-drill.com の予定）。dl-drill の build.py をもとに作った。略語クイズの代わりに勘定科目の分類クイズ（`kamoku.html`）。サイト名に「日商」を入れない
+- 入り口のサイト **「用語ドリル」**（https://yogo-drill.com/ の予定、デスクトップの `yogo-drill`、未公開）が各サイトを紹介する。サイトを公開したら、そちらの `sites.json` の `"public"` を true にしてビルドする
 
 ## フォルダ構成
 
@@ -32,8 +34,10 @@
 | `docs/` | **生成物。直接編集しない**（ビルドのたびに作り直される）。ただし GitHub Pages が使うので commit はする |
 | `checks/` | ビルドで作られる確認ページ（`b-check.html`）。commit しない |
 | `make_ig_images.py` | 用語クイズの投稿画像（1080×1350 の2枚組）と投稿文を作る |
-| `make_b_media.py` | 科目Bのリール動画（1080×1920、H.264）とトレースクイズの画像を作る。Edge と FFmpeg を使う |
+| `make_b_media.py` | 科目Bのリール動画（1080×1920、60fps、H.264 CRF 16。いま実行する行の帯がすべって動き、画面の間はふわっと切り替わる。効果音と BGM は `media_fx.py`。1行ごとに「カチッ」、値が変わると「ポッ」）とトレースクイズの画像を作る。Edge（動かないときは Chrome）と FFmpeg を使う |
 | `make_intro_media.py` | Instagram の最初の投稿（サイト紹介のフィード5枚・リール・ストーリー2枚と投稿文）を `static/ig/intro/` に作る。一度きり |
+| `make_ip_launch_media.py` | ITパスポート用語ドリルの公開を知らせるリール（約34秒・60fps・効果音・BGM つき。BGM なしの `reel-no-bgm.mp4` も）・表紙・投稿文を `static/ig/ip-launch/` に作る。一度きり。用語は `../ip-drill/data/terms.json` から読む |
+| `media_fx.py` | 動画の飾り。8ビット風の効果音・BGM（どちらもプログラムで作る。素材サイトの音は使わない。BGM はハ長調・テンポ120、`PROG` コード進行と `MELODY` メロディ）。キャラクターのドット絵を切り抜く仕組み（`POSES`・`POSES_B`、`notes/brand/` のシート）も残っているが、今は使っていない |
 | `make_news_image.py` | 「今週のITニュース」の画像（見出し・用語の解説）を `static/ig/news/` に作る。ふだんは GitHub の自動実行が動かす。`--cover` で合言葉なしのとき用の表紙 |
 | `.github/workflows/news-image.yml` | ボットの合図（repository_dispatch: news-image）で `make_news_image.py` を動かし、画像を commit して公開する |
 | `line-bot/` | LINE ボットのプログラム。役割ごとの .gs（`config` 設定・setup / `talk` 話し方 / `report` 毎朝のレポート / `news` / `instagram` / `youtube` 数字とコメント / `inquiry` お問い合わせ / `line` Webhook と送信）と `appsscript.json`。合言葉（トークン）は入れない |
@@ -79,6 +83,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 
 ### Instagram
 
+- **ボットからの自動投稿（API で投稿）は 2026-10-16 から止めている**（`CONFIG.igAutoPost: false`）。下書きには「素材を受け取る」だけを出し、運営者がアプリから投稿して「投稿した」を押す。「投稿」と送っても投稿しない。止める前の予約は投稿せずに取り消す。また使うときは `igAutoPost: true` にする（テストは両方を確かめている）
 - Facebook ログイン方式。API は `https://graph.facebook.com/v23.0`、トークンは Facebook ページのトークン（期限なし）。Facebook ページ「Fe用語ドリル」と連携
 - 投稿の種類は `IG_KINDS`: 用語クイズ（term）・トレースクイズ（trace）・リール動画（reel）・今週のITニュース（news）。曜日ごとの種類は `CONFIG.rotation`（日〜土: reel, term, term, trace, term, reel, news）
 - ストックはサイトに置いた `ig/posts.json`・`ig/trace-posts.json`・`ig/reels.json`。投稿すると次へ進む。**リールは減りが早い**（16本・週2本で約2か月分）
@@ -99,6 +104,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 - 広告は「PR」の表示を消さない（ステルスマーケティング規制）
 - トークン・合言葉・個人情報はリポジトリに入れない。リポジトリは **公開** なので、`notes/` や画像の置き場所に注意する
 - 用語の説明は AI の支援で作ったもの。数値や法律の内容を足すときは特に確かめる
+- 動画にキャラクター（アイコンのドット絵）は **入れない**（2026-10-16 に運営者が決めた。ふきだしでセリフを言わせる形も試したが、やめた）。`make_ip_launch_media.py` の `Scene.chara`・`Scene.say`（ふきだしの形 talk/think/shout）・`Scene.walk` は残してあるので、また使うときはそれを呼ぶ
 
 ## 未決定・これからの候補
 

@@ -134,6 +134,7 @@ const t_text = () => lastMsg().messages.map((x) => x.text || "").join("\n");
 const out = [], fails = [];
 const check = (name, cond) => { out.push((cond ? "  OK  " : "  NG  ") + name); if (!cond) fails.push(name); };
 try {
+  CONFIG.igAutoPost = true;   // 自動投稿ありのときの動き（いまは止めているが、また使うときのために確かめる）
   setup();
   check("トリガーを作る", triggers.length >= 3);
   check("setup で YouTube のチャンネルを見つける", store.YT_CHANNEL_ID === "UCtest");
@@ -304,6 +305,21 @@ try {
 
   NOW = new Date("2026-10-12T08:00:00+09:00").getTime();
   check("月曜は用語クイズの日", kindToday() === "term");
+
+  // 自動投稿を止めたとき（CONFIG.igAutoPost = false。2026-10-16 から）
+  CONFIG.igAutoPost = false;
+  delete store.IG_PENDING;
+  store.IG_SCHEDULE = JSON.stringify({ kind: "term", id: "1", at: 0 });
+  igCalls.length = 0; igWorker();
+  check("自動投稿を止めると、前の予約は投稿せずに取り消す", !store.IG_SCHEDULE && !igCalls.some((c) => c.includes("media")));
+  t_say("インスタ 用語"); out.push("--- 自動投稿を止めたときの下書き", t_last());
+  const offLabels = lastMsg().messages[lastMsg().messages.length - 1].quickReply.items.map((q) => q.action.label);
+  check("下書きに「今すぐ投稿」「〇時に投稿」を出さない", offLabels.includes("素材を受け取る") && !offLabels.includes("今すぐ投稿") && !offLabels.some((l) => l.endsWith("時に投稿")));
+  igCalls.length = 0;
+  t_say("投稿"); out.push("--- 自動投稿を止めたときに「投稿」", t_last());
+  check("「投稿」と送っても投稿しない", t_text().includes("自動投稿を止めて") && igCalls.length === 0);
+  t_say("素材");
+  check("素材は受け取れる", lastMsg().messages.length >= 3 && lastMsg().messages.some((m) => m.type === "image"));
 } catch (e) { out.push("ERROR " + e.stack); fails.push("例外"); }
 out.push("", fails.length ? "FAILED: " + fails.join("、") : "ALL OK");
 document.getElementById("out").textContent = out.join("\n");
