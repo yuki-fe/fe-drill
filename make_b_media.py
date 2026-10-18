@@ -29,6 +29,8 @@ OUT = ROOT / "static" / "ig"
 CONFIG = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
 BASE = CONFIG["base_url"].rstrip("/")
 
+# リール動画に「動きの図」（配列の箱・番号の矢印・飛んでいく値。b_visual.py）を入れるか
+VISUAL = True
 W, H, FPS = 1080, 1920, 60   # Instagram のリールは 23〜60fps まで受け付ける
 PAPER, BG, INK, MUTED, LINE = "#fbfcfa", "#f1f4f1", "#1d2a2e", "#5d6c6e", "#d5ddd8"
 MARK, MARK_SOFT, OK, OK_SOFT, HL = "#c0435a", "#f6dfe3", "#2b7a68", "#d9eee8", "#fff1b8"
@@ -345,7 +347,7 @@ def encode(frames, path, ffmpeg, sounds=(), music=True):
     prev_last = None
     for shot, sec in frames:
         n = max(1, round(sec * FPS))
-        fade = min(0.3, sec * 0.25)
+        fade = 0 if getattr(shot, "no_fade", False) else min(0.3, sec * 0.25)   # 動きの図の行どうしは重ねない
         still = None if callable(shot) else shot.convert("RGB")
         for i in range(n):
             t = i / FPS
@@ -388,35 +390,37 @@ def step_shots(it, no, fn, args, steps, per):
 
 
 def step_sounds(steps, times):
-    """1行ずつの画面の効果音。行ごとに「カチッ」、変数の値が変わった行は小さく「ポッ」も。"""
-    out, prev = [], None
-    for s, t in zip(steps, times):
-        out.append((t, "tick", 0.8))
-        if prev is not None and prev["fn"] == s["fn"] and prev["depth"] == s["depth"]:
-            pv, cv = prev.get("vars") or {}, s.get("vars") or {}
-            if any(k in pv and fmt(pv[k]) != fmt(v) for k, v in cv.items()):
-                out.append((t + 0.03, "pop", 0.35))
-        prev = s
-    return out
+    """1行ずつの画面の効果音。行ごとの音は鳴らさない（音が多すぎて、うるさくなるため。2026-10-16 にやめた）。
+    BGM だけを流す。また鳴らすときは、ここで [(秒, "tick", 音量)] などを返す。"""
+    return []
 
 
 def make_reel(it, no, ffmpeg):
     fn, args = args_of(it)
     steps, last = reel_frames(it)
     total = len(steps)
-    per = min(0.9, max(0.2, 16 / max(1, total)))
     frames = [(draw_intro(it, no, fn, args), 2.5)]
-    shots, cover, prev = step_shots(it, no, fn, args, steps, per)
-    frames += shots
-    frames.append((draw_step(it, no, None if not last else dict(last, line=0), prev, total - 1, total, fn, args), 1.0))
+    end_step = None if not last else dict(last, line=0)
+    if VISUAL:
+        import b_visual as bv
+        per = min(0.9, max(0.5, 26 / max(1, total)))   # 図の動きを目で追えるように、1行は0.5秒以上
+        shots, cover, prev = bv.step_shots(it, no, fn, args, steps, per)
+        frames += shots
+        frames.append((bv.draw_frame(bv.Layout(it, steps), it, no, end_step, prev, total - 1, total, fn, args), 1.2))
+    else:
+        per = min(0.9, max(0.2, 16 / max(1, total)))
+        shots, cover, prev = step_shots(it, no, fn, args, steps, per)
+        frames += shots
+        frames.append((draw_step(it, no, end_step, prev, total - 1, total, fn, args), 1.0))
     frames.append((draw_outro(it, no, it["output"]), 3.5))
     key = f"{it['kind']}-{it['id']}"
     (OUT / "reels").mkdir(parents=True, exist_ok=True)
     mp4 = OUT / "reels" / f"{key}.mp4"
     st = starts(frames)
     n = len(shots)
-    sounds = [(0.0, "idea", 0.7), (st[1], "whoosh", 0.6)] + step_sounds(steps, st[1:1 + n])
-    sounds += [(st[1 + n], "idea", 0.8), (st[2 + n], "whoosh", 0.6), (st[2 + n] + 0.3, "fanfare", 1.0)]
+    # 効果音は、トレースが始まる「シュッ」・実行が終わった「ピコーン」・最後の「タラララン」だけ
+    sounds = [(st[1], "whoosh", 0.4)] + step_sounds(steps, st[1:1 + n])
+    sounds += [(st[1 + n], "idea", 0.6), (st[2 + n], "whoosh", 0.4), (st[2 + n] + 0.3, "fanfare", 1.0)]
     encode(frames, mp4, ffmpeg, sounds)
     (cover or frames[0][0]).convert("RGB").save(OUT / "reels" / f"{key}.jpg", "JPEG", quality=85)
     return key, seconds_of(frames)

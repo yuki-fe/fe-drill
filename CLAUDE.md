@@ -34,10 +34,12 @@
 | `docs/` | **生成物。直接編集しない**（ビルドのたびに作り直される）。ただし GitHub Pages が使うので commit はする |
 | `checks/` | ビルドで作られる確認ページ（`b-check.html`）。commit しない |
 | `make_ig_images.py` | 用語クイズの投稿画像（1080×1350 の2枚組）と投稿文を作る |
-| `make_b_media.py` | 科目Bのリール動画（1080×1920、60fps、H.264 CRF 16。いま実行する行の帯がすべって動き、画面の間はふわっと切り替わる。効果音と BGM は `media_fx.py`。1行ごとに「カチッ」、値が変わると「ポッ」）とトレースクイズの画像を作る。Edge（動かないときは Chrome）と FFmpeg を使う |
+| `make_b_media.py` | 科目Bのリール動画（1080×1920、60fps、H.264 CRF 16、音なし）とトレースクイズの画像を作る。上にコード（今の行の帯がすべって動く）、下に **「動きの図」**（`b_visual.py`。`VISUAL = True`）。1行は0.5秒以上。Edge（動かないときは Chrome）と FFmpeg を使う |
+| `b_visual.py` | リールの「動きの図」: 配列は箱、番号に使う変数（`[ ]` の中や、それを計算する式の変数）は箱の下の矢印（すべって動く）、代入は値のチップが飛ぶ（「s ← 0 + 3」の式も出す）、if・while で比べる箱はオレンジ、ふつうの変数はカード、再帰は呼び出しの深さ。大域変数は、コードに「大域:」とあるものだけ図に入れる。部品が多いと自動で小さくして収める |
 | `make_intro_media.py` | Instagram の最初の投稿（サイト紹介のフィード5枚・リール・ストーリー2枚と投稿文）を `static/ig/intro/` に作る。一度きり |
-| `make_ip_launch_media.py` | ITパスポート用語ドリルの公開を知らせるリール（約34秒・60fps・効果音・BGM つき。BGM なしの `reel-no-bgm.mp4` も）・表紙・投稿文を `static/ig/ip-launch/` に作る。一度きり。用語は `../ip-drill/data/terms.json` から読む |
-| `media_fx.py` | 動画の飾り。8ビット風の効果音・BGM（どちらもプログラムで作る。素材サイトの音は使わない。BGM はハ長調・テンポ120、`PROG` コード進行と `MELODY` メロディ）。キャラクターのドット絵を切り抜く仕組み（`POSES`・`POSES_B`、`notes/brand/` のシート）も残っているが、今は使っていない |
+| `make_app_icons.py` | スマホのホーム画面に置くアプリのアイコン（PWA 用。`static/icon-192.png`・`icon-512.png`・`icon-maskable-512.png`）を作る。アイコンの形を変えたときだけ |
+| `make_ip_launch_media.py` | ITパスポート用語ドリルの公開を知らせるリール（約34秒・60fps・音なし）・表紙・投稿文を `static/ig/ip-launch/` に作る。一度きり。用語は `../ip-drill/data/terms.json` から読む |
+| `media_fx.py` | 動画の飾りの仕組み。**リール動画は音なし（BGM も効果音もなし）**（2026-10-16 に運営者が決めた。`SFX_ON = False`・`BGM_STYLE = None`。動画には無音の音声トラックだけ入る）。効果音・BGM（`chip` 8ビット・`band` 楽器・`healing` ヒーリング風）・キャラクターのドット絵（`POSES`・`POSES_B`）を作る仕組みは残っているが、今は使っていない |
 | `make_news_image.py` | 「今週のITニュース」の画像（見出し・用語の解説）を `static/ig/news/` に作る。ふだんは GitHub の自動実行が動かす。`--cover` で合言葉なしのとき用の表紙 |
 | `.github/workflows/news-image.yml` | ボットの合図（repository_dispatch: news-image）で `make_news_image.py` を動かし、画像を commit して公開する |
 | `line-bot/` | LINE ボットのプログラム。役割ごとの .gs（`config` 設定・setup / `talk` 話し方 / `report` 毎朝のレポート / `news` / `instagram` / `youtube` 数字とコメント / `inquiry` お問い合わせ / `line` Webhook と送信）と `appsscript.json`。合言葉（トークン）は入れない |
@@ -60,6 +62,13 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 - Windows のコンソールは cp932 なので、日本語を出力するスクリプトは `PYTHONIOENCODING=utf-8` を付けて動かす
 - Python のパッケージは `requirements.txt`（Pillow・imageio-ffmpeg）。サイト専用の `.venv` に入れて、`.venv\Scripts\python` で動かす。FFmpeg は `imageio-ffmpeg` に入っているもの（環境変数 `FFMPEG` で別のものも指定できる）
 - Bash の長いヒアドキュメントは失敗しやすい。長い内容は Write でファイルに書いてから実行する
+
+## アプリとして使う（PWA）
+
+- サイトはスマホのホーム画面に追加して、アプリのように全画面で使える（PWA）。build.py の `build_pwa_files` が `manifest.webmanifest`（名前・アイコン・色 `THEME`）と `sw.js`（サービスワーカー）を作り、全ページで登録する。手順のページは `app.html`（フッターの「アプリとして使う」）
+- サービスワーカー: ページはネット優先・取れないときは保存したもの（なければ `offline.html`）、CSS・JS・画像は保存したものをすぐ出して裏で新しくする。`ig/`（動画など）は保存しない。中身が変わると版の名前（ハッシュ）が変わり、古い保存は自動で消える
+- iPhone では、Safari とホーム画面のアプリで進み具合（localStorage）が別々になる（`app.html` に書いてある）
+- Google Play に出すときは、この PWA を包む（TWA。登録料 25ドル）。App Store は、サイトを包んだだけのアプリは審査で断られやすい
 
 ## 公開までの流れ
 

@@ -19,6 +19,8 @@
 <link rel="icon" href="favicon.ico" sizes="48x48">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c0435a">
 
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-4FY1CNV38B"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-4FY1CNV38B');</script>
 
@@ -38,6 +40,7 @@
   <h1>プライバシーポリシー・免責事項</h1>
   <h2>学習の記録について</h2>
   <p>学習機能の進み具合（覚えた用語など）は、利用者のブラウザの中（localStorage）にだけ保存されます。運営者のサーバに送られることはありません。ブラウザのデータを消去すると、進み具合も消えます。</p>
+  <p>電波がないところでも使えるように、一度開いたページや CSS・JavaScript などのファイルを、利用者のブラウザの中（サービスワーカーのキャッシュ）に保存します。保存したものが運営者に送られることはありません。</p>
   <h2>個人情報の利用目的</h2>
   <p>お問い合わせの際に、お名前やメールアドレスなどの個人情報をご提供いただく場合があります。これらの情報は、お問い合わせへの回答や必要な連絡のためにだけ利用し、法令に基づく場合を除き、本人の同意なく第三者に提供しません。</p>
   <h2>アクセス解析ツールについて</h2>
@@ -51,7 +54,7 @@
   <p><a href="https://forms.gle/s4yB1xMbcoRqZps2A">お問い合わせフォーム</a></p>
   <h2>改定</h2>
   <p>このページの内容は、必要に応じて予告なく変更することがあります。</p>
-  <p class="muted">制定日: 2026-10-06 / 最終更新日: 2026-10-16</p>
+  <p class="muted">制定日: 2026-10-06 / 最終更新日: 2026-10-17</p>
 </main>
 
 <footer class="site-foot">
@@ -59,10 +62,12 @@
     <a href="terms/index.html">用語一覧</a>
     <a href="about.html">運営者情報</a>
     <a href="privacy.html">プライバシーポリシー・免責事項</a>
+    <a href="app.html">アプリとして使う</a>
   </nav>
   <p>基本情報技術者試験は、独立行政法人 情報処理推進機構（IPA）が実施する国家試験です。当サイトはIPAとは関係のない個人の学習サイトです。</p>
   <p>© 2026 Yuki-fe</p>
 </footer>
 
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

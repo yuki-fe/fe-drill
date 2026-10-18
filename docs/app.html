@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>アプリとして使う（ホーム画面に追加）｜FE用語ドリル</title>
+<meta name="description" content="FE用語ドリルをスマホのホーム画面に追加して、アプリのように使う方法です。iPhone と Android の手順。">
+<link rel="canonical" href="https://fe.yogo-drill.com/app.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="アプリとして使う（ホーム画面に追加）｜FE用語ドリル">
+<meta property="og:description" content="FE用語ドリルをスマホのホーム画面に追加して、アプリのように使う方法です。iPhone と Android の手順。">
+<meta property="og:url" content="https://fe.yogo-drill.com/app.html">
+<meta property="og:site_name" content="FE用語ドリル">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c0435a">
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-4FY1CNV38B"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-4FY1CNV38B');</script>
+
+</head>
+<body class="" data-root="">
+<header class="site-head">
+  <a class="brand" href="index.html">FE用語ドリル</a>
+  <nav class="site-nav" aria-label="サイト内">
+    <a href="index.html">科目A 用語</a>
+    <a href="b/index.html">科目B</a>
+    <a href="terms/index.html">用語一覧</a>
+    <a href="about.html">このサイトについて</a>
+  </nav>
+</header>
+
+<main class="prose">
+  <h1>アプリとして使う<small>スマホのホーム画面に追加</small></h1>
+  <p>FE用語ドリルは、スマホのホーム画面に追加すると、アプリのように全画面で開けます。インストールの手間やお金はかかりません。一度開いたページや問題は、電波がないところでも使えます。</p>
+  <p id="pwa-done" class="note" hidden>いまはアプリとして開いています。</p>
+  <p id="pwa-install-wrap" hidden><button id="pwa-install" class="btn primary" type="button">ホーム画面に追加する</button></p>
+  <h2>iPhone（Safari）</h2>
+  <ol>
+    <li>Safari でこのサイトを開く</li>
+    <li>画面の下（または上）の <b>共有ボタン</b>（四角から矢印が上に出ているマーク）を押す</li>
+    <li>メニューを下へ動かして <b>「ホーム画面に追加」</b> を押す</li>
+    <li>右上の <b>「追加」</b> を押す</li>
+  </ol>
+  <h2>Android（Chrome）</h2>
+  <ol>
+    <li>Chrome でこのサイトを開く</li>
+    <li>右上の <b>︙（メニュー）</b> を押す</li>
+    <li><b>「アプリをインストール」</b>（または <b>「ホーム画面に追加」</b>）を押す</li>
+    <li><b>「インストール」</b> を押す</li>
+  </ol>
+  <h2>知っておくこと</h2>
+  <ul>
+    <li>覚えた用語などの進み具合は、使っているスマホの中に保存されます。<b>iPhone では、Safari で使っていたときの進み具合は、ホーム画面のアプリには引きつがれません</b>（別々に保存されます）。</li>
+    <li>電波がないときに使えるのは、一度開いたことのあるページです。ホームの単語帳（カード・4択・書いて答える）と科目Bの練習は、一度開けば全部の問題が使えます。</li>
+    <li>サイトを新しくしたときは、次に電波があるところで開いたときに、自動で新しくなります。</li>
+    <li>ホーム画面から消すときは、ふつうのアプリと同じように、アイコンを長押しして削除します。</li>
+  </ul>
+</main>
+<script>
+(() => {
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (standalone) document.getElementById("pwa-done").hidden = false;
+  let ev = null;
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); ev = e; document.getElementById("pwa-install-wrap").hidden = false; });
+  document.getElementById("pwa-install").onclick = async () => {
+    if (!ev) return;
+    ev.prompt();
+    await ev.userChoice;
+    ev = null;
+    document.getElementById("pwa-install-wrap").hidden = true;
+  };
+})();
+</script>
+
+<footer class="site-foot">
+  <nav aria-label="フッター">
+    <a href="terms/index.html">用語一覧</a>
+    <a href="about.html">運営者情報</a>
+    <a href="privacy.html">プライバシーポリシー・免責事項</a>
+    <a href="app.html">アプリとして使う</a>
+  </nav>
+  <p>基本情報技術者試験は、独立行政法人 情報処理推進機構（IPA）が実施する国家試験です。当サイトはIPAとは関係のない個人の学習サイトです。</p>
+  <p>© 2026 Yuki-fe</p>
+</footer>
+
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

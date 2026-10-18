@@ -1,0 +1,39 @@
+{
+ "name": "FE用語ドリル",
+ "short_name": "FE用語ドリル",
+ "lang": "ja",
+ "description": "基本情報技術者試験の用語を無料で覚える単語帳",
+ "start_url": "./?utm_source=pwa&utm_medium=app",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#f1f4f1",
+ "theme_color": "#c0435a",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ],
+ "shortcuts": [
+  {
+   "name": "科目B トレース練習",
+   "url": "./b/trace.html"
+  },
+  {
+   "name": "用語一覧",
+   "url": "./terms/index.html"
+  }
+ ]
+}

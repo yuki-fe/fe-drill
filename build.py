@@ -4,6 +4,7 @@
 入力:    config.json（サイトの設定）、data/terms.json（用語）、static/（CSS・JS）
 出力:    docs/（GitHub Pages でそのまま公開できる）
 """
+import hashlib
 import json
 import random
 import re
@@ -16,6 +17,7 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).parent
 OUT = ROOT / "docs"
+THEME = "#c0435a"   # アプリ（PWA）の上の帯の色。style.css の --mark と同じ
 FIELDS = {"T": "テクノロジ系", "M": "マネジメント系", "S": "ストラテジ系"}
 KANA = ["ア", "イ", "ウ", "エ"]
 
@@ -104,6 +106,8 @@ def page(path, title, desc, body, rel, body_class="", jsonld=None, scripts="", i
 <link rel="icon" href="{rel}favicon.ico" sizes="48x48">
 <link rel="icon" href="{rel}favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="{rel}apple-touch-icon.png">
+<link rel="manifest" href="{rel}manifest.webmanifest">
+<meta name="theme-color" content="{THEME}">
 {'' if index else '<meta name="robots" content="noindex">'}
 {head_extras()}
 {ld}
@@ -124,11 +128,13 @@ def page(path, title, desc, body, rel, body_class="", jsonld=None, scripts="", i
     <a href="{rel}terms/index.html">用語一覧</a>
     <a href="{rel}about.html">運営者情報</a>
     <a href="{rel}privacy.html">プライバシーポリシー・免責事項</a>
+    <a href="{rel}app.html">アプリとして使う</a>
   </nav>
   <p>基本情報技術者試験は、独立行政法人 情報処理推進機構（IPA）が実施する国家試験です。当サイトはIPAとは関係のない個人の学習サイトです。</p>
   <p>© {date.today().year} {escape(config.get("operator") or SITE)}</p>
 </footer>
 {scripts}
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("{rel}sw.js").catch(() => {{}}));</script>
 </body>
 </html>
 """
@@ -687,6 +693,7 @@ def build_privacy():
   <h1>プライバシーポリシー・免責事項</h1>
   <h2>学習の記録について</h2>
   <p>学習機能の進み具合（覚えた用語など）は、利用者のブラウザの中（localStorage）にだけ保存されます。運営者のサーバに送られることはありません。ブラウザのデータを消去すると、進み具合も消えます。</p>
+  <p>電波がないところでも使えるように、一度開いたページや CSS・JavaScript などのファイルを、利用者のブラウザの中（サービスワーカーのキャッシュ）に保存します。保存したものが運営者に送られることはありません。</p>
   <h2>個人情報の利用目的</h2>
   <p>お問い合わせの際に、お名前やメールアドレスなどの個人情報をご提供いただく場合があります。これらの情報は、お問い合わせへの回答や必要な連絡のためにだけ利用し、法令に基づく場合を除き、本人の同意なく第三者に提供しません。</p>
   {''.join(parts)}
@@ -714,6 +721,132 @@ def build_404():
 </main>
 """
     page("404.html", f"ページが見つかりません｜{SITE}", "お探しのページは見つかりませんでした。", body, "", index=False)
+
+
+def build_app():
+    """「アプリとして使う」ページ（ホーム画面に追加する手順）と、電波がないときのページ。"""
+    body = f"""
+<main class="prose">
+  <h1>アプリとして使う<small>スマホのホーム画面に追加</small></h1>
+  <p>{escape(SITE)}は、スマホのホーム画面に追加すると、アプリのように全画面で開けます。インストールの手間やお金はかかりません。一度開いたページや問題は、電波がないところでも使えます。</p>
+  <p id="pwa-done" class="note" hidden>いまはアプリとして開いています。</p>
+  <p id="pwa-install-wrap" hidden><button id="pwa-install" class="btn primary" type="button">ホーム画面に追加する</button></p>
+  <h2>iPhone（Safari）</h2>
+  <ol>
+    <li>Safari でこのサイトを開く</li>
+    <li>画面の下（または上）の <b>共有ボタン</b>（四角から矢印が上に出ているマーク）を押す</li>
+    <li>メニューを下へ動かして <b>「ホーム画面に追加」</b> を押す</li>
+    <li>右上の <b>「追加」</b> を押す</li>
+  </ol>
+  <h2>Android（Chrome）</h2>
+  <ol>
+    <li>Chrome でこのサイトを開く</li>
+    <li>右上の <b>︙（メニュー）</b> を押す</li>
+    <li><b>「アプリをインストール」</b>（または <b>「ホーム画面に追加」</b>）を押す</li>
+    <li><b>「インストール」</b> を押す</li>
+  </ol>
+  <h2>知っておくこと</h2>
+  <ul>
+    <li>覚えた用語などの進み具合は、使っているスマホの中に保存されます。<b>iPhone では、Safari で使っていたときの進み具合は、ホーム画面のアプリには引きつがれません</b>（別々に保存されます）。</li>
+    <li>電波がないときに使えるのは、一度開いたことのあるページです。ホームの単語帳（カード・4択・書いて答える）と科目Bの練習は、一度開けば全部の問題が使えます。</li>
+    <li>サイトを新しくしたときは、次に電波があるところで開いたときに、自動で新しくなります。</li>
+    <li>ホーム画面から消すときは、ふつうのアプリと同じように、アイコンを長押しして削除します。</li>
+  </ul>
+</main>
+<script>
+(() => {{
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (standalone) document.getElementById("pwa-done").hidden = false;
+  let ev = null;
+  addEventListener("beforeinstallprompt", (e) => {{ e.preventDefault(); ev = e; document.getElementById("pwa-install-wrap").hidden = false; }});
+  document.getElementById("pwa-install").onclick = async () => {{
+    if (!ev) return;
+    ev.prompt();
+    await ev.userChoice;
+    ev = null;
+    document.getElementById("pwa-install-wrap").hidden = true;
+  }};
+}})();
+</script>
+"""
+    page("app.html", f"アプリとして使う（ホーム画面に追加）｜{SITE}",
+         f"{SITE}をスマホのホーム画面に追加して、アプリのように使う方法です。iPhone と Android の手順。", body, "")
+    body = """
+<main class="prose">
+  <h1>電波がないみたいです</h1>
+  <p>このページは、まだスマホに保存されていません。電波のあるところで、もう一度開いてください。</p>
+  <p><a href="index.html">ホームの単語帳</a>は、一度開いていれば、電波がなくても使えます。</p>
+</main>
+"""
+    page("offline.html", f"オフライン｜{SITE}", "電波がないときに表示するページです。", body, "", index=False)
+
+
+def build_pwa_files():
+    """アプリの説明書（manifest）と、サービスワーカー（sw.js）。
+    サービスワーカーは、ページを開くたびにネットから新しいものを取り、取れないとき（電波がない）は保存しておいたものを出す。
+    CSS・JS・画像は、保存しておいたものをすぐ出して、裏で新しくする。動画（ig/）は大きいので保存しない。"""
+    manifest = {
+        "name": SITE, "short_name": SITE, "lang": "ja",
+        "description": config.get("tagline", ""),
+        "start_url": "./?utm_source=pwa&utm_medium=app", "scope": "./", "display": "standalone",
+        "background_color": "#f1f4f1", "theme_color": THEME,
+        "icons": [
+            {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+            {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+            {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+        ],
+        "shortcuts": [
+            {"name": "科目B トレース練習", "url": "./b/trace.html"},
+            {"name": "用語一覧", "url": "./terms/index.html"},
+        ],
+    }
+    (OUT / "manifest.webmanifest").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
+    # 最初に保存しておくもの（ホーム・科目B・CSS・JS・アイコン）
+    pre = ["./", "index.html", "offline.html", "app.html", "terms/index.html",
+           "b/index.html", "b/trace.html", "b/fill.html", "b/notation.html", "b/security.html", "b/simulator.html",
+           "favicon.svg", "icon-192.png", "manifest.webmanifest"]
+    pre += sorted("assets/" + f.name for f in (OUT / "assets").iterdir() if f.is_file())
+    # 中身が変わったら、版の名前も変わる（古い保存は自動で消える）
+    h = hashlib.sha1()
+    for f in sorted(OUT.rglob("*")):
+        if f.is_file() and "ig" not in f.relative_to(OUT).parts and f.suffix in (".html", ".js", ".css", ".webmanifest", ".png", ".svg"):
+            h.update(f.read_bytes())
+    version = h.hexdigest()[:10]
+    sw = f"""// {SITE} のサービスワーカー（build.py が作る。直接編集しない）
+const CACHE = "fe-drill-{version}";
+const PRECACHE = {json.dumps(pre)};
+self.addEventListener("install", (e) => {{
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
+}});
+self.addEventListener("activate", (e) => {{
+  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    .then(() => self.clients.claim()));
+}});
+self.addEventListener("fetch", (e) => {{
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+  const fonts = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
+  if (url.origin !== location.origin && !fonts) return;            // アクセス解析などは、そのままネットへ
+  if (url.pathname.includes("/ig/")) return;                       // 動画や SNS の画像は保存しない
+  if (req.mode === "navigate") {{                                   // ページ: ネット優先、だめなら保存したもの
+    e.respondWith(fetch(req).then((res) => {{
+      const copy = res.clone();
+      caches.open(CACHE).then((c) => c.put(req, copy));
+      return res;
+    }}).catch(() => caches.match(req, {{ ignoreSearch: true }}).then((r) => r || caches.match("offline.html"))));
+    return;
+  }}
+  e.respondWith(caches.match(req).then((hit) => {{                  // CSS・JS・画像・フォント: 保存したものをすぐ、裏で新しく
+    const net = fetch(req).then((res) => {{
+      if (res.ok || res.type === "opaque") {{ const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }}
+      return res;
+    }}).catch(() => hit);
+    return hit || net;
+  }}));
+}});
+"""
+    (OUT / "sw.js").write_text(sw, encoding="utf-8")
 
 
 def build_meta_files():
@@ -797,8 +930,10 @@ def main():
     build_about()
     build_privacy()
     build_404()
+    build_app()
     build_b()
     build_meta_files()
+    build_pwa_files()
     write_b_check()
     n = sum(1 for _ in OUT.rglob("*.html"))
     print(f"docs/ に {n} ページを書き出しました（用語 {len(terms)} 語、科目B {len(B['algorithms'])} 図鑑・{len(B['trace']) + len(B['fill']) + len(B['security']) + len(B['notation'])} 問）")

@@ -327,7 +327,7 @@ def make_reel(item, ffmpeg):
     frames.append((r_outro(), 4.0))
     st = mb.starts(frames)
     # 効果音: 場面の切り替えに「シュッ」、カードをめくると「パタッ」、4択の正解に「ピンポン」、トレースは1行ごとに「カチッ」
-    sounds = [(0.0, "idea", 0.7)] + [(st[k], "whoosh", 0.6) for k in (1, 2, 4, 6, head, len(frames) - 1)]
+    sounds = [(st[k], "whoosh", 0.4) for k in (1, 2, 4, 6, head, len(frames) - 1)]
     sounds += [(st[3], "flip", 1.0), (st[5], "correct", 1.0), (st[-1] + 0.3, "fanfare", 1.0)]
     sounds += mb.step_sounds(steps, st[head:head + len(shots)])
     mb.encode(frames, OUT / "reel.mp4", ffmpeg, sounds)

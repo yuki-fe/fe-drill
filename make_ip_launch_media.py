@@ -1,8 +1,7 @@
 """「ITパスポート用語ドリル」を公開したことを知らせるリール動画を作る。一度だけ使う。
 
 作るもの（static/ig/ip-launch/ に書き出す）:
-  ・reel.mp4 / reel-cover.jpg   リール動画（1080×1920、60fps、約34秒、効果音・BGM つき）と表紙
-  ・reel-no-bgm.mp4            BGM なし（効果音だけ）の版。Instagram の音楽を付けるとき用
+  ・reel.mp4 / reel-cover.jpg   リール動画（1080×1920、60fps、約34秒、効果音つき。BGM は入れない）と表紙
   ・captions.txt               リールの投稿文、YouTube ショートのタイトルと説明
 
 動き: 場面ごとに、部品（枠・文字）を下から順に出す。場面の間はふわっと切り替える。
@@ -86,8 +85,8 @@ class Scene:
     def sfx(self, t, name, vol=1.0):
         self.sounds.append((t, name, vol))
 
-    def add(self, t0, draw_fn, rise=RISE, sound="pop", vol=0.45):
-        """t0 秒に、下から上がりながら出てくる部品。出るときに効果音を鳴らす（sound=None で鳴らさない）。"""
+    def add(self, t0, draw_fn, rise=RISE, sound=None, vol=0.45):
+        """t0 秒に、下から上がりながら出てくる部品。sound を渡すと、出るときに効果音を鳴らす（ふだんは鳴らさない）。"""
         part = Part(draw_fn)
         self.items.append(lambda f, t: part.put(f, ease((t - t0) / ENTER), dy=(1 - ease((t - t0) / ENTER)) * rise))
         if sound:
@@ -333,7 +332,7 @@ def s_title():
     sc.add(0.4, lambda img, d: center_text(d, 810, "ITパスポート", font(116, True), BLUE))
     sc.add(0.55, lambda img, d: center_text(d, 960, "用語ドリル", font(116, True), BLUE))
     sc.add(0.9, lambda img, d: center_text(d, 1160, "スマホでそのまま・登録なし", font(50, True), INK))
-    sc.sfx(0, "idea", 0.7)
+    sc.sfx(0.4, "idea", 0.5)   # サイト名が出るときだけ「ピコーン」
     return sc
 
 
@@ -361,10 +360,7 @@ def s_numbers():
             d.text((120, y + 60), v, font=nf, fill=BLUE)
             d.text((120 + nf.getlength(str(n)) + 16, y + 150), "語", font=font(60, True), fill=INK)
         sc.custom(count)
-        k = 0
-        while k * 0.09 < 1.1:   # 数え上げの「ピピピ…」
-            sc.sfx(t0 + 0.15 + k * 0.09, "count", 0.6)
-            k += 1
+        sc.sfx(t0 + 0.95, "pop", 0.6)   # 数字が止まったときに1回だけ「ポッ」
     return sc
 
 
@@ -445,7 +441,6 @@ def s_card():
             d.text((bx + (bw - font(42, True).getlength(lab)) / 2, 1360), lab, font=font(42, True), fill=PAPER)
         sc.add(T_FLIP + DUR + 0.1 + k * 0.12, btn, rise=40)
     sc.sfx(T_FLIP, "flip", 1.0)
-    sc.sfx(T_FLIP + DUR, "idea", 0.9)
     return sc
 
 
@@ -558,7 +553,7 @@ def encode(scenes, path, ffmpeg):
     events, start = [], 0.0
     for k, sc in enumerate(scenes):
         if k:
-            events.append((start, "whoosh", 0.7))
+            events.append((start, "whoosh", 0.4))   # 場面の切り替えは小さめに
         events += [(start + t, name, vol) for t, name, vol in sc.sounds]
         start += round(sc.sec * FPS) / FPS
     wav = path.with_suffix(".wav")
@@ -586,14 +581,6 @@ def encode(scenes, path, ffmpeg):
     wav.unlink(missing_ok=True)
     if not ok:
         sys.exit(f"動画の変換に失敗しました: {path.name}")
-    # BGM なし（効果音だけ）の版。Instagram の音楽を付けるとき用。映像はそのまま使い、音だけ入れ替える
-    fx.write_track(wav, start, events, music=False)
-    nobgm = path.with_name(path.stem + "-no-bgm.mp4")
-    r = subprocess.run([ffmpeg, "-y", "-loglevel", "error", "-i", str(path), "-i", str(wav), "-map", "0:v", "-map", "1:a",
-                        "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", str(nobgm)])
-    wav.unlink(missing_ok=True)
-    if r.returncode != 0:
-        sys.exit(f"動画の変換に失敗しました: {nobgm.name}")
     return n / FPS
 
 
