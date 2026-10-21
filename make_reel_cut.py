@@ -38,6 +38,9 @@ CUTS = {
     # 曲がアウトロのすぐあとで終わるので、宣伝の画面のあいだは音なし（None）
     "コミットしないで": ([(11.41, 99.64), (184.35, 254.0)], 250.0, None),
 }
+# --shorts のときは YouTube ショート用（案内の文を「チャンネルのリンクから」に、ファイル名を _ショート に）
+LINK_TEXT = "プロフィールのリンクから"
+OUT_SUFFIX = "_リール"
 XFADE = 0.4      # つなぎ目で重ねる秒数
 PROMO_SEC = 6.0  # 宣伝の画面の長さ
 FADE_OUT = 2.0   # 最後のフェードアウトの秒数
@@ -70,7 +73,7 @@ def promo_card(bg, path):
     for k, s in enumerate(["カード・4択・書いて答える", "無料・登録なし・スマホで使える"]):
         text(1260 + k * 70, s, 40, CREAM, False)
     d.rounded_rectangle((200, 1430, W - 200, 1530), radius=50, fill=GOLD)
-    text(1480, "プロフィールのリンクから", 44, BG1)
+    text(1480, LINK_TEXT, 44, BG1)
     img.save(path)
 
 
@@ -78,7 +81,7 @@ def banner(path):
     """画面のいちばん上に出す、小さな案内（透明な PNG）。"""
     img = Image.new("RGBA", (W, 110), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    s = "ITパスポート・FE用語ドリル（無料）｜プロフィールのリンクから"
+    s = f"ITパスポート・FE用語ドリル（無料）｜{LINK_TEXT}"
     f = font(30, True)
     tw = f.getlength(s)
     d.rounded_rectangle(((W - tw) / 2 - 26, 30, (W + tw) / 2 + 26, 86), radius=28, fill=(10, 20, 18, 170))
@@ -88,10 +91,10 @@ def banner(path):
 
 def cut(name, segs, promo_at, promo_audio):
     src = song_dir(name) / f"{name}_MV.mp4"
-    out = song_dir(name) / f"{name}_リール.mp4"
+    out = song_dir(name) / f"{name}{OUT_SUFFIX}.mp4"
     tmp = WORK
     tmp.mkdir(exist_ok=True)
-    card, ban = tmp / f"{name}_宣伝.png", tmp / "上の案内.png"
+    card, ban = tmp / f"{name}_宣伝{OUT_SUFFIX}.png", tmp / f"上の案内{OUT_SUFFIX}.png"
     # 宣伝の画面の背景は、文字の入っていない背景の映像から取る（なければ MV から）
     bgv = tmp / f"{name}_MV_背景.mp4"
     promo_card(grab(bgv if bgv.exists() else src, promo_at), card)
@@ -134,6 +137,10 @@ def cut(name, segs, promo_at, promo_audio):
 
 if __name__ == "__main__":
     # 名前を指定すると、その曲だけ作る（例: python make_reel_cut.py ワン・ラブ・ストラテジ）
-    for name in sys.argv[1:] or list(CUTS):
+    args = sys.argv[1:]
+    if "--shorts" in args:
+        args.remove("--shorts")
+        LINK_TEXT, OUT_SUFFIX = "チャンネルのリンクから", "_ショート"
+    for name in args or list(CUTS):
         segs, promo_at, promo_audio = CUTS[name]
         cut(name, segs, promo_at, promo_audio)

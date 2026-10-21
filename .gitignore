@@ -5,6 +5,7 @@ notes/
 # Python や エディタが作るファイル
 __pycache__/
 .venv/
+.venv-asr/
 .vscode/
 Thumbs.db
 desktop.ini

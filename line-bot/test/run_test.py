@@ -27,6 +27,7 @@ let newsReady = false, insightsDenied = false;
 let ytDenied = false, ytHidden = false, ytSubsN = 35;
 const ytCalls = [];
 let gaDeniedIp = false;
+let checkData = null, checkCode = 200;   // サイトの点検の結果（null のときは、まだ結果がない = 404）
 const store = { LINE_TOKEN: "t", WEBHOOK_KEY: "key", OWNER_USER_ID: "U1", IG_TOKEN: "ig", IG_USER_ID: "1789", YT_API_KEY: "ytkey" };
 const PropertiesService = { getScriptProperties: () => ({ getProperty: (k) => store[k] ?? null, setProperty: (k, v) => { store[k] = String(v); }, deleteProperty: (k) => { delete store[k]; } }) };
 const grid = [["タイムスタンプ", "お問い合わせの種類"]];
@@ -99,6 +100,7 @@ const UrlFetchApp = { fetch: (url, o) => {
   }
   if (url.includes("assets/terms.js")) return t_resp(200, 'window.FE_TERMS = [{"id": "0167", "f": "T", "sub": "セキュリティ", "term": "ランサムウェア", "desc": "身代金を要求するマルウェア。"}, {"id": "0100", "f": "T", "sub": "ネットワーク", "term": "IP", "desc": "x"}];');
   if (url.includes("api.github.com")) { dispatches.push(JSON.parse(o.payload)); return t_resp(204, ""); }
+  if (url.includes("raw.githubusercontent.com/yuki-fe/yogo-drill/check-results/")) return checkData ? t_resp(checkCode, JSON.stringify(checkData)) : t_resp(404, "404: Not Found");
   if (url.includes("/ig/news/")) return t_resp(newsReady || url.endsWith("cover.jpg") ? 200 : 404, "img");
   for (const name in STOCK) if (url.endsWith("/ig/" + name)) return t_resp(200, JSON.stringify(STOCK[name]));
   if (url.includes("graph.facebook.com") || url.includes("graph.instagram.com")) {
@@ -320,6 +322,40 @@ try {
   check("「投稿」と送っても投稿しない", t_text().includes("自動投稿を止めて") && igCalls.length === 0);
   t_say("素材");
   check("素材は受け取れる", lastMsg().messages.length >= 3 && lastMsg().messages.some((m) => m.type === "image"));
+
+  // サイトの点検（毎週月曜に GitHub の自動実行が点検した結果を読む）
+  NOW = new Date("2026-10-23T08:00:00+09:00").getTime();
+  check("点検の結果がまだなくても、月曜以外の朝は何も言わない", !buildReport(true).includes("【サイトの点検】"));
+  const ckSite = (key, name, items) => ({ key, name, url: `https://${key}.yogo-drill.com/`, pages: 300, items, more: 0,
+    problems: items.filter((i) => i.level === "問題").length, warnings: items.filter((i) => i.level === "注意").length });
+  checkData = { checked_at: "2026-10-26T04:10:00+09:00", result_url: "https://github.com/yuki-fe/yogo-drill/blob/check-results/result.md",
+    summary: { sites: 3, pages: 900, problems: 2, warnings: 1, infos: 1 },
+    sites: [
+      ckSite("fe", "FE用語ドリル", [{ level: "問題", kind: "リンク切れ", page: "https://fe.yogo-drill.com/about.html", detail: "https://fe.yogo-drill.com/x.html（エラー 404）" },
+                                   { level: "注意", kind: "スマホで横にはみ出す", page: "https://fe.yogo-drill.com/b/trace.html", detail: "幅 390px に 420px" }]),
+      ckSite("ip", "ITパスポート用語ドリル", [{ level: "問題", kind: "JavaScript のエラー", page: "https://ip.yogo-drill.com/", detail: "x is not defined" }]),
+      ckSite("boki", "簿記用語ドリル", [{ level: "情報", kind: "アクセス解析なし", page: "https://boki.yogo-drill.com/", detail: "" }])] };
+  NOW = new Date("2026-10-26T08:00:00+09:00").getTime();
+  const ckm = buildReport(true);
+  out.push("--- 【サイトの点検】の欄（月曜）", ckm.slice(ckm.indexOf("【サイトの点検】"), ckm.indexOf("【最後の更新】")).trim());
+  check("新しい点検の結果を朝のレポートに出す", ckm.includes("【サイトの点検】\n10/26 の点検で、問題が 2 件・注意が 1 件 見つかったよ。") &&
+    ckm.includes("・FE用語ドリル: リンク切れ（/about.html）") && ckm.includes("・ITパスポート用語ドリル: JavaScript のエラー（/）") && ckm.includes("「点検」"));
+  check("同じ結果は次の朝には出さない", !buildReport(true).includes("【サイトの点検】"));
+  check("「状況」ではいつも最新の結果を出す", buildReport(false).includes("10/26 の点検で、問題が 2 件"));
+  t_say("点検"); out.push("--- 点検", t_last());
+  check("「点検」でサイトごとの問題と注意", t_text().includes("■ FE用語ドリル（問題 1・注意 1）") && t_text().includes("・[問題] リンク切れ: /about.html") &&
+    t_text().includes("問題なし: 簿記用語ドリル") && t_text().includes("check-results/result.md") && !t_text().includes("アクセス解析なし"));
+  NOW = new Date("2026-11-09T08:00:00+09:00").getTime();
+  check("点検が止まっていたら月曜に知らせる", buildReport(true).includes("点検が 14 日動いてない"));
+  NOW = new Date("2026-11-10T08:00:00+09:00").getTime();
+  check("月曜以外は、止まっていても毎朝は言わない", !buildReport(true).includes("【サイトの点検】"));
+  checkData = Object.assign({}, checkData, { checked_at: "2026-11-09T04:00:00+09:00", summary: { sites: 8, pages: 2300, problems: 0, warnings: 0, infos: 6 }, sites: [] });
+  check("問題がない週は「問題なし！」", buildReport(true).includes("11/9 に 8 サイト・2300 ページを点検したよ。問題なし！"));
+  checkCode = 500; NOW = new Date("2026-11-16T08:00:00+09:00").getTime();
+  check("結果が取れない月曜は知らせる", buildReport(true).includes("点検の結果が取れなかった"));
+  checkCode = 200;
+  t_say("使い方");
+  check("使い方に「点検」がある", t_text().includes("・点検 …"));
 } catch (e) { out.push("ERROR " + e.stack); fails.push("例外"); }
 out.push("", fails.length ? "FAILED: " + fails.join("、") : "ALL OK");
 document.getElementById("out").textContent = out.join("\n");

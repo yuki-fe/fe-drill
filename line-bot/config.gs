@@ -46,6 +46,9 @@ const CONFIG = {
   scheduleHour: 20,                                       // 「〇時に投稿」ボタンで投稿する時刻（igAutoPost が true のとき）
   // 姉妹サイト「ITパスポート用語ドリル」の閲覧者も、毎朝のレポートに出す（GA4 のプロパティ ID。空にすると出さない）
   ipGaPropertyId: "558662911",
+  // サイトの点検（全サイト・毎週月曜の朝に GitHub の自動実行が点検する）の結果。空にすると出さない
+  checkUrl: "https://raw.githubusercontent.com/yuki-fe/yogo-drill/check-results/result.json",
+  checkStaleDays: 9,                                      // これより古い結果しかないときは「点検が止まっている」と知らせる
 };
 
 /* ========== Instagram の投稿の種類 ==========

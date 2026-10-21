@@ -33,6 +33,7 @@ function buildReport(morning) {
   if (gaReady()) Object.assign(reqs, { visitors: gaRequest(VISITORS_QUERY), igVisitors: gaRequest(IG_VISITORS_QUERY) });
   if (ytReady()) Object.assign(reqs, ytRequests(5));
   if (CONFIG.ipGaPropertyId) reqs.ipVisitors = gaRequest(VISITORS_QUERY, CONFIG.ipGaPropertyId);
+  if (CONFIG.checkUrl) reqs.check = checkRequest();
   const pre = fetchNamed(reqs);
   if (gaReady()) {
     const st = visitorStats(pre.visitors);
@@ -73,6 +74,8 @@ function buildReport(morning) {
   }
   const h = siteHealth();
   lines.push("", "【サイト】", h.ok ? TALK.siteOk(h.sec) : TALK.siteNg(h.why));
+  const ck = CONFIG.checkUrl ? checkSection(morning, pre.check) : "";
+  if (ck) lines.push("", "【サイトの点検】", ck);
   const u = lastUpdate(pre.update);
   lines.push("", "【最後の更新】", u ? TALK.updated(u.date, u.message) : TALK.updatedUnknown);
   const n = openInquiries().length;
@@ -252,4 +255,72 @@ function lastUpdate(res) {
     console.warn(e);
     return null;
   }
+}
+
+/* ---------- サイトの点検（全サイト。GitHub の自動実行が毎週月曜に点検して、結果を check-results のブランチに置く） ---------- */
+function checkRequest() {
+  return { url: CONFIG.checkUrl + "?t=" + Date.now() };
+}
+
+/* 結果を読む: { data } / { none: true }（まだ結果がない） / { error: true } */
+function checkResult(res) {
+  try {
+    res = res || fetchAll([checkRequest()])[0];
+    const code = res.getResponseCode();
+    if (code === 404) return { none: true };
+    if (code !== 200) return { error: true };
+    return { data: JSON.parse(res.getContentText()) };
+  } catch (e) {
+    console.warn(e);
+    return { error: true };
+  }
+}
+
+const checkPage = (site, page) => (page || "").replace(site.url, "/");
+
+/* 結果のまとめ（数行）。問題があれば、はじめの3件を出す */
+function checkSummary(d) {
+  const s = d.summary, date = fmt(new Date(d.checked_at), "M/d");
+  if (!s.problems && !s.warnings) return TALK.checkOk(date, s.sites, s.pages);
+  if (!s.problems) return TALK.checkWarnOnly(date, s.warnings);
+  const items = [];
+  d.sites.forEach((site) => site.items.filter((i) => i.level === "問題").forEach((i) => items.push(TALK.checkItem(site.name, i.kind, checkPage(site, i.page)))));
+  return [TALK.checkNg(date, s.problems, s.warnings), ...items.slice(0, 3), TALK.checkMore].join("\n");
+}
+
+/* 毎朝のレポートの【サイトの点検】の欄。新しい結果が出た朝に1回だけ出す。
+ * 点検の曜日（月曜）は、結果が取れない・古いときも知らせる。「状況」では最新の結果をいつも出す */
+function checkSection(morning, res) {
+  const r = checkResult(res);
+  const monday = new Date(fmt(new Date(), "yyyy/MM/dd")).getDay() === CONFIG.chartWeekday;
+  if (r.data) {
+    const days = Math.floor((Date.now() - new Date(r.data.checked_at).getTime()) / 86400000);
+    if (!morning) return checkSummary(r.data);
+    if (r.data.checked_at !== prop("CHECK_SEEN")) {
+      PROPS.setProperty("CHECK_SEEN", r.data.checked_at);
+      return checkSummary(r.data);
+    }
+    return monday && days >= CONFIG.checkStaleDays ? TALK.checkStale(days) : "";
+  }
+  if (morning && !monday) return "";
+  return r.none ? TALK.checkNone : TALK.checkError;
+}
+
+/* LINE の「点検」: サイトごとの問題・注意（1サイト5件まで） */
+function checkDetailText() {
+  if (!CONFIG.checkUrl) return TALK.checkOff;
+  const r = checkResult();
+  if (!r.data) return r.none ? TALK.checkNone : TALK.checkError;
+  const d = r.data, lines = [TALK.checkDetailHead(fmt(new Date(d.checked_at), "M/d"), d.summary)];
+  const ok = [];
+  d.sites.forEach((site) => {
+    const shown = site.items.filter((i) => i.level !== "情報");
+    if (!shown.length) { ok.push(site.name); return; }
+    lines.push("", `■ ${site.name}（問題 ${site.problems}・注意 ${site.warnings}）`);
+    shown.slice(0, 5).forEach((i) => lines.push(`・[${i.level}] ${i.kind}` + (i.page ? `: ${checkPage(site, i.page)}` : "") + (i.detail ? `\n  ${String(i.detail).slice(0, 70)}` : "")));
+    if (shown.length > 5) lines.push(`  ほか ${shown.length - 5} 件`);
+  });
+  if (ok.length) lines.push("", TALK.checkDetailOk(ok));
+  lines.push("", TALK.checkDetailFoot(d.result_url));
+  return lines.join("\n");
 }

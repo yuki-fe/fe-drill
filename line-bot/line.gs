@@ -77,6 +77,7 @@ function answer(text) {
   if (/^(ユーチューブ|ゆーちゅーぶ|youtube)/i.test(text)) return ytKitReply();
   if (/^(反応|はんのう|インサイト)/.test(text)) return igReady() ? igRecentText() : TALK.igOff;
   if (/^(リンク|りんく)/.test(text)) return TALK.igLink(igProfileLink());
+  if (/^(点検|てんけん|チェック)/.test(text)) return checkDetailText();
   if (/^(使い方|つかいかた|ヘルプ|help|\?)/i.test(text)) return TALK.help;
   return pick(TALK.unknown);
 }
