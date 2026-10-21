@@ -11,6 +11,12 @@
     { id: "list", name: "一覧", cap: "検索・チェック", title: "用語一覧", sub: "検索して、覚えた用語に印を付けられます" }
   ];
   const KINDS = [["card", "カード"], ["quiz", "4択"], ["type", "書いて答える"]];
+  /* 動く図がある用語は、答えのあとに「図で見る」を出す（開いたときに読み込む） */
+  const figMore = (t) => t.g ? `<details class="fig-more" data-fig="figs/${t.id}.svg"><summary>図で見る</summary><div class="fig-player"></div></details>` : "";
+  document.addEventListener("toggle", (e) => {
+    const d = e.target;
+    if (d.classList && d.classList.contains("fig-more") && d.open && window.FigPlayer) window.FigPlayer.load(d.querySelector(".fig-player"), d.dataset.fig);
+  }, true);
 
   /* ---------- 保存 ---------- */
   function load(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v && typeof v === "object" ? v : d; } catch (e) { return d; } }
@@ -157,6 +163,7 @@
         <span class="tag">${FIELD[t.f]}・${esc(t.sub)}</span>${body}
       </div>
       <div class="actions"><button class="btn again" type="button" id="again">まだ</button><button class="btn ok" type="button" id="ok">覚えた</button></div>
+      ${flipped ? figMore(t) : ""}
       <div class="kbd">Space で裏返す / ← まだ / → 覚えた</div>`;
     $("#flashcard").onclick = flip;
     $("#again").onclick = () => answerCard(false);
@@ -203,7 +210,7 @@
         const cls = done && c.id === q.t.id ? "correct" : done && k === q.picked ? "wrong" : "";
         return `<button class="choice ${cls}" type="button" data-k="${k}" ${done ? "disabled" : ""}><span class="oval">${KANA[k]}</span><span>${label(c)}</span></button>`;
       }).join("")}</div>
-      ${done ? `${explain}<button class="btn primary" type="button" id="next">${quiz.i + 1 < quiz.qs.length ? "次の問題" : "結果を見る"}</button>` : ""}
+      ${done ? `${explain}${figMore(q.t)}<button class="btn primary" type="button" id="next">${quiz.i + 1 < quiz.qs.length ? "次の問題" : "結果を見る"}</button>` : ""}
       <div class="kbd">1〜4 で解答 / Enter で次へ</div>`;
     document.querySelectorAll(".choice").forEach((b) => b.onclick = () => pick(+b.dataset.k));
     if (done) { $("#next").onclick = () => { quiz.i++; renderQuiz(); }; $("#next").focus({ preventScroll: true }); }
@@ -249,6 +256,7 @@
           ${q.result === "ng" ? `<span class="yours">あなたの答え: ${esc(q.input)}</span>` : ""}
           <a href="${link(q.t)}">この用語の解説ページを見る</a>
         </div>
+        ${figMore(q.t)}
         <button class="btn primary" type="button" id="next">${typing.i + 1 < typing.qs.length ? "次の問題" : "結果を見る"}</button>`;
     }
     $("#panel").innerHTML = `
@@ -335,7 +343,7 @@
 
   document.addEventListener("keydown", (e) => {
     const tag = e.target.tagName;
-    if (tag === "INPUT" || tag === "A" || (tag === "BUTTON" && (e.key === "Enter" || e.key === " "))) return;
+    if (tag === "INPUT" || tag === "A" || ((tag === "BUTTON" || tag === "SUMMARY") && (e.key === "Enter" || e.key === " "))) return;
     const k = kind();
     if (k === "card" && deck[idx] && $("#flashcard")) {
       if (e.key === " ") { e.preventDefault(); flip(); }

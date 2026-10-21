@@ -15,11 +15,14 @@
 - アクセス解析: GA4（測定ID `G-4FY1CNV38B`）、Google Search Console
 - 姉妹サイト **「ITパスポート用語ドリル」** は別のリポジトリ（デスクトップの `ip-drill`、`yuki-fe/ip-drill`、https://ip.yogo-drill.com/ で公開中。GA4 は別プロパティ）。この build.py をもとに作った。くわしくはそちらの CLAUDE.md
 - 3つ目のサイト **「クラウド用語ドリル」**（AWS 認定クラウドプラクティショナー CLF-C02）はデスクトップの `cloud-drill`（`yuki-fe/cloud-drill`、未公開）。ip-drill の build.py をもとに作った。サイト名に「AWS」を入れない（AWS の商標の決まり）
-- 4つ目のサイト **「国内旅行業務用語ドリル」**（国内旅行業務取扱管理者試験）はデスクトップの `travel-drill`（`yuki-fe/travel-drill`、未公開）。cloud-drill の build.py をもとに作った。数字は元の文書で確かめたものだけを書く
+- 4つ目のサイト **「国内旅行業務用語ドリル」**（国内旅行業務取扱管理者試験）はデスクトップの `travel-drill`（`yuki-fe/travel-drill`、未公開。**公開しない予定**（2026-10-21 に運営者が決めた））。cloud-drill の build.py をもとに作った。数字は元の文書で確かめたものだけを書く
 - 5つ目のサイト **「生成AI用語ドリル」**（生成AIパスポート試験、2027年2月試験からの新シラバス）はデスクトップの `genai-drill`（`yuki-fe/genai-drill`、未公開、genai.yogo-drill.com の予定）。cloud-drill の build.py をもとに作った
 - 6つ目のサイト **「ディープラーニング用語ドリル」**（JDLA の G検定、シラバス 2024）はデスクトップの `dl-drill`（`yuki-fe/dl-drill`、未公開、dl.yogo-drill.com の予定）。genai-drill の build.py をもとに作った。サイト名に「G検定」を入れない
 - 7つ目のサイト **「簿記用語ドリル」**（簿記検定3級、2027年4月施行の出題区分表）はデスクトップの `boki-drill`（`yuki-fe/boki-drill`、未公開、boki.yogo-drill.com の予定）。dl-drill の build.py をもとに作った。略語クイズの代わりに勘定科目の分類クイズ（`kamoku.html`）。サイト名に「日商」を入れない
-- 入り口のサイト **「用語ドリル」**（https://yogo-drill.com/ の予定、デスクトップの `yogo-drill`、未公開）が各サイトを紹介する。サイトを公開したら、そちらの `sites.json` の `"public"` を true にしてビルドする
+- 7つ目のサイトの「簿記用語ドリル」は、2026-10-19 に **2級（商業簿記・工業簿記）** も足した（3級・2級で300語）
+- 8つ目のサイト **「医療事務用語ドリル」** はデスクトップの `iryo-drill`（`yuki-fe/iryo-drill`、未公開、iryo.yogo-drill.com の予定）。dl-drill の build.py をもとに作った。特定の試験に合わせていない（診療報酬請求事務能力認定試験は2025年12月で終了・実施団体は2026年3月に解散）。診療報酬の点数は書かない
+- **IPA の試験制度が2027年度から変わる**（2026-10-19 に確認）: 今の制度は2026年度の試験で終わり。応用情報と高度試験は「プロフェッショナルデジタルスキル試験（仮称）」などに再編される案。ITパスポート・基本情報もシラバスが見直される（新シラバス案 Ver.0.1、2026年8〜9月公表）。FE・ITパスポートのサイトは、新シラバスが決まったら見直す
+- 入り口のサイト **「用語ドリル」**（https://yogo-drill.com/ の予定、デスクトップの `yogo-drill`、未公開）が各サイトを紹介する（旅行のサイトは載せない）。サイトを公開したら、そちらの `sites.json` の `"public"` を true にしてビルドする
 
 ## フォルダ構成
 
@@ -36,6 +39,8 @@
 | `make_ig_images.py` | 用語クイズの投稿画像（1080×1350 の2枚組）と投稿文を作る |
 | `make_b_media.py` | 科目Bのリール動画（1080×1920、60fps、H.264 CRF 16、音なし）とトレースクイズの画像を作る。上にコード（今の行の帯がすべって動く）、下に **「動きの図」**（`b_visual.py`。`VISUAL = True`）。1行は0.5秒以上。Edge（動かないときは Chrome）と FFmpeg を使う |
 | `b_visual.py` | リールの「動きの図」: 配列は箱、番号に使う変数（`[ ]` の中や、それを計算する式の変数）は箱の下の矢印（すべって動く）、代入は値のチップが飛ぶ（「s ← 0 + 3」の式も出す）、if・while で比べる箱はオレンジ、ふつうの変数はカード、再帰は呼び出しの深さ。大域変数は、コードに「大域:」とあるものだけ図に入れる。部品が多いと自動で小さくして収める |
+| `make_figs.py` | 用語の **「動く図」**（ステップに分かれた SVG、`static/figs/<用語id>.svg`。利用者が「前へ」「次へ」・図のタップ・左右のスワイプで切り替える。切り替えは `static/assets/fig.js`）と、図のタイトル・手順の文（`data/figs.json`）を作る。用語ページの「図で見る」と、4択・書いて答える問題の答えのあとの「図で見る」に出る。図を足したら `python make_figs.py` → `python build.py`。今は20語（2026-10-20）。「前へ」「次へ」は小さな丸いボタン（‹ ›）と、ステップの点 |
+| `make_mv.py`・`make_mv_strategy.py`・`mv_common.py` | 運営者が Suno で作った曲の MV（縦長・60fps・曲の音入り）。歌詞のまとまりごとに場面が変わり、1行ごとに図が1つ進む。歌詞は下にカラオケのように出す。曲・歌詞・行ごとの時間（`*_時間.json`）・できた動画は `notes/曲の動画/<曲名>/`、背景の映像は `notes/曲の動画/背景素材/`、背景の動画など作業用のファイルは `notes/曲の動画/作業用/`（どれも公開しない）。時間は音声認識（faster-whisper、サイトの .venv とは別に入れる）と歌詞の突き合わせで作り、合わない行は手で直す。`make_mv_strategy.py`・`make_mv_critical.py`・`make_mv_commit.py` は共通の部品 `mv_common.py` を使う（`make_mv.py` はまだ使っていない）。`--jobs 4` で4つに分けて同時に書き出す（できている部分は飛ばす。同時に2曲を動かすとメモリが足りなくなるので1曲ずつ）、`--youtube` で横長。リール版は `make_reel_cut.py`（小節の区切りで切ってつなぎ、宣伝の画面とフェードアウト）、YouTube のサムネイルと説明文は `make_youtube.py --meta 曲名`。Suno の曲を宣伝に使うときは、商用で使えるプランで作ったか確かめる |
 | `make_intro_media.py` | Instagram の最初の投稿（サイト紹介のフィード5枚・リール・ストーリー2枚と投稿文）を `static/ig/intro/` に作る。一度きり |
 | `make_app_icons.py` | スマホのホーム画面に置くアプリのアイコン（PWA 用。`static/icon-192.png`・`icon-512.png`・`icon-maskable-512.png`）を作る。アイコンの形を変えたときだけ |
 | `make_ip_launch_media.py` | ITパスポート用語ドリルの公開を知らせるリール（約34秒・60fps・音なし）・表紙・投稿文を `static/ig/ip-launch/` に作る。一度きり。用語は `../ip-drill/data/terms.json` から読む |
@@ -50,6 +55,7 @@
 
 ```powershell
 python build.py                         # docs/ を作り直す（エラー・注意が出たら直す）
+python make_figs.py                     # 用語の動く図を作り直す（そのあと build.py）
 python -m http.server 8000 -d docs      # http://localhost:8000 で確認
 python make_ig_images.py 120            # 用語クイズのストックを 120 投稿分まで作る
 python make_b_media.py 16               # リール動画を 16 本まで作る（先に build.py を実行）

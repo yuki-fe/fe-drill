@@ -377,3 +377,24 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 .home-feature .tag { background: var(--mark); color: var(--paper); font-size: .75rem; font-weight: 700; padding: 1px 10px; border-radius: 999px; }
 .home-feature .go { margin-left: auto; color: var(--mark); font-weight: 700; }
 @media (max-width: 859px) { .home-feature { width: calc(100% - 32px); } }
+
+/* 用語の動く図（make_figs.py・fig.js） */
+.fig-title { font-size: .85rem; color: var(--muted); margin: 0 0 8px; }
+.fig-player { max-width: 640px; outline: none; }
+.fig-player svg, .fig-player img { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); user-select: none; -webkit-user-select: none; }
+.fig-player:focus-visible svg { outline: 2px solid var(--mark); outline-offset: 2px; }
+.fig-cap { font-weight: 700; margin: 10px 0 6px; min-height: 1.75em; }
+.fig-ctrl { display: flex; align-items: center; justify-content: center; gap: 10px; max-width: 640px; }
+.fig-btn { width: 40px; height: 40px; padding: 0 0 3px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-size: 1.5rem; line-height: 1; cursor: pointer; flex: 0 0 auto; }
+.fig-btn:hover { border-color: var(--mark); color: var(--mark); }
+.fig-btn:disabled { opacity: .3; cursor: default; border-color: var(--line); color: var(--ink); }
+.fig-dots { display: flex; align-items: center; gap: 6px; }
+.fig-dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 4px; background: var(--line); cursor: pointer; transition: width .2s, background .2s; }
+.fig-dot.now { width: 20px; background: var(--mark); }
+.fig-count { color: var(--muted); font-size: .8rem; min-width: 3em; text-align: center; }
+.fig-steps { margin: 14px 0 0; padding-left: 1.4em; font-size: .92rem; }
+.fig-steps li { margin: 2px 0; padding: 1px 6px; border-radius: 6px; cursor: pointer; color: var(--muted); }
+.fig-steps li.now { background: var(--mark-soft); color: var(--ink); font-weight: 700; }
+.fig-more { margin: 4px 0 12px; }
+.fig-more summary { cursor: pointer; color: var(--mark); font-weight: 700; font-size: .9rem; padding: 4px 0; }
+.fig-more .fig-player { margin-top: 6px; }

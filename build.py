@@ -28,6 +28,8 @@ BASE = config["base_url"].rstrip("/")
 SITE = config["site_name"]
 TODAY = date.today().isoformat()
 TERM_ID = {t["term"]: t["id"] for t in terms}
+# 用語の「動く図」（make_figs.py が作る）。用語 id → {"title", "steps"}
+FIGS = json.loads((ROOT / "data" / "figs.json").read_text(encoding="utf-8")) if (ROOT / "data" / "figs.json").exists() else {}
 
 
 def load_b(name):
@@ -201,7 +203,7 @@ def build_home():
 """
     ld = [{"@context": "https://schema.org", "@type": "WebSite", "name": SITE, "url": BASE + "/", "description": config["description"]}]
     page("index.html", f"{SITE}｜{config['tagline']}", config["description"], body, "", "home", ld,
-         '<script src="assets/terms.js"></script>\n<script src="assets/app.js"></script>')
+         '<script src="assets/terms.js"></script>\n<script src="assets/fig.js"></script>\n<script src="assets/app.js"></script>')
 
 
 def related_terms(t, n=6):
@@ -247,6 +249,12 @@ def build_term(t, prev, nxt):
     b_html = ('<section><h2>科目Bで練習する</h2><ul class="b-links">'
               + "".join(f'<li><a href="../{escape(h)}">{escape(label)}</a></li>' for label, h in blinks)
               + "</ul></section>") if blinks else ""
+    fig = FIGS.get(t["id"])
+    # 図の SVG はページに直接入れる（fig.js が「前へ」「次へ」を付ける）
+    fig_svg = (ROOT / "static" / "figs" / f'{t["id"]}.svg').read_text(encoding="utf-8") if fig else ""
+    fig_html = (f'<section class="fig-box"><h2>図で見る</h2><p class="fig-title">{escape(fig["title"])}（› を押すか、図をタップすると進みます）</p>'
+                f'<div class="fig-player">{fig_svg}</div>'
+                '<ol class="fig-steps">' + "".join(f"<li>{escape(s)}</li>" for s in fig["steps"]) + "</ol></section>") if fig else ""
     body = f"""
 <main class="prose term-page">
   <nav class="crumbs" aria-label="パンくずリスト"><a href="../index.html">ホーム</a><span>›</span><a href="index.html#{t['field']}">{field}</a><span>›</span><a href="index.html#sub-{t['field']}-{escape(t['sub'])}">{escape(t['sub'])}</a></nav>
@@ -257,6 +265,7 @@ def build_term(t, prev, nxt):
     <a class="btn primary" href="../index.html#card">カードで練習する</a>
     <a class="btn" href="../index.html#type">書いて答える問題に挑戦</a>
   </div>
+  {fig_html}
   <section>
     <h2>同じ分野の用語</h2>
     <ul class="related">{related_html}</ul>
@@ -275,7 +284,7 @@ def build_term(t, prev, nxt):
     ]
     short = t["desc"] if len(t["desc"]) <= 100 else t["desc"][:99] + "…"
     page(f"terms/{t['id']}.html", f"{t['term']}とは？意味と覚え方｜基本情報技術者試験の用語｜{SITE}",
-         f"{t['term']}（{field}・{t['sub']}）: {short}", body, "../", "", ld, '<script src="../assets/term.js"></script>')
+         f"{t['term']}（{field}・{t['sub']}）: {short}", body, "../", "", ld, '<script src="../assets/term.js"></script>' + ('\n<script src="../assets/fig.js"></script>' if fig else ""))
 
 
 def build_index():
@@ -864,7 +873,7 @@ def build_meta_files():
     host = urlparse(BASE).hostname or ""
     if host and not host.endswith("github.io"):
         (OUT / "CNAME").write_text(host + "\n", encoding="utf-8")
-    data =[{"id": t["id"], "f": t["field"], "sub": t["sub"], "term": t["term"], "desc": t["desc"]} for t in terms]
+    data = [{"id": t["id"], "f": t["field"], "sub": t["sub"], "term": t["term"], "desc": t["desc"], **({"g": 1} if t["id"] in FIGS else {})} for t in terms]
     (OUT / "assets" / "terms.js").write_text("window.FE_TERMS = " + json.dumps(data, ensure_ascii=False) + ";\n", encoding="utf-8")
 
 
