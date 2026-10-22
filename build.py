@@ -822,6 +822,18 @@ def build_app():
     page("offline.html", f"オフライン｜{SITE}", "電波がないときに表示するページです。", body, "", index=False)
 
 
+def add_asset_versions():
+    """ページが読む CSS・JS の URL に、中身から作った版の印（?v=…）を付ける。
+    サイトを新しくした直後でも、ブラウザやアプリに保存してある古いファイルが使われないようにするため。"""
+    ver = {f.name: hashlib.sha1(f.read_bytes()).hexdigest()[:8] for f in (OUT / "assets").iterdir() if f.suffix in (".js", ".css")}
+    pat = re.compile(r'((?:href|src)="(?:\.\./)*assets/)([\w.-]+\.(?:js|css))"')
+    for f in OUT.rglob("*.html"):
+        html = f.read_text(encoding="utf-8")
+        new = pat.sub(lambda m: f'{m.group(1)}{m.group(2)}?v={ver[m.group(2)]}"' if m.group(2) in ver else m.group(0), html)
+        if new != html:
+            f.write_text(new, encoding="utf-8")
+
+
 def build_pwa_files():
     """アプリの説明書（manifest）と、サービスワーカー（sw.js）。
     サービスワーカーは、ページを開くたびにネットから新しいものを取り、取れないとき（電波がない）は保存しておいたものを出す。
@@ -882,7 +894,7 @@ self.addEventListener("fetch", (e) => {{
     const net = fetch(req).then((res) => {{
       if (res.ok || res.type === "opaque") {{ const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }}
       return res;
-    }}).catch(() => hit);
+    }}).catch(() => hit || caches.match(req, {{ ignoreSearch: true }}));   // 電波がないときは、版の印が違っても保存したものを出す
     return hit || net;
   }}));
 }});
@@ -982,6 +994,7 @@ def main():
     build_typing()
     build_b()
     build_meta_files()
+    add_asset_versions()
     build_pwa_files()
     write_b_check()
     n = sum(1 for _ in OUT.rglob("*.html"))

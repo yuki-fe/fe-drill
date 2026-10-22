@@ -5,7 +5,12 @@
   "use strict";
   const root = document.getElementById("typing");
   const TERMS = (window.SITE_TERMS || window.FE_TERMS || []).filter((t) => t.y);
-  if (!root || !TERMS.length) return;
+  if (!root) return;
+  if (!TERMS.length) {
+    // サイトを新しくした直後は、保存してある古い terms.js（読みがない）が使われることがある
+    root.innerHTML = '<p class="empty">用語のデータが古いままです。ページを再読み込みしてください（直らないときは、もう一度）。</p>';
+    return;
+  }
   const FIELDS = window.SITE_FIELDS || JSON.parse(root.dataset.fields || "{}");
   const SECONDS = 60;
   const REL = document.body.dataset.root || "";

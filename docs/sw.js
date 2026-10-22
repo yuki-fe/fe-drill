@@ -1,5 +1,5 @@
 // FE用語ドリル のサービスワーカー（build.py が作る。直接編集しない）
-const CACHE = "fe-drill-65922bb161";
+const CACHE = "fe-drill-7870f117d5";
 const PRECACHE = ["./", "index.html", "offline.html", "app.html", "terms/index.html", "b/index.html", "b/trace.html", "b/fill.html", "b/notation.html", "b/security.html", "b/simulator.html", "favicon.svg", "icon-192.png", "manifest.webmanifest", "assets/app.js", "assets/b-data.js", "assets/b.js", "assets/fig.js", "assets/pseudo.js", "assets/style.css", "assets/term.js", "assets/terms.js", "assets/typing.js"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
@@ -27,7 +27,7 @@ self.addEventListener("fetch", (e) => {
     const net = fetch(req).then((res) => {
       if (res.ok || res.type === "opaque") { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
       return res;
-    }).catch(() => hit);
+    }).catch(() => hit || caches.match(req, { ignoreSearch: true }));   // 電波がないときは、版の印が違っても保存したものを出す
     return hit || net;
   }));
 });
