@@ -430,6 +430,14 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 .ty-kana .hint { color: var(--ok); }
 .ty-desc { margin-top: 18px !important; color: var(--muted); font-size: .92rem; text-align: left; border-top: 1px dashed var(--line); padding-top: 12px; }
 .ty-desc.big { color: var(--ink); font-size: 1.05rem; border: 0; padding: 0; margin: 12px 0 14px !important; }
+/* 意味も打つ: 用語を打ち終わったあとの画面 */
+.ty-term-done { font-size: clamp(1.1rem, 4.5vw, 1.6rem); color: var(--muted); }
+.ty-check { color: var(--ok); margin-left: 8px; font-size: .8em; }
+.ty-part { display: inline-block; margin-top: 10px !important; padding: 1px 12px; border-radius: 999px; background: var(--mark); color: var(--paper); font-size: .78rem; font-weight: 700; }
+.ty-imi { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.2rem, 5vw, 1.9rem); line-height: 1.4; margin-top: 6px !important; overflow-wrap: anywhere; }
+.ty-next { font-size: .78rem; color: var(--muted); margin-top: 6px !important; }
+.ty-missed li { flex-wrap: wrap; }
+.ty-missed .ty-m { flex-basis: 100%; color: var(--muted); font-size: .78rem; }
 .ty-keys { display: flex; justify-content: center; gap: 10px; margin-top: 16px !important; }
 .ty-keys .btn { padding: 6px 14px; font-size: .85rem; }
 p.ty-keys.muted { display: none; }

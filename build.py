@@ -32,6 +32,9 @@ TERM_ID = {t["term"]: t["id"] for t in terms}
 FIGS = json.loads((ROOT / "data" / "figs.json").read_text(encoding="utf-8")) if (ROOT / "data" / "figs.json").exists() else {}
 # 用語の読み（タイピングで打つ文字）。用語 id → ひらがな・英数字
 YOMI = json.loads((ROOT / "data" / "yomi.json").read_text(encoding="utf-8")) if (ROOT / "data" / "yomi.json").exists() else {}
+# 意味の要点（タイピングの「意味も打つ」で打つ）。用語 id → [画面に出す文, 打つ読み]
+IMI = {k: v for k, v in json.loads((ROOT / "data" / "imi.json").read_text(encoding="utf-8")).items() if not k.startswith("_")} \
+    if (ROOT / "data" / "imi.json").exists() else {}
 
 
 def load_b(name):
@@ -201,7 +204,7 @@ def build_home():
   <ul class="field-list">{field_links}</ul>
   <p>すべての用語は<a href="terms/index.html">用語一覧</a>から、1語ずつ解説ページで読めます。</p>
   <h2>用語タイピング</h2>
-  <p><a href="typing.html">用語タイピング</a>では、60秒で何語打てるかに挑戦しながら用語を覚えられます。読みを見て打つ「練習」と、意味だけを見て用語を思い出して打つ「腕だめし」があります。</p>
+  <p><a href="typing.html">用語タイピング</a>では、制限時間（30〜180秒）の中で何語打てるかに挑戦しながら、用語と意味を打って覚えられます。読みを見て打つ「練習」と、意味だけを見て用語を思い出して打つ「腕だめし」があります。</p>
   <h2>科目Bの対策</h2>
   <p>科目Bでは、プログラムの動きを追う「トレース」が鍵になります。このサイトでは、擬似言語のプログラムを<b>1行ずつ再生</b>して、どの行で変数がどう変わるかを目で見て確かめられます。<a href="b/trace.html">トレース練習</a>（{len(B["trace"])}問）のほか、アルゴリズム図鑑、穴埋め問題、情報セキュリティの事例問題、自分で書いたプログラムを動かせるシミュレータも用意しています。<a href="b/index.html">科目Bのページへ</a></p>
 </section>
@@ -738,12 +741,14 @@ def build_typing():
     <dl class="howto">
       <dt>練習</dt><dd>用語・読み・意味が出ます。読みをローマ字で打ちます。打ちながら意味も目に入るので、用語と意味をいっしょに覚えられます。</dd>
       <dt>腕だめし</dt><dd>意味だけが出ます。答えの用語を思い出して、読みを打ちます。Enter でヒント（1文字ずつ読みが出る）、Esc でパス。</dd>
+      <dt>意味も打つ</dt><dd>用語を打ったあとに、その用語の意味の要点（「負の数を表す方法」のような短い文）も打ちます。用語と意味を手で覚えられます。「しない」にすると、用語だけを打ちます。</dd>
+      <dt>制限時間</dt><dd>30秒・60秒・90秒・120秒・180秒から選べます。意味も打つときは、長めの時間がおすすめです。</dd>
     </dl>
     <ul>
       <li>「し」は shi でも si でも、「ん」は n でも nn でも打てます。英語の略語（TCP など）は、そのまま英字で打ちます。</li>
-      <li>ミスやパスをした用語は、終わったあとに一覧で出ます。解説ページで確かめましょう。</li>
-      <li>スコアは、正しく打てた読みの文字数です（「きゃっしゅ」なら5文字。腕だめしのヒントで見た文字は数えません）。</li>
-      <li>自己ベストのスコアは、遊び方と分野ごとにこのブラウザに保存されます。</li>
+      <li>ミスやパスをした用語は、終わったあとに意味といっしょに一覧で出ます。解説ページで確かめましょう。</li>
+      <li>スコアは、正しく打てた読みの文字数です（「きゃっしゅ」なら5文字。意味の文字も数えます。腕だめしのヒントで見た文字は数えません）。</li>
+      <li>自己ベストのスコアは、遊び方・分野・制限時間・意味も打つかどうかごとに、このブラウザに保存されます。</li>
     </ul>
   </section>
 </main>
@@ -917,7 +922,8 @@ def build_meta_files():
     host = urlparse(BASE).hostname or ""
     if host and not host.endswith("github.io"):
         (OUT / "CNAME").write_text(host + "\n", encoding="utf-8")
-    data = [{"id": t["id"], "f": t["field"], "sub": t["sub"], "term": t["term"], "desc": t["desc"], **({"g": 1} if t["id"] in FIGS else {}), **({"y": YOMI[t["id"]]} if YOMI.get(t["id"]) else {})} for t in terms]
+    data = [{"id": t["id"], "f": t["field"], "sub": t["sub"], "term": t["term"], "desc": t["desc"], **({"g": 1} if t["id"] in FIGS else {}), **({"y": YOMI[t["id"]]} if YOMI.get(t["id"]) else {}),
+             **({"mt": IMI[t["id"]][0], "my": IMI[t["id"]][1]} if IMI.get(t["id"]) else {})} for t in terms]
     (OUT / "assets" / "terms.js").write_text("window.FE_TERMS = " + json.dumps(data, ensure_ascii=False) + ";\n", encoding="utf-8")
 
 
@@ -944,6 +950,15 @@ def check():
             warnings.append(f"{t['id']} {t['term']} の読みが data/yomi.json にありません（タイピングに出ません）")
         elif not re.fullmatch(r"[ぁ-ゖー0-9a-z/\-.&']+", y):
             errors.append(f"{t['id']} {t['term']} の読みに使えない文字があります: {y}")
+    # 意味の要点（タイピングの「意味も打つ」）。読みは、用語の読みと同じ文字だけ
+    for t in terms:
+        m = IMI.get(t["id"])
+        if not m:
+            warnings.append(f"{t['id']} {t['term']} の意味の要点が data/imi.json にありません（「意味も打つ」では意味を飛ばします）")
+        elif len(m) != 2 or not m[0] or not re.fullmatch(r"[ぁ-ゖー0-9a-z/\-.&']+", m[1]):
+            errors.append(f"{t['id']} {t['term']} の意味の要点の形か読みがおかしい: {m}")
+    for k in set(IMI) - set(ids):
+        warnings.append(f"data/imi.json の {k} は、用語にない id です")
     # 科目B
     slugs = {a["slug"] for a in B["algorithms"]}
     for kind in ["algorithms", "trace", "fill", "security", "notation", "kakomon"]:

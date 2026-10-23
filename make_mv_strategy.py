@@ -1,4 +1,4 @@
-"""曲「Strategy Riddim 〜ストラテジ・アイランド〜」の MV（縦長 1080×1920・60fps）を作る。
+"""曲「ワン・ラブ・ストラテジ」（前の音源は「Strategy Riddim 〜ストラテジ・アイランド〜」）の MV（縦長 1080×1920・60fps）を作る。
 
 歌詞のまとまり（13個）ごとに場面を変え、歌詞の1行ごとに図が1つ進む（mv_common.py の仕組み）。
 南の島をテーマに、SWOT・3C・4P/4C・PPM・損益分岐点・ROE・KGI/KPI・ERP など、ストラテジ系の用語の意味を図で見せる。
@@ -28,13 +28,17 @@ OLD_DIR = ROOT / "notes" / "曲の動画" / "ストラテジ・アイランド�
 # ORIGINAL = True で前の音源（Strategy Riddim、4分36秒・アウトロあり。商用で使えない）、
 # False で新しい音源（ワン・ラブ・ストラテジ、4分8秒・アウトロの語りなし）
 ORIGINAL = False
+# 画面に出す曲名（タイトル・各場面の上の小さな曲名・最後の画面）。音源に合わせて変える
+# （2026-10-22: 新しい音源の動画に前の曲名が出ていたので、音源ごとに分けた）
 if ORIGINAL:
+    NAME, NAME_SUB, NAME_SCALE = "Strategy Riddim", "〜ストラテジ・アイランド〜", 1.0
     mc.configure(OLD_DIR / "Strategy Riddim 〜ストラテジ・アイランド〜.mp3", OLD_DIR / "ストラテジ・アイランド_歌詞.txt",
                  OLD_DIR / "ストラテジ・アイランド_時間.json", "Strategy Riddim 〜ストラテジ・アイランド〜")
     OUT = OLD_DIR / "ストラテジ・アイランド_MV.mp4"
 else:
+    NAME, NAME_SUB, NAME_SCALE = "ワン・ラブ・ストラテジ", "〜One Love Strategy〜", 0.86   # 日本語は幅が広いので小さめ
     mc.configure(DIR / "ワン・ラブ・ストラテジ.mp3", DIR / "ワン・ラブ・ストラテジ_歌詞.txt",
-                 DIR / "ワン・ラブ・ストラテジ_時間.json", "Strategy Riddim 〜ストラテジ・アイランド〜")
+                 DIR / "ワン・ラブ・ストラテジ_時間.json", "ワン・ラブ・ストラテジ")
     OUT = DIR / "ワン・ラブ・ストラテジ_MV.mp4"
 # 背景の本物の映像（Mixkit の Stock Video Free License の素材。notes/曲の動画/背景素材/ に番号.mp4 で置く）
 # REAL = False にすると、前の版（絵だけの背景）で作る
@@ -66,8 +70,8 @@ def sc_title(d, c, t):
         island(d, W / 2, 1060, 520, fade(SAND, ease((st - 1) / 1.5)))
         palm(d, W / 2 - 60, 1050, 1.3, fade(TRUNK, ease((st - 1.5) / 1.5)), fade(LEAF, ease((st - 1.5) / 1.5)), math.sin(t * 1.4))
     q = ease((st - 2.5) / 1.5)
-    label(d, W / 2, 540, "Strategy Riddim", 92, fade(GOLD, q))
-    label(d, W / 2, 650, "〜ストラテジ・アイランド〜", 58, fade(CREAM, q))
+    label(d, W / 2, 540, NAME, round(92 * NAME_SCALE), fade(GOLD, q))
+    label(d, W / 2, 650, NAME_SUB, 58, fade(CREAM, q))
     q = ease((st - 4) / 1.5)
     label(d, W / 2, 1280, "経営戦略の用語を、島のリズムで", 42, fade(MUTED, q), False)
 
@@ -80,8 +84,8 @@ def sc_intro(d, c, t):
         waves(d, 970, t + 1, mix(SEA, (14, 32, 28), 0.3), 10, 0.022, 6)
         island(d, W / 2, 920, 460)
         palm(d, W / 2 - 50, 912, 1.15, TRUNK, LEAF, math.sin(t * 1.4))
-    label(d, W / 2, 470, "Strategy Riddim", 76, GOLD)
-    label(d, W / 2, 560, "〜ストラテジ・アイランド〜", 50, CREAM)
+    label(d, W / 2, 470, NAME, round(76 * NAME_SCALE), GOLD)
+    label(d, W / 2, 560, NAME_SUB, 50, CREAM)
     words = ["戦略", "経営", "マーケティング", "会計", "法務"]
     for k, s in enumerate(words):
         r = c.p(2, 0.5) if c.li >= 2 else (c.p(1, 0.5) if k < 2 and c.li >= 1 else 0)
@@ -529,8 +533,8 @@ def sc_end(d, c, t):
         island(d, W / 2, 1060, 460, SAND)
         palm(d, W / 2 - 50, 1050, 1.15, TRUNK, LEAF, math.sin(t * 1.4))
     q = ease((st - 0.5) / 1.2)
-    label(d, W / 2, 520, "Strategy Riddim", 80, fade(GOLD, q))
-    label(d, W / 2, 610, "〜ストラテジ・アイランド〜", 48, fade(CREAM, q))
+    label(d, W / 2, 520, NAME, round(80 * NAME_SCALE), fade(GOLD, q))
+    label(d, W / 2, 610, NAME_SUB, 48, fade(CREAM, q))
     q = ease((st - 1.5) / 1.2)
     label(d, W / 2, 1250, "用語の復習は", 40, fade(MUTED, q), False)
     label(d, W / 2, 1330, "ip.yogo-drill.com", 50, fade(GOLD, q))

@@ -1,6 +1,8 @@
 /* 用語タイピング（typing.html）。用語ドリルの各サイトで同じファイルを使う。
    用語は terms.js（window.SITE_TERMS、FE は window.FE_TERMS）の y（読み）を打つ。
-   練習: 用語・読み・ローマ字・意味が出る。腕だめし: 意味だけを見て、用語を思い出して打つ。 */
+   練習: 用語・読み・ローマ字・意味が出る。腕だめし: 意味だけを見て、用語を思い出して打つ。
+   意味も打つ: 用語のあとに、意味の要点（terms.js の mt＝画面に出す文、my＝打つ読み）も打つ。データがないサイトでは出さない。
+   制限時間は TIMES から選ぶ。 */
 (function () {
   "use strict";
   const root = document.getElementById("typing");
@@ -12,7 +14,8 @@
     return;
   }
   const FIELDS = window.SITE_FIELDS || JSON.parse(root.dataset.fields || "{}");
-  const SECONDS = 60;
+  const TIMES = [30, 60, 90, 120, 180];
+  const HAS_IMI = TERMS.some((t) => t.my);
   const REL = document.body.dataset.root || "";
 
   function load(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v && typeof v === "object" ? v : d; } catch (e) { return d; } }
@@ -73,21 +76,29 @@
   }
 
   // ---------- 状態 ----------
-  const state = { mode: load("typing-pref", {}).mode || "practice", field: load("typing-pref", {}).field || "all",
+  const pref = load("typing-pref", {});
+  const state = { mode: pref.mode || "practice", field: pref.field || "all",
+    sec: TIMES.includes(pref.sec) ? pref.sec : 60, imi: HAS_IMI && pref.imi !== false,
     phase: "menu", deck: [], cur: null, idx: 0, buf: "", kanaBuf: "", typed: "", t0: 0, timer: 0,
     score: 0, words: 0, keys: 0, miss: 0, missedIds: new Set(), wordMiss: false, hintTo: 0, flash: "", passed: null };
 
   const fieldKeys = Object.keys(FIELDS).filter((f) => TERMS.some((t) => t.f === f));
   function pool() { return state.field === "all" ? TERMS : TERMS.filter((t) => t.f === state.field); }
-  function bestKey() { return `typing-best-${state.mode}-${state.field}`; }
+  // 自己ベストは、遊び方・分野・制限時間・意味も打つかごとに分ける（60秒・用語だけは、前からの名前のまま）
+  function bestKey() { return `typing-best-${state.mode}-${state.field}` + (state.sec !== 60 ? `-${state.sec}s` : "") + (state.imi ? "-imi" : ""); }
 
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
   function nextWord() {
     if (!state.deck.length) state.deck = shuffle(pool().slice());
     const t = state.deck.pop();
-    state.cur = { t, ch: chunks(t.y) };
+    state.cur = { t, ch: chunks(t.y), part: "term" };
     state.idx = 0; state.buf = ""; state.kanaBuf = ""; state.typed = ""; state.wordMiss = false; state.hintTo = 0;
+  }
+  // 用語を打ち終わったら、続けて意味の要点を打つ（ミスの記録は用語と合わせて1語として数える）
+  function startImi() {
+    state.cur.part = "imi"; state.cur.ch = chunks(state.cur.t.my);
+    state.idx = 0; state.buf = ""; state.kanaBuf = ""; state.typed = ""; state.hintTo = 0;
   }
 
   // ---------- 打つ処理 ----------
@@ -121,6 +132,7 @@
     if (state.idx >= state.hintTo) state.score += [...state.cur.ch[state.idx].kana].length;
     state.idx++; state.buf = ""; state.kanaBuf = "";
     if (state.idx >= state.cur.ch.length) {
+      if (state.cur.part === "term" && state.imi && state.cur.t.my) { flash("ok"); startImi(); return; }
       state.words++;
       if (state.wordMiss || state.hintTo) state.missedIds.add(state.cur.t.id);
       flash("ok"); nextWord();
@@ -132,12 +144,12 @@
   function pass() {
     if (state.phase !== "play") return;
     state.missedIds.add(state.cur.t.id);
-    state.passed = state.cur.t; clearTimeout(passTimer);
+    state.passed = { t: state.cur.t, part: state.cur.part }; clearTimeout(passTimer);
     passTimer = setTimeout(() => { state.passed = null; render(); }, 1800);
     nextWord(); render();
   }
   function hint() {
-    if (state.phase !== "play" || state.mode !== "test") return;
+    if (state.phase !== "play" || state.mode !== "test" || state.cur.part !== "term") return;
     state.hintTo = Math.min(Math.max(state.hintTo, state.idx) + 1, state.cur.ch.length); render();
   }
   let flashTimer = 0, passTimer = 0;
@@ -157,11 +169,23 @@
     const restKana = ch.slice(state.idx).map((c) => c.kana).join("").slice(state.kanaBuf.length);
     const romaRest = rest(ch[state.idx], state.buf) + ch.slice(state.idx + 1).map((c) => c.opts[0]).join("");
     const label = FIELDS[t.f] ? `${esc(FIELDS[t.f])}・${esc(t.sub)}` : esc(t.sub || "");
+    const kanaLine = `<p class="ty-kana"><span class="done">${esc(doneKana)}</span>${esc(restKana)}</p>
+        <p class="ty-roma"><span class="done">${esc(state.typed)}</span>${esc(romaRest)}</p>`;
+    if (state.cur.part === "imi") {
+      // 意味の要点: 練習でも腕だめしでも、文と読みを見て打つ
+      return `<p class="ty-sub">${label}</p>
+        <p class="ty-term ty-term-done">${esc(t.term)}<span class="ty-check" aria-label="打てた">✓</span></p>
+        <p class="ty-part">意味を打とう</p>
+        <p class="ty-imi">${esc(t.mt)}</p>
+        ${kanaLine}
+        <p class="ty-desc">${esc(t.desc)}</p>
+        ${state.mode === "test" ? '<p class="ty-keys"><button type="button" class="btn ghost" data-act="pass">パス（Esc）</button></p>' : ""}`;
+    }
+    const next = state.imi && t.my ? '<p class="ty-next">このあと意味も打ちます</p>' : "";
     if (state.mode === "practice") {
       return `<p class="ty-sub">${label}</p>
         <p class="ty-term">${esc(t.term)}</p>
-        <p class="ty-kana"><span class="done">${esc(doneKana)}</span>${esc(restKana)}</p>
-        <p class="ty-roma"><span class="done">${esc(state.typed)}</span>${esc(romaRest)}</p>
+        ${kanaLine}${next}
         <p class="ty-desc">${esc(t.desc)}</p>`;
     }
     const shown = ch.slice(state.idx, state.hintTo).map((c) => c.kana).join("");
@@ -169,7 +193,7 @@
     return `<p class="ty-sub">${label}</p>
       <p class="ty-desc big">${esc(masked(t))}</p>
       <p class="ty-kana"><span class="done">${esc(doneKana)}</span><span class="hint">${esc(shown.slice(state.kanaBuf.length))}</span>${"・".repeat(Math.max(0, left))}</p>
-      <p class="ty-roma"><span class="done">${esc(state.typed)}</span></p>
+      <p class="ty-roma"><span class="done">${esc(state.typed)}</span></p>${next}
       <p class="ty-keys"><button type="button" class="btn ghost" data-act="hint">ヒント（Enter）</button><button type="button" class="btn ghost" data-act="pass">パス（Esc）</button></p>`;
   }
   // 腕だめしでは、意味の中に答えの用語が出てきたら「〇〇」で隠す
@@ -186,22 +210,28 @@
       .map(([k, v]) => `<button type="button" class="ty-chip" data-field="${k}" aria-pressed="${state.field === k}">${esc(v)}</button>`).join("");
     const modeBtns = [["practice", "練習", "用語と読みを見て打つ"], ["test", "腕だめし", "意味を見て、用語を思い出して打つ"]]
       .map(([k, b, s]) => `<button type="button" class="ty-mode" data-mode="${k}" aria-pressed="${state.mode === k}"><b>${b}</b><small>${s}</small></button>`).join("");
+    const imiBtns = [[true, "する"], [false, "しない（用語だけ）"]]
+      .map(([v, s]) => `<button type="button" class="ty-chip" data-imi="${v ? 1 : 0}" aria-pressed="${state.imi === v}">${s}</button>`).join("");
+    const secBtns = TIMES.map((s) => `<button type="button" class="ty-chip" data-sec="${s}" aria-pressed="${state.sec === s}">${s}秒</button>`).join("");
     return `<div class="ty-menu">
       <p class="label">遊び方</p><div class="ty-modes">${modeBtns}</div>
+      ${HAS_IMI ? `<p class="label">意味も打つ</p><div class="ty-chips">${imiBtns}</div>` : ""}
+      <p class="label">制限時間</p><div class="ty-chips">${secBtns}</div>
       <p class="label">分野</p><div class="ty-chips">${fieldBtns}</div>
       <p class="ty-best">${best && best.score ? `自己ベスト: <b>${best.score}文字</b>（${best.words}語）` : "まだ記録はありません"}</p>
       <button type="button" class="btn primary ty-start" data-act="start">スタート（スペースキー）</button>
-      <p class="muted">${SECONDS}秒で何語打てるか挑戦します。ローマ字入力は半角英数で打ってください（スマホは、ひらがなのキーボードでも打てます）。</p>
+      <p class="muted">${state.sec}秒で何語打てるか挑戦します。${state.imi ? "用語を打ったあとに、意味の要点も打ちます。" : ""}ローマ字入力は半角英数で打ってください（スマホは、ひらがなのキーボードでも打てます）。</p>
     </div>`;
   }
 
   function resultHtml() {
-    const kps = (state.keys / SECONDS).toFixed(1);
+    const kps = (state.keys / state.sec).toFixed(1);
     const acc = state.keys + state.miss ? Math.round((state.keys / (state.keys + state.miss)) * 100) : 0;
     const missed = TERMS.filter((t) => state.missedIds.has(t.id));
-    const list = missed.map((t) => `<li><a href="${REL}terms/${t.id}.html">${esc(t.term)}</a><span>${esc(t.y)}</span></li>`).join("");
+    const list = missed.map((t) => `<li><a href="${REL}terms/${t.id}.html">${esc(t.term)}</a><span>${esc(t.y)}</span>`
+      + (t.mt ? `<small class="ty-m">${esc(t.mt)}</small>` : "") + `</li>`).join("");
     return `<div class="ty-result">
-      <p class="ty-mode-name">${state.mode === "practice" ? "練習" : "腕だめし"}・${esc(state.field === "all" ? "すべて" : FIELDS[state.field])}</p>
+      <p class="ty-mode-name">${state.mode === "practice" ? "練習" : "腕だめし"}・${esc(state.field === "all" ? "すべて" : FIELDS[state.field])}・${state.sec}秒${state.imi ? "・意味も打つ" : ""}</p>
       ${state.newBest ? '<p class="ty-new">自己ベスト更新！</p>' : ""}
       <p class="ty-total"><small>スコア</small><b class="mono">${state.score}</b><small>文字</small></p>
       <dl class="ty-score"><div><dt>打てた用語</dt><dd>${state.words}<small>語</small></dd></div><div><dt>正しく打った数</dt><dd>${state.keys}<small>打鍵</small></dd></div>
@@ -216,11 +246,14 @@
     if (state.phase === "menu") html = menuHtml();
     else if (state.phase === "result") html = resultHtml();
     else {
-      const left = Math.max(0, Math.ceil(SECONDS - (performance.now() - state.t0) / 1000));
-      const passed = state.passed ? `<p class="ty-passed">答え: <b>${esc(state.passed.term)}</b>（${esc(state.passed.y)}）</p>` : "";
+      const left = Math.max(0, Math.ceil(state.sec - (performance.now() - state.t0) / 1000));
+      const pt = state.passed && state.passed.t;
+      const passed = !pt ? "" : state.passed.part === "imi"
+        ? `<p class="ty-passed">${esc(pt.term)} の意味: <b>${esc(pt.mt)}</b></p>`
+        : `<p class="ty-passed">答え: <b>${esc(pt.term)}</b>（${esc(pt.y)}）${pt.mt ? `… ${esc(pt.mt)}` : ""}</p>`;
       html = `<div class="ty-play ${state.flash ? "f-" + state.flash : ""}">
         <div class="ty-bar"><span>残り <b class="mono ty-left">${left}</b> 秒</span><span>スコア <b class="mono">${state.score}</b></span><span><b class="mono">${state.words}</b> 語</span><span>ミス <b class="mono">${state.miss}</b></span></div>
-        <div class="ty-time"><i style="width:${(left / SECONDS) * 100}%"></i></div>
+        <div class="ty-time"><i style="width:${(left / state.sec) * 100}%"></i></div>
         ${passed}<div class="ty-word">${wordHtml()}</div>
         <p class="ty-keys muted">打つ欄が見えないときは、ここを押すとキーボードが出ます。</p>
       </div>`;
@@ -231,7 +264,7 @@
   function start() {
     state.phase = "play"; state.deck = []; state.score = 0; state.words = 0; state.keys = 0; state.miss = 0; state.missedIds = new Set();
     state.newBest = false; state.passed = null; state.flash = "";
-    store("typing-pref", { mode: state.mode, field: state.field });
+    store("typing-pref", { mode: state.mode, field: state.field, sec: state.sec, imi: state.imi });
     nextWord(); state.t0 = performance.now();
     clearInterval(state.timer);
     state.timer = setInterval(tick, 200);
@@ -239,20 +272,22 @@
   }
   // 残り時間だけを書き換える（画面全体を作り直すと、ボタンが押しにくくなるため）
   function tick() {
-    const ms = SECONDS * 1000 - (performance.now() - state.t0);
+    const ms = state.sec * 1000 - (performance.now() - state.t0);
     if (ms <= 0) { end(); return; }
     const l = root.querySelector(".ty-left"), bar = root.querySelector(".ty-time i");
     if (l) l.textContent = Math.ceil(ms / 1000);
-    if (bar) bar.style.width = (ms / SECONDS / 10) + "%";
+    if (bar) bar.style.width = (ms / state.sec / 10) + "%";
   }
   function end() {
     clearInterval(state.timer);
+    // 時間切れのときに打っていた用語も、ミスやヒントがあれば一覧に入れる
+    if (state.cur && (state.wordMiss || state.hintTo)) state.missedIds.add(state.cur.t.id);
     const best = load(bestKey(), null);
     if (state.score && (!best || !best.score || state.score > best.score)) {
       store(bestKey(), { score: state.score, words: state.words }); state.newBest = true;
     }
     state.phase = "result"; render();
-    if (window.gtag) gtag("event", "typing_finish", { mode: state.mode, field: state.field, words: state.words, score: state.score });
+    if (window.gtag) gtag("event", "typing_finish", { mode: state.mode, field: state.field, seconds: state.sec, meaning: state.imi ? 1 : 0, words: state.words, score: state.score });
   }
 
   // ---------- 入力 ----------
@@ -292,6 +327,8 @@
     if (!b) { if (state.phase === "play") focusInput(); return; }
     if (b.dataset.mode) { state.mode = b.dataset.mode; render(); }
     else if (b.dataset.field) { state.field = b.dataset.field; render(); }
+    else if (b.dataset.sec) { state.sec = Number(b.dataset.sec); render(); }
+    else if (b.dataset.imi) { state.imi = b.dataset.imi === "1"; render(); }
     else if (b.dataset.act === "start") start();
     else if (b.dataset.act === "menu") { state.phase = "menu"; render(); }
     else if (b.dataset.act === "pass") { pass(); focusInput(); }
