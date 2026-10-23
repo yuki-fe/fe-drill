@@ -86,6 +86,33 @@ def head_extras():
 SITEMAP = []  # page() で書き出したページの URL（sitemap.xml に載せる）
 
 
+NAV = [("index.html", "科目A 用語"), ("b/index.html", "科目B"), ("terms/index.html", "用語一覧"), ("typing.html", "タイピング"), ("about.html", "このサイトについて")]
+
+
+def nav_links(path, rel):
+    """今いる場所のリンクに aria-current を付ける（科目Bの中のページなら「科目B」）"""
+    def current(href):
+        return path == href or (href == "b/index.html" and path.startswith("b/")) or (href == "terms/index.html" and path.startswith("terms/"))
+    cur = ' aria-current="page"'
+    return "".join(f'<a href="{rel}{h}"{cur if current(h) else ""}>{label}</a>' for h, label in NAV)
+
+
+# 線のアイコン（Lucide の形をもとに、そのまま SVG で入れる）
+ICONS = {
+    "cards": '<rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 2h12a2 2 0 0 1 2 2v12"/>',
+    "play": '<polygon points="7 4 19 12 7 20 7 4"/>',
+    "keyboard": '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',
+    "list": '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    "book": '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>',
+    "shield": '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    "pencil": '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+}
+
+
+def icon(name):
+    return f'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">{ICONS[name]}</svg>'
+
+
 def page(path, title, desc, body, rel, body_class="", jsonld=None, scripts="", index=True):
     """path は docs/ からの相対パス。rel はそのページからサイトのルートへの相対パス（"" / "../" / "../../"）。"""
     url = BASE + "/" + ("" if path == "index.html" else path)
@@ -108,8 +135,9 @@ def page(path, title, desc, body, rel, body_class="", jsonld=None, scripts="", i
 <meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
 <link rel="stylesheet" href="{rel}assets/style.css">
+<link rel="stylesheet" href="{rel}assets/layout.css">
 <link rel="icon" href="{rel}favicon.ico" sizes="48x48">
 <link rel="icon" href="{rel}favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="{rel}apple-touch-icon.png">
@@ -120,16 +148,16 @@ def page(path, title, desc, body, rel, body_class="", jsonld=None, scripts="", i
 {ld}
 </head>
 <body class="{body_class}" data-root="{rel}">
+<a class="skip" href="#content">本文へ移動</a>
 <header class="site-head">
-  <a class="brand" href="{rel}index.html">{escape(SITE)}</a>
-  <nav class="site-nav" aria-label="サイト内">
-    <a href="{rel}index.html">科目A 用語</a>
-    <a href="{rel}b/index.html">科目B</a>
-    <a href="{rel}terms/index.html">用語一覧</a>
-    <a href="{rel}typing.html">タイピング</a>
-    <a href="{rel}about.html">このサイトについて</a>
-  </nav>
+  <div class="site-head-in">
+    <a class="brand" href="{rel}index.html"><img src="{rel}favicon.svg" alt="" width="28" height="28">{escape(SITE)}</a>
+    <nav class="site-nav" aria-label="サイト内">
+      {nav_links(path, rel)}
+    </nav>
+  </div>
 </header>
+<div id="content"></div>
 {body}
 <footer class="site-foot">
   <nav aria-label="フッター">
@@ -169,28 +197,59 @@ def breadcrumb_ld(items):
 def build_home():
     counts = {k: sum(t["field"] == k for t in terms) for k in FIELDS}
     field_links = "".join(f'<li><a href="terms/index.html#{k}">{v}</a><span class="mono">{counts[k]}語</span></li>' for k, v in FIELDS.items())
+    n_b = len(B["trace"]) + len(B["fill"]) + len(B["security"])
+    features = [
+        ("cards", "単語帳とクイズ", f"{len(terms)}語をカード・4択・書いて答えるで。間違えた用語だけを復習できます。", "#study", "学習を始める"),
+        ("play", "科目B トレース練習", f"擬似言語を1行ずつ再生して、変数の変化を目で追えます（{len(B['trace'])}問）。", "b/trace.html", "トレースを試す"),
+        ("book", "アルゴリズム図鑑", f"探索・整列・再帰など{len(B['algorithms'])}種類の動きを、コードと並べて見られます。", "b/algorithms/index.html", "図鑑を見る"),
+        ("keyboard", "用語タイピング", "用語と意味を打って、手で覚えます。制限時間は30〜180秒から。", "typing.html", "タイピングする"),
+        ("shield", "セキュリティ事例", f"科目Bの情報セキュリティを、場面を読んで答える形で（{len(B['security'])}問）。", "b/security.html", "事例を解く"),
+        ("list", "用語一覧", "分野・小分類ごとに全部の用語を一覧で。1語ずつ解説ページがあります。", "terms/index.html", "一覧を見る"),
+    ]
+    feature_cards = "".join(f'<a class="feat" href="{h}">{icon(i)}<b>{escape(t)}</b><span>{escape(d)}</span><em>{escape(c)} →</em></a>'
+                            for i, t, d, h, c in features)
     body = f"""
-<a class="home-feature" href="b/trace.html"><span class="tag">科目B</span><b>プログラムの動きを1行ずつ再生できる「トレース練習」{len(B["trace"])}問</b><span class="go">試してみる →</span></a>
-<div class="app">
-  <aside class="side">
-    <div>
-      <p class="label">学び方</p>
-      <nav class="modes" role="tablist" id="modes" aria-label="学び方"></nav>
+<section class="hero" aria-labelledby="hero-h">
+  <div class="hero-text">
+    <p class="hero-eyebrow">基本情報技術者試験（FE）の対策・無料</p>
+    <h1 id="hero-h"><span>用語は、</span><span>すきま時間に。</span><br><span>科目Bは、</span><span>1行ずつ動かして。</span></h1>
+    <p class="hero-lead">科目Aの用語{len(terms)}語を単語帳とクイズで覚え、科目Bは擬似言語のプログラムを1行ずつ再生して、変数の変化を目で追えます。登録は要りません。</p>
+    <div class="hero-cta">
+      <a class="btn primary" href="#study">用語を覚えはじめる</a>
+      <a class="btn" href="b/trace.html">科目Bのトレースを試す</a>
     </div>
-    <div>
-      <p class="label">分野と覚えた数</p>
-      <div class="fields" id="fields"></div>
-    </div>
+    <ul class="hero-stats" aria-label="収録の数">
+      <li><b class="mono">{len(terms)}</b><span>用語</span></li>
+      <li><b class="mono">{n_b}</b><span>科目Bの問題</span></li>
+      <li><b class="mono">{len(B["algorithms"])}</b><span>アルゴリズム</span></li>
+    </ul>
+  </div>
+  <aside class="hero-progress" aria-labelledby="prog-h">
+    <h2 id="prog-h">あなたの進み具合</h2>
+    <p class="hero-progress-sub">分野を押すと、その分野だけで学習します</p>
+    <div class="fields" id="fields"></div>
+    <p class="save-note">進み具合はこのブラウザに保存されます。<button id="reset" type="button">リセット</button></p>
   </aside>
-  <main class="main">
+</section>
+
+<section class="study" id="study" aria-labelledby="study-h">
+  <div class="study-head">
+    <h2 id="study-h" class="sec-title">学習する</h2>
+    <nav class="modes" role="tablist" id="modes" aria-label="学び方"></nav>
+  </div>
+  <div class="study-body">
     <div class="toolbar" id="toolbar"></div>
     <section class="panel" id="panel"><noscript><p class="empty">この学習機能を使うには JavaScript を有効にしてください。<a href="terms/index.html">用語一覧</a>はそのまま読めます。</p></noscript></section>
-    <p class="save-note">進み具合はこのブラウザに保存されます。<button id="reset" type="button">進み具合をリセット</button></p>
-  </main>
-</div>
+  </div>
+</section>
+
+<section class="features" aria-labelledby="feat-h">
+  <h2 id="feat-h" class="sec-title">できること</h2>
+  <div class="feat-grid">{feature_cards}</div>
+</section>
 
 <section class="prose home-intro">
-  <h1>{escape(SITE)}<small>{escape(config["tagline"])}</small></h1>
+  <h2 class="intro-title">{escape(SITE)}について<small>{escape(config["tagline"])}</small></h2>
   <p>基本情報技術者試験（FE）の科目A・科目Bで出てくる用語を、{len(terms)}語収録しています。登録は不要で、スマホでもパソコンでも無料で使えます。</p>
   <h2>5つの学び方</h2>
   <dl class="howto">
@@ -210,8 +269,11 @@ def build_home():
 </section>
 """
     ld = [{"@context": "https://schema.org", "@type": "WebSite", "name": SITE, "url": BASE + "/", "description": config["description"]}]
+    # 「カードで練習する」など、学び方つきのリンク（#card）から来たときは、学習の欄まで送る
+    # app.js が URL の # を書き換える前に読む
+    jump = '<script>if (/^#(card|quiz|type|review|list)$/.test(location.hash)) addEventListener("load", () => document.getElementById("study").scrollIntoView());</script>'
     page("index.html", f"{SITE}｜{config['tagline']}", config["description"], body, "", "home", ld,
-         '<script src="assets/terms.js"></script>\n<script src="assets/fig.js"></script>\n<script src="assets/app.js"></script>')
+         jump + '\n<script src="assets/terms.js"></script>\n<script src="assets/fig.js"></script>\n<script src="assets/app.js"></script>')
 
 
 def related_terms(t, n=6):
@@ -263,26 +325,39 @@ def build_term(t, prev, nxt):
     fig_html = (f'<section class="fig-box"><h2>図で見る</h2><p class="fig-title">{escape(fig["title"])}（› を押すか、図をタップすると進みます）</p>'
                 f'<div class="fig-player">{fig_svg}</div>'
                 '<ol class="fig-steps">' + "".join(f"<li>{escape(s)}</li>" for s in fig["steps"]) + "</ol></section>") if fig else ""
+    no = int(t["id"])
     body = f"""
-<main class="prose term-page">
+<div class="term-wrap">
   <nav class="crumbs" aria-label="パンくずリスト"><a href="../index.html">ホーム</a><span>›</span><a href="index.html#{t['field']}">{field}</a><span>›</span><a href="index.html#sub-{t['field']}-{escape(t['sub'])}">{escape(t['sub'])}</a></nav>
-  <p class="eyebrow">{field}・{escape(t['sub'])}</p>
-  <h1>{escape(t['term'])}</h1>
-  <p class="lead">{escape(t['desc'])}</p>
-  <div class="cta-row">
-    <a class="btn primary" href="../index.html#card">カードで練習する</a>
-    <a class="btn" href="../index.html#type">書いて答える問題に挑戦</a>
+  <div class="term-grid">
+    <main class="prose term-page term-main">
+      <p class="eyebrow">{field}・{escape(t['sub'])}<span class="term-no mono">No.{no:03d} / {len(terms)}</span></p>
+      <h1>{escape(t['term'])}</h1>
+      <p class="lead">{escape(t['desc'])}</p>
+      <div class="cta-row cta-mobile">
+        <a class="btn primary" href="../index.html#card">{icon("cards")}カードで練習</a>
+        <a class="btn" href="../index.html#type">{icon("pencil")}書いて答える</a>
+      </div>
+      {fig_html}
+      {mini_quiz(t, rel)}
+      {b_html}
+      {pr_box()}
+      {pager}
+    </main>
+    <aside class="term-side" aria-label="練習と関連する用語">
+      <section class="side-card">
+        <h2>この用語を練習する</h2>
+        <a class="btn primary" href="../index.html#card">{icon("cards")}カードで練習</a>
+        <a class="btn" href="../index.html#type">{icon("pencil")}書いて答える</a>
+        <a class="btn" href="../typing.html">{icon("keyboard")}タイピングで覚える</a>
+      </section>
+      <section class="side-card">
+        <h2>同じ分野の用語</h2>
+        <ul class="related">{related_html}</ul>
+      </section>
+    </aside>
   </div>
-  {fig_html}
-  <section>
-    <h2>同じ分野の用語</h2>
-    <ul class="related">{related_html}</ul>
-  </section>
-  {b_html}
-  {mini_quiz(t, rel)}
-  {pr_box()}
-  {pager}
-</main>
+</div>
 """
     url = f"{BASE}/terms/{t['id']}.html"
     ld = [

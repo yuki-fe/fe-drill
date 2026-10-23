@@ -48,6 +48,7 @@
 | `make_intro_media.py` | Instagram の最初の投稿（サイト紹介のフィード5枚・リール・ストーリー2枚と投稿文）を `static/ig/intro/` に作る。一度きり |
 | `make_app_icons.py` | スマホのホーム画面に置くアプリのアイコン（PWA 用。`static/icon-192.png`・`icon-512.png`・`icon-maskable-512.png`）を作る。アイコンの形を変えたときだけ |
 | `make_ip_launch_media.py` | ITパスポート用語ドリルの公開を知らせるリール（約34秒・60fps・音なし）・表紙・投稿文を `static/ig/ip-launch/` に作る。一度きり。用語は `../ip-drill/data/terms.json` から読む |
+| `make_series_promo.py`・`make_promo_shots.py` | **用語ドリル全体**（yogo-drill.com と公開中の7サイト）の宣伝リール（約36秒・60fps・音なし）・表紙・投稿文を `static/ig/series-promo/` に作る。デザインはサイトのレイアウトと同じ「ミニマル・スイス」（ui-ux-pro-max）、文字は Noto Sans JP、上のふちに7サイトの色の帯。サイトの一覧は `../yogo-drill/sites.json`（`public` のもの。旅行は入らない）。先に `..\yogo-drill\.venv\Scripts\python make_promo_shots.py` で各サイトのスマホの画面を `notes/宣伝動画/画面/` に撮る（playwright が要る）。`--stills` で場面ごとの静止画、`--captions` で投稿文だけ作り直す。FE だけの宣伝リール（クレイ風・紫）は `make_promo_media.py`（`static/ig/promo/`） |
 | `media_fx.py` | 動画の飾りの仕組み。**リール動画は音なし（BGM も効果音もなし）**（2026-10-16 に運営者が決めた。`SFX_ON = False`・`BGM_STYLE = None`。動画には無音の音声トラックだけ入る）。効果音・BGM（`chip` 8ビット・`band` 楽器・`healing` ヒーリング風）・キャラクターのドット絵（`POSES`・`POSES_B`）を作る仕組みは残っているが、今は使っていない |
 | `make_news_image.py` | 「今週のITニュース」の画像（見出し・用語の解説）を `static/ig/news/` に作る。ふだんは GitHub の自動実行が動かす。`--cover` で合言葉なしのとき用の表紙 |
 | `.github/workflows/news-image.yml` | ボットの合図（repository_dispatch: news-image）で `make_news_image.py` を動かし、画像を commit して公開する |
@@ -117,6 +118,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 
 ## 決まりごと
 
+- **レイアウト**（2026-10-23 に入れた）: 見た目の土台は `static/assets/style.css`、その上に全サイト共通の `static/assets/layout.css`（FE用語ドリルのものと同じファイル。直すときは FE で直して、各サイトにコピーする）。トップは「見出し・説明・数字・あなたの進み具合」→「学習する」（学び方はタブ）→「できること」のカード→説明。用語ページは本文と右の「この用語を練習する」「同じ分野の用語」の2列（スマホは1列）。学習の画面（app.js）が使う `#modes`・`#fields`・`#toolbar`・`#panel`・`#reset` は消さない
 - ユーザーへの回答は **日本語**。運営者は初心者寄りなので、手順は画面のボタン名まで具体的に書く
 - 手順書・計画などの資料は **PDF** で作る: `notes/src/〇〇.html` を書く → `python notes/src/make_pdf.py 〇〇` → PDF を開いて崩れを確認。PDF のファイル名は日本語のタイトル。機能や運用の手順書を作ったら `make_book.py` の PARTS に足して、まとめの1冊も作り直す。古くなった手順書は `notes/pdf/古い/`・`notes/src/古い/` へ
 - 「公式」「IPA」など試験の主催者と関係があるように見える言葉、「必ず合格」「ここだけ」など確かめられない言い切りは、サイト・投稿・資料のどれにも使わない

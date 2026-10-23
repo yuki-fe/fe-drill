@@ -14,8 +14,9 @@
 <meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
 <link rel="stylesheet" href="assets/style.css?v=e20602fb">
+<link rel="stylesheet" href="assets/layout.css?v=bfbfffc3">
 <link rel="icon" href="favicon.ico" sizes="48x48">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -26,38 +27,58 @@
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "FE用語ドリル", "url": "https://fe.yogo-drill.com/", "description": "基本情報技術者試験（FE）の頻出用語を、カード・4択クイズ・書いて答える問題で覚えられる無料の単語帳サイトです。用語ごとの解説ページもあります。"}</script>
 </head>
 <body class="home" data-root="">
+<a class="skip" href="#content">本文へ移動</a>
 <header class="site-head">
-  <a class="brand" href="index.html">FE用語ドリル</a>
-  <nav class="site-nav" aria-label="サイト内">
-    <a href="index.html">科目A 用語</a>
-    <a href="b/index.html">科目B</a>
-    <a href="terms/index.html">用語一覧</a>
-    <a href="typing.html">タイピング</a>
-    <a href="about.html">このサイトについて</a>
-  </nav>
+  <div class="site-head-in">
+    <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="28" height="28">FE用語ドリル</a>
+    <nav class="site-nav" aria-label="サイト内">
+      <a href="index.html" aria-current="page">科目A 用語</a><a href="b/index.html">科目B</a><a href="terms/index.html">用語一覧</a><a href="typing.html">タイピング</a><a href="about.html">このサイトについて</a>
+    </nav>
+  </div>
 </header>
+<div id="content"></div>
 
-<a class="home-feature" href="b/trace.html"><span class="tag">科目B</span><b>プログラムの動きを1行ずつ再生できる「トレース練習」20問</b><span class="go">試してみる →</span></a>
-<div class="app">
-  <aside class="side">
-    <div>
-      <p class="label">学び方</p>
-      <nav class="modes" role="tablist" id="modes" aria-label="学び方"></nav>
+<section class="hero" aria-labelledby="hero-h">
+  <div class="hero-text">
+    <p class="hero-eyebrow">基本情報技術者試験（FE）の対策・無料</p>
+    <h1 id="hero-h"><span>用語は、</span><span>すきま時間に。</span><br><span>科目Bは、</span><span>1行ずつ動かして。</span></h1>
+    <p class="hero-lead">科目Aの用語345語を単語帳とクイズで覚え、科目Bは擬似言語のプログラムを1行ずつ再生して、変数の変化を目で追えます。登録は要りません。</p>
+    <div class="hero-cta">
+      <a class="btn primary" href="#study">用語を覚えはじめる</a>
+      <a class="btn" href="b/trace.html">科目Bのトレースを試す</a>
     </div>
-    <div>
-      <p class="label">分野と覚えた数</p>
-      <div class="fields" id="fields"></div>
-    </div>
+    <ul class="hero-stats" aria-label="収録の数">
+      <li><b class="mono">345</b><span>用語</span></li>
+      <li><b class="mono">40</b><span>科目Bの問題</span></li>
+      <li><b class="mono">10</b><span>アルゴリズム</span></li>
+    </ul>
+  </div>
+  <aside class="hero-progress" aria-labelledby="prog-h">
+    <h2 id="prog-h">あなたの進み具合</h2>
+    <p class="hero-progress-sub">分野を押すと、その分野だけで学習します</p>
+    <div class="fields" id="fields"></div>
+    <p class="save-note">進み具合はこのブラウザに保存されます。<button id="reset" type="button">リセット</button></p>
   </aside>
-  <main class="main">
+</section>
+
+<section class="study" id="study" aria-labelledby="study-h">
+  <div class="study-head">
+    <h2 id="study-h" class="sec-title">学習する</h2>
+    <nav class="modes" role="tablist" id="modes" aria-label="学び方"></nav>
+  </div>
+  <div class="study-body">
     <div class="toolbar" id="toolbar"></div>
     <section class="panel" id="panel"><noscript><p class="empty">この学習機能を使うには JavaScript を有効にしてください。<a href="terms/index.html">用語一覧</a>はそのまま読めます。</p></noscript></section>
-    <p class="save-note">進み具合はこのブラウザに保存されます。<button id="reset" type="button">進み具合をリセット</button></p>
-  </main>
-</div>
+  </div>
+</section>
+
+<section class="features" aria-labelledby="feat-h">
+  <h2 id="feat-h" class="sec-title">できること</h2>
+  <div class="feat-grid"><a class="feat" href="#study"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 2h12a2 2 0 0 1 2 2v12"/></svg><b>単語帳とクイズ</b><span>345語をカード・4択・書いて答えるで。間違えた用語だけを復習できます。</span><em>学習を始める →</em></a><a class="feat" href="b/trace.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><polygon points="7 4 19 12 7 20 7 4"/></svg><b>科目B トレース練習</b><span>擬似言語を1行ずつ再生して、変数の変化を目で追えます（20問）。</span><em>トレースを試す →</em></a><a class="feat" href="b/algorithms/index.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/></svg><b>アルゴリズム図鑑</b><span>探索・整列・再帰など10種類の動きを、コードと並べて見られます。</span><em>図鑑を見る →</em></a><a class="feat" href="typing.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg><b>用語タイピング</b><span>用語と意味を打って、手で覚えます。制限時間は30〜180秒から。</span><em>タイピングする →</em></a><a class="feat" href="b/security.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><b>セキュリティ事例</b><span>科目Bの情報セキュリティを、場面を読んで答える形で（10問）。</span><em>事例を解く →</em></a><a class="feat" href="terms/index.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><b>用語一覧</b><span>分野・小分類ごとに全部の用語を一覧で。1語ずつ解説ページがあります。</span><em>一覧を見る →</em></a></div>
+</section>
 
 <section class="prose home-intro">
-  <h1>FE用語ドリル<small>基本情報技術者試験の用語を無料で覚える単語帳</small></h1>
+  <h2 class="intro-title">FE用語ドリルについて<small>基本情報技術者試験の用語を無料で覚える単語帳</small></h2>
   <p>基本情報技術者試験（FE）の科目A・科目Bで出てくる用語を、345語収録しています。登録は不要で、スマホでもパソコンでも無料で使えます。</p>
   <h2>5つの学び方</h2>
   <dl class="howto">
@@ -86,6 +107,7 @@
   <p>基本情報技術者試験は、独立行政法人 情報処理推進機構（IPA）が実施する国家試験です。当サイトはIPAとは関係のない個人の学習サイトです。</p>
   <p>© 2026 Yuki-fe</p>
 </footer>
+<script>if (/^#(card|quiz|type|review|list)$/.test(location.hash)) addEventListener("load", () => document.getElementById("study").scrollIntoView());</script>
 <script src="assets/terms.js?v=85787c1e"></script>
 <script src="assets/fig.js?v=a4301614"></script>
 <script src="assets/app.js?v=87510d16"></script>
