@@ -1,11 +1,11 @@
 /* FE用語ドリル 運用LINE: Instagram（ほかのファイルと合わせて1つのプログラム。分け方は config.gs の先頭） */
 
-/* ---------- Instagram（下書き → LINE のボタンで投稿） ---------- */
+/* ---------- Instagram（下書き → 素材を受け取って、運営者がアプリで投稿） ---------- */
 function igReady() {
   return !!(prop("IG_TOKEN") && prop("IG_USER_ID"));
 }
 
-/* 今日の投稿の種類（「インスタ リール」などで変えたら、その日はそれを使う） */
+/* 今日の投稿の種類（下書きの「種類を変える」で変えたら、その日はそれを使う） */
 function kindToday() {
   const o = jsonProp("IG_KIND_TODAY", null);
   if (o && o.date === fmt(new Date(), "yyyy-MM-dd") && IG_KINDS[o.kind]) return o.kind;
@@ -16,14 +16,6 @@ function setKindToday(kind) {
   PROPS.setProperty("IG_KIND_TODAY", JSON.stringify({ date: fmt(new Date(), "yyyy-MM-dd"), kind }));
 }
 
-function kindFromWord(w) {
-  if (/ニュース|にゅーす/.test(w)) return "news";
-  if (/用語/.test(w)) return "term";
-  if (/トレース|とれーす/.test(w)) return "trace";
-  if (/リール|動画|りーる/i.test(w)) return "reel";
-  return null;
-}
-
 /* サイトに置いた投稿のストック */
 function igPosts(kind) {
   const res = UrlFetchApp.fetch(CONFIG.siteUrl + IG_KINDS[kind].file, { muteHttpExceptions: true });
@@ -31,12 +23,10 @@ function igPosts(kind) {
 }
 
 function igCurrent(kind) {
-  if (kind === "news") return newsCurrent();
   return igPosts(kind)[Number(prop(IG_KINDS[kind].next) || 0)] || null;
 }
 
 function igAdvance(kind) {
-  if (kind === "news") { PROPS.setProperty("IG_NEWS_DONE", todayStr()); return; }
   const k = IG_KINDS[kind].next;
   PROPS.setProperty(k, String(Number(prop(k) || 0) + 1));
 }
@@ -46,7 +36,6 @@ const postTitle = (p) => p.term || p.title;
 
 function igDraftMessage(prefix, kind) {
   kind = kind || kindToday();
-  if (kind === "news") return newsDraftMessage(prefix);
   const K = IG_KINDS[kind];
   const p = igCurrent(kind);
   if (!p) return { type: "text", text: TALK.igEmpty(K.label, K.maker) };
@@ -56,11 +45,12 @@ function igDraftMessage(prefix, kind) {
   const text = {
     type: "text",
     text: [prefix, TALK.igHead(K.label, postTitle(p)), ""].concat(media, ["", "―― 投稿文 ――", preview]).filter((x) => x !== undefined).join("\n"),
-    quickReply: { items: igPostButtons(d).concat([
+    quickReply: { items: [
+      qr("素材を受け取る", "ig=kit&" + d),
       qr("別のにする", "ig=next&" + d),
       qr("種類を変える", "ig=kind&" + d),
       qr("今日はやめる", "ig=skip&" + d),
-    ]) },
+    ] },
   };
   // クイックリプライは最後の吹き出しに付ける必要があるので、動画は先に置く
   return kind === "reel" ? [{ type: "video", originalContentUrl: p.video, previewImageUrl: p.cover }, text] : text;
@@ -68,12 +58,6 @@ function igDraftMessage(prefix, kind) {
 
 function qr(label, data) {
   return { type: "action", action: { type: "postback", label, data, displayText: label } };
-}
-
-/* 下書きの投稿のボタン。自動投稿を止めている（CONFIG.igAutoPost が false）ときは「素材を受け取る」だけ */
-function igPostButtons(d) {
-  if (!CONFIG.igAutoPost) return [qr("素材を受け取る", "ig=kit&" + d)];
-  return [qr("今すぐ投稿", "ig=post&" + d), qr("素材を受け取る", "ig=kit&" + d), qr(`${CONFIG.scheduleHour}時に投稿`, "ig=sched&" + d)];
 }
 
 /* 「素材を受け取る」: 自分でアプリから投稿する（音楽を付けるなど）ための一式を、保存・コピーしやすいように別々の吹き出しで送る。
@@ -94,8 +78,27 @@ function igKit(kind, p) {
 function igManualDone(kind, p) {
   igAdvance(kind);
   if (kind !== "reel") return TALK.igManualDone;
-  PROPS.setProperty("IG_LAST_REEL", p.key);
   return [TALK.igManualDone].concat(ytKitMessages(p));
+}
+
+/* 下書き・素材のボタン（postback の ig=…）。id が今の下書きと違えば、前の下書きのボタン */
+function igAction(action, kind, id) {
+  if (!igReady()) return TALK.igOff;
+  kind = IG_KINDS[kind] ? kind : "term";
+  const K = IG_KINDS[kind];
+  const cur = igCurrent(kind);
+  if (!cur) return TALK.igEmpty(K.label, K.maker);
+  if (id && id !== postId(cur, kind)) return TALK.igStale;
+  if (action === "kit") return igKit(kind, cur);
+  if (action === "done") return igManualDone(kind, cur);
+  if (action === "next") { igAdvance(kind); return igDraftMessage(TALK.igNext, kind); }
+  if (action === "kind") {
+    const order = Object.keys(IG_KINDS);
+    const nk = order[(order.indexOf(kind) + 1) % order.length];
+    setKindToday(nk);
+    return igDraftMessage(TALK.igKindChanged(IG_KINDS[nk].label), nk);
+  }
+  return TALK.igSkipped;   // 「今日はやめる」と、前にあった「今すぐ投稿」などのボタン
 }
 
 function igCall(path, params, method) {
@@ -126,46 +129,6 @@ function igMediaList(count) {
   return igMediaCache.list.slice(0, count);
 }
 
-/* 画像で投稿し、投稿の URL を返す。2枚以上はカルーセル（今週のITニュースは1枚のこともある） */
-function igPublish(p, kind) {
-  for (const url of p.images) {
-    if (UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getResponseCode() !== 200) throw new Error("IMAGE_MISSING");
-  }
-  const user = prop("IG_USER_ID");
-  let container;
-  if (p.images.length === 1) {
-    container = igCall(`/${user}/media`, { image_url: p.images[0], caption: p.caption }).id;
-  } else {
-    const children = p.images.map((url) => igCall(`/${user}/media`, { image_url: url, is_carousel_item: "true" }).id);
-    container = igCall(`/${user}/media`, { media_type: "CAROUSEL", children: children.join(","), caption: p.caption }).id;
-  }
-  for (let i = 0; i < 5; i++) {
-    const st = igCall(`/${container}?fields=status_code`, null, "get").status_code;
-    if (st === "FINISHED") break;
-    if (st === "ERROR") throw new Error("画像の読み込みに失敗しました");
-    Utilities.sleep(2000);
-  }
-  const media = igCall(`/${user}/media_publish`, { creation_id: container }).id;
-  rememberPost(media, p.term);
-  const commented = igPinComment(media, kind);
-  let url = "https://www.instagram.com/";
-  try { url = igCall(`/${media}?fields=permalink`, null, "get").permalink; } catch (e) { /* URL が取れなくても投稿はできている */ }
-  return { url, commented };
-}
-
-/* サイトの紹介コメントを付ける。付けられたら true */
-function igPinComment(mediaId, kind) {
-  const text = PIN_COMMENTS[kind];
-  if (!text) return false;
-  try {
-    igCall(`/${mediaId}/comments`, { message: text });
-    return true;
-  } catch (e) {
-    console.warn("紹介コメント: " + e.message);
-    return false;
-  }
-}
-
 /* LINE で「紹介コメント」: いちばん新しい投稿に付ける（前に投稿したものや、アプリで投稿したもの用） */
 function igPinLatest() {
   try {
@@ -179,137 +142,9 @@ function igPinLatest() {
   }
 }
 
-/* 「〇時に投稿」の時刻。もう過ぎていたら次の日 */
-function scheduledTime() {
-  const t = new Date(fmt(new Date(), "yyyy/MM/dd") + " " + CONFIG.scheduleHour + ":00:00");
-  if (t.getTime() <= Date.now()) t.setDate(t.getDate() + 1);
-  return t;
-}
-
-function igAction(action, kind, id) {
-  if (!igReady()) return TALK.igOff;
-  kind = IG_KINDS[kind] ? kind : "term";
-  if (kind === "news") {
-    if (action === "skip") return TALK.igSkipped;
-    if (action === "newsauto") return newsChoose(null);
-    if (action === "newsrepick" || action === "next") return newsRepick();
-  }
-  const K = IG_KINDS[kind];
-  const cur = igCurrent(kind);
-  if (!cur) return kind === "news" ? newsDraftMessage() : TALK.igEmpty(K.label, K.maker);
-  if (id && id !== postId(cur, kind)) return TALK.igStale;
-  if (action === "skip") return TALK.igSkipped;
-  if (action === "kit") return igKit(kind, cur);
-  if (action === "done") return igManualDone(kind, cur);
-  if (action === "next") { igAdvance(kind); return igDraftMessage(TALK.igNext, kind); }
-  if (action === "kind") {
-    const order = Object.keys(IG_KINDS);
-    const nk = order[(order.indexOf(kind) + 1) % order.length];
-    setKindToday(nk);
-    return igDraftMessage(TALK.igKindChanged(IG_KINDS[nk].label), nk);
-  }
-  if (!CONFIG.igAutoPost) return TALK.igAutoOff;   // 「今すぐ投稿」「〇時に投稿」（古いボタンや「投稿」のことば）
-  if (prop("IG_PENDING")) return TALK.igBusy;
-  if (action === "sched") {
-    const t = scheduledTime();
-    PROPS.setProperty("IG_SCHEDULE", JSON.stringify({ kind, id: postId(cur, kind), at: t.getTime() }));
-    const when = (fmt(t, "yyyy-MM-dd") === fmt(new Date(), "yyyy-MM-dd") ? "今日の" : "明日の") + CONFIG.scheduleHour + "時";
-    return TALK.igScheduled(when, postTitle(cur));
-  }
-  return igPublishNow(kind, cur);
-}
-
-/* すぐ投稿する。画像はその場で投稿し、動画は Instagram に送って、処理が終わるのを igWorker で待つ */
-function igPublishNow(kind, p) {
-  try {
-    if (kind === "reel") { igStartReel(p); return TALK.igReelProcessing; }
-    const r = igPublish(p, kind);
-    igAdvance(kind);
-    return TALK.igPosted(r.url, r.commented);
-  } catch (e) {
-    if (e.message === "IMAGE_MISSING") return kind === "news" ? TALK.newsImageWait : TALK.igImageMissing;
-    return TALK.igPostError(e.message);
-  }
-}
-
-function igStartReel(p) {
-  if (UrlFetchApp.fetch(p.cover, { muteHttpExceptions: true }).getResponseCode() !== 200) throw new Error("IMAGE_MISSING");
-  const c = igCall(`/${prop("IG_USER_ID")}/media`, { media_type: "REELS", video_url: p.video, cover_url: p.cover, caption: p.caption, share_to_feed: "true" }).id;
-  PROPS.setProperty("IG_PENDING", JSON.stringify({ container: c, kind: "reel", id: p.key, label: p.title, at: Date.now() }));
-}
-
-/* ---------- 最初の紹介リール（make_intro_media.py が作る ig/intro/intro.json） ----------
- * 投稿はアプリで手動（Instagram の音楽を付けるため。API では付けられない）。ボットは素材を LINE に送るだけ */
-function igIntro() {
-  const res = UrlFetchApp.fetch(CONFIG.siteUrl + "ig/intro/intro.json", { muteHttpExceptions: true });
-  return res.getResponseCode() === 200 ? JSON.parse(res.getContentText()) : null;
-}
-
-/* LINE で「紹介リール」: 動画・表紙・手順・投稿文・紹介コメントを、長押しで保存・コピーしやすいように別々の吹き出しで送る */
-function igIntroKit() {
-  const p = igIntro();
-  if (!p) return TALK.igIntroMissing;
-  return [
-    { type: "video", originalContentUrl: p.video, previewImageUrl: p.cover },
-    { type: "image", originalContentUrl: p.cover, previewImageUrl: p.cover },
-    TALK.igIntroKitHead(Math.round(p.seconds)),
-    p.caption,
-    PIN_COMMENTS.intro,
-  ];
-}
-
-/* 10分ごとにトリガーから呼ばれる: 処理中の動画の投稿と、予約した投稿 */
-function igWorker() {
-  if (!igReady() || !prop("OWNER_USER_ID")) return;
-  try { newsWorker(); } catch (e) { console.warn("今週のITニュース: " + e.message); }
-  const pend = jsonProp("IG_PENDING", null);
-  if (pend) {
-    let st;
-    try { st = igCall(`/${pend.container}?fields=status_code`, null, "get").status_code; } catch (e) { st = "ERROR"; }
-    if (st === "FINISHED") {
-      PROPS.deleteProperty("IG_PENDING");
-      try {
-        const media = igCall(`/${prop("IG_USER_ID")}/media_publish`, { creation_id: pend.container }).id;
-        rememberPost(media, pend.label);
-        const commented = igPinComment(media, pend.kind);
-        let url = "https://www.instagram.com/";
-        try { url = igCall(`/${media}?fields=permalink`, null, "get").permalink; } catch (e) { /* URL が取れなくても投稿はできている */ }
-        igAdvance(pend.kind);
-        PROPS.setProperty("IG_LAST_REEL", pend.id);
-        const p = igPosts("reel").find((x) => x.key === pend.id);
-        push([TALK.igPosted(url, commented)].concat(p ? ytKitMessages(p) : []));
-      } catch (e) {
-        push(TALK.igPostError(e.message));
-      }
-    } else if (st === "ERROR" || st === "EXPIRED" || Date.now() - pend.at > 60 * 60 * 1000) {
-      PROPS.deleteProperty("IG_PENDING");
-      push(TALK.igPostError("動画の処理がうまくいかなかった（" + st + "）"));
-    }
-    return;
-  }
-  const sch = jsonProp("IG_SCHEDULE", null);
-  if (sch && !CONFIG.igAutoPost) {   // 自動投稿を止める前に予約していたものは、投稿せずに取り消す
-    PROPS.deleteProperty("IG_SCHEDULE");
-    return;
-  }
-  if (sch && Date.now() >= sch.at) {
-    PROPS.deleteProperty("IG_SCHEDULE");
-    const cur = igCurrent(sch.kind);
-    if (!cur || postId(cur, sch.kind) !== sch.id) return;
-    const r = igPublishNow(sch.kind, cur);
-    if (r !== TALK.igReelProcessing) push(r);  // 動画は、処理が終わったときに知らせる
-  }
-}
-
 /* YouTube ショート用: 説明・タイトル・本文を別々の吹き出しにして、長押しでコピーしやすくする */
 function ytKitMessages(p) {
   return [TALK.ytKitHead(p.video), p.youtube.title, p.youtube.description];
-}
-
-function ytKitReply() {
-  const posts = igPosts("reel");
-  const p = posts.find((x) => x.key === prop("IG_LAST_REEL")) || igCurrent("reel") || posts[0];
-  return p ? ytKitMessages(p) : TALK.ytNone;
 }
 
 /* ---------- Instagram のコメント ---------- */
@@ -395,10 +230,10 @@ const IG_VISITORS_QUERY = {
   ] } },
 };
 
-/* res: 先にまとめて取ってあれば、その返事（なければここで取りに行く） */
+/* FE のサイトの、Instagram から来た閲覧者。res: 先にまとめて取ってあれば、その返事（なければここで取りに行く） */
 function igVisitorStats(res) {
   if (!gaReady()) return null;
-  const r = res ? gaParse(res) : gaReport(IG_VISITORS_QUERY);
+  const r = res ? gaParse(res) : gaReport(IG_VISITORS_QUERY, siteGa(mainSite()));
   if (!r) return null;
   const byDate = {};
   (r.rows || []).forEach((row) => { byDate[row.dimensionValues[0].value] = Number(row.metricValues[0].value); });
@@ -408,18 +243,7 @@ function igVisitorStats(res) {
   return { yesterday: days[13], week: sum(days.slice(7)), prevWeek: sum(days.slice(0, 7)) };
 }
 
-/* 投稿した日の記録: { メディアID: 用語 }。投稿の名前を「No.60…」ではなく用語で見せるため */
-function rememberPost(mediaId, label) {
-  const log = jsonProp("IG_POST_LOG", {});
-  log[mediaId] = label;
-  const keys = Object.keys(log);
-  keys.slice(0, Math.max(0, keys.length - 60)).forEach((k) => delete log[k]);
-  PROPS.setProperty("IG_POST_LOG", JSON.stringify(log));
-}
-
 function postLabel(m) {
-  const known = jsonProp("IG_POST_LOG", {})[m.id];
-  if (known) return known;
   const first = String(m.caption || "").split("\n")[0].replace(/[【】]/g, "");
   return first.length > 18 ? first.slice(0, 18) + "…" : first || "（投稿文なし）";
 }

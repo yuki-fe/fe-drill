@@ -6,6 +6,7 @@
 
     python make_youtube.py
 """
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -91,6 +92,54 @@ SONGS["コミットしないで"] = {
     "tags": "#ITパスポート #基本情報技術者試験 #テクノロジ系 #勉強ソング #資格勉強",
     "desc": "ITパスポート試験・基本情報技術者試験のテクノロジ系に出てくる、2進数・ネットワーク・データベース・セキュリティの用語を、夏の恋の歌にしました。",
 }
+SONGS["リカーシブルキング"] = {
+    "title": "リカーシブルキング", "sub": "Recursive King",
+    "lead": ["アルゴリズムと", "開発の用語で刻む、", "IT のラップ"],
+    "terms": ["再帰・スタック・ベースケース", "バブルソート・マージソート・ヒープ・計算量", "逆ポーランド記法",
+              "外部キー・インデックス・ビュー・射影", "スタブ・ドライバ・テスト駆動開発・リファクタリング",
+              "ブルートフォース攻撃・辞書攻撃・DDoS", "ペアプログラミング・スクラム"],
+    "thumb_at": 24.0,
+    "thumb_big": ["リカーシブルキング", "IT用語で刻むラップ"],
+    "thumb_small": "再帰・ソート・DB・テスト…",
+    "chapters": [(0, "イントロ・再帰とスタック（サビ）"), (27, "ソートと計算量"), (49, "再帰とスタック（サビ2）"),
+                 (69, "逆ポーランド記法・データベース"), (95, "テスト・TDD・リファクタリング"),
+                 (116, "攻撃・パスワード・ペアプロ・スクラム"), (136, "最後のサビ"), (157, "アウトロ（return）")],
+    "yt_title": "【勉強ソング】再帰・ソート・DB・テストの用語で刻むラップ｜リカーシブルキング（基本情報・ITパスポート）",
+    "tags": "#基本情報技術者試験 #ITパスポート #アルゴリズム #勉強ソング #資格勉強",
+    "desc": "基本情報技術者試験・ITパスポート試験に出てくる、アルゴリズム（再帰・ソート・逆ポーランド記法）・データベース・テスト・セキュリティ・アジャイルの用語を、ラップにしました。",
+}
+SONGS["ビットバイト・ダンス"] = {
+    "title": "ビットバイト・ダンス", "sub": "Bit Byte Dance",
+    "lead": ["0 と 1 の", "基礎理論で踊る、", "エレクトロの歌"],
+    "terms": ["ビット・バイト・2のn乗", "2進数・10進数・16進数", "AND・OR・NOT・XOR・シフト", "2の補数",
+              "パリティチェック・CRC・ハミング符号", "情報量", "期待値・正規分布", "オートマトン・BNF"],
+    "thumb_at": 70.0,
+    "thumb_big": ["ビットバイト・ダンス", "0と1の基礎理論"],
+    "thumb_small": "16進数・論理演算・2の補数…",
+    "chapters": [(0, "イントロ"), (28, "ビットとバイト"), (43, "16進数・2のn乗"), (64, "基数とビット演算（サビ）"),
+                 (93, "論理演算（NOT・AND・OR）"), (107, "パリティ・CRC・ハミング符号"), (121, "情報量"),
+                 (135, "基数とビット演算（サビ2）"), (164, "期待値・正規分布・オートマトン・BNF"),
+                 (195, "2の補数（最後のサビ）"), (229, "アウトロ")],
+    "yt_title": "【勉強ソング】2進数・16進数・論理演算の用語で踊る｜ビットバイト・ダンス（基本情報・ITパスポート）",
+    "tags": "#基本情報技術者試験 #ITパスポート #基礎理論 #勉強ソング #資格勉強",
+    "desc": "基本情報技術者試験・ITパスポート試験の基礎理論に出てくる、ビットとバイト・基数の変換・論理演算・誤り検出・情報量・確率・オートマトンの用語を、エレクトロの歌にしました。",
+}
+SONGS["ハードウェア・レイヴ"] = {
+    "title": "ハードウェア・レイヴ", "sub": "Hardware Rave",
+    "lead": ["CPU・メモリ・入出力の", "ハードウェアの用語で", "上がる EDM"],
+    "terms": ["マルチコア・GPU", "DRAM・SRAM・キャッシュ", "揮発性・フラッシュメモリ", "SSD・HDD",
+              "USB・ホットプラグ・バスパワー", "Bluetooth・NFC・HDMI", "RGB・CMYK・解像度・dpi", "センサ・有機EL・液晶"],
+    "thumb_at": 78.0,
+    "thumb_big": ["ハードウェア・レイヴ", "CPU・メモリ・入出力"],
+    "thumb_small": "SSD・HDD・DRAM・SRAM・USB…",
+    "chapters": [(0, "イントロ（電源オン）"), (32, "マルチコアと GPU"), (46, "DRAM と SRAM"), (61, "揮発性とフラッシュメモリ"),
+                 (75, "SSD と HDD（ドロップ）"), (109, "USB・ホットプラグ・バスパワー"), (117, "Bluetooth・NFC・HDMI"),
+                 (128, "RGB と CMYK"), (146, "画素・解像度・dpi（ドロップ2）"), (161, "センサ・タッチパネル・有機EL・液晶"),
+                 (183, "クロック〜最後のドロップ"), (233, "アウトロ")],
+    "yt_title": "【勉強ソング】SSD・DRAM・USBのハードウェア用語で上がる｜ハードウェア・レイヴ（基本情報・ITパスポート）",
+    "tags": "#基本情報技術者試験 #ITパスポート #ハードウェア #勉強ソング #資格勉強",
+    "desc": "基本情報技術者試験・ITパスポート試験のハードウェアの分野に出てくる、CPU（マルチコア・GPU）・メモリ（DRAM・SRAM・フラッシュメモリ）・記憶装置（SSD・HDD）・入出力インタフェース（USB・Bluetooth・NFC・HDMI）・色と解像度・入出力装置の用語を、EDM（レイヴ）の歌にしました。",
+}
 SITES = [("ITパスポート用語ドリル", "https://ip.yogo-drill.com/", GREEN), ("FE用語ドリル", "https://fe.yogo-drill.com/", BLUE)]
 
 
@@ -146,6 +195,18 @@ THUMBS = {
     "コミットしないで": {"font": "KleeOne-SemiBold.ttf", "clip": 4151, "at": 6.0, "size": 124,
                        "tint": None, "dark": 0.2, "snow": False, "title_col": (255, 244, 248), "glow": (255, 120, 170),
                        "sub": "", "line": "コンピュータの用語で歌う、夏の恋の歌"},
+    # ui-ux-pro-max の提案（深い紫紺・0＝シアン・1＝ローズ・ドット文字）に合わせた
+    "ビットバイト・ダンス": {"font": "DotGothic16-Regular.ttf", "clip": 28900, "at": 6.0, "size": 92,
+                          "tint": (17, 10, 36), "dark": 0.3, "snow": False, "title_col": (34, 211, 238), "glow": (244, 63, 94),
+                          "sub": "Bit Byte Dance", "line": "0 と 1 の基礎理論で踊る、エレクトロの歌"},
+    # ui-ux-pro-max の提案（暗い背景・ネオンのピンク・金色）に合わせた
+    "リカーシブルキング": {"font": "DelaGothicOne-Regular.ttf", "clip": 830, "at": 6.0, "size": 96,
+                         "tint": (15, 23, 42), "dark": 0.3, "snow": False, "title_col": (245, 179, 1), "glow": (236, 72, 153),
+                         "sub": "Recursive King", "line": "アルゴリズムと開発の用語で刻む、IT のラップ"},
+    # ui-ux-pro-max の提案（深い紺・ネオンのアシッドグリーン・マゼンタ・シアン）に合わせた
+    "ハードウェア・レイヴ": {"font": "RocknRollOne-Regular.ttf", "clip": 50449, "at": 6.0, "size": 92,
+                          "tint": (15, 15, 35), "dark": 0.3, "snow": False, "title_col": (190, 242, 100), "glow": (255, 64, 160),
+                          "sub": "Hardware Rave", "line": "CPU・メモリ・入出力の用語で上がる、EDM の歌"},
 }
 
 
@@ -223,6 +284,45 @@ def description(info, path):
     path.write_text(text, encoding="utf-8")
 
 
+def lyric_rows(name):
+    """歌詞（[見出し] の行は外す）と行ごとの [開始秒, 終了秒] を組にする。"""
+    d = song_dir(name)
+    lines = [ln.strip() for ln in (d / f"{name}_歌詞.txt").read_text(encoding="utf-8").splitlines()
+             if ln.strip() and not (ln.strip().startswith("[") and ln.strip().endswith("]"))]
+    times = json.loads((d / f"{name}_時間.json").read_text(encoding="utf-8"))
+    if len(lines) != len(times):
+        sys.exit(f"歌詞の行の数（{len(lines)}）と時間の数（{len(times)}）が合いません: {name}")
+    return [(a, b, t) for t, (a, b) in zip(lines, times)]
+
+
+def srt_time(t):
+    ms = int(round(t * 1000))
+    return f"{ms // 3600000:02d}:{ms // 60000 % 60:02d}:{ms // 1000 % 60:02d},{ms % 1000:03d}"
+
+
+def write_srt(rows, path):
+    out = [f"{k}\n{srt_time(a)} --> {srt_time(b)}\n{t}\n" for k, (a, b, t) in enumerate(rows, 1)]
+    path.write_text("\n".join(out), encoding="utf-8")
+
+
+def subtitles(name):
+    """YouTube 用の字幕ファイル（SRT）。横長版（フル）と、ショート版（make_reel_cut.py の切り方に合わせた時間）。
+    YouTube Studio の「字幕」から上げる（API の今の権限では上げられない）。"""
+    import make_reel_cut
+    rows = lyric_rows(name)
+    d = song_dir(name)
+    write_srt(rows, d / f"{name}_字幕.srt")
+    if name in make_reel_cut.CUTS:
+        segs = make_reel_cut.CUTS[name][0]
+        short, off = [], 0.0
+        for k, (a, b) in enumerate(segs):
+            for s0, e0, t in rows:
+                if a <= s0 < b:
+                    short.append((off + s0 - a, off + min(e0, b) - a, t))
+            off += (b - a) - make_reel_cut.XFADE
+        write_srt(short, d / f"{name}_ショート_字幕.srt")
+
+
 def make(name, info):
     mv = song_dir(name) / f"{name}_MV.mp4"
     bgv = WORK / f"{name}_MV_背景.mp4"
@@ -232,6 +332,7 @@ def make(name, info):
     panels(info, pan)
     thumbnail(name, info, song_dir(name) / f"{name}_YouTube_サムネイル.jpg")
     description(info, song_dir(name) / f"{name}_YouTube_説明文.txt")
+    subtitles(name)
     ff = imageio_ffmpeg.get_ffmpeg_exe()
     fc = (f"[1:v]scale={YW}:-2,crop={YW}:{YH},boxblur=18:2,colorchannelmixer=rr=0.45:gg=0.45:bb=0.45[bg];"
           f"[0:v]scale={MVW}:{YH}[mv];[bg][mv]overlay={SIDE}:0[a];[a][2:v]overlay=0:0:format=auto,format=yuv420p[v]")
@@ -253,6 +354,7 @@ def meta_only(name, info):
     bgv = WORK / f"{name}_MV_背景.mp4"
     thumbnail(name, info, song_dir(name) / f"{name}_YouTube_サムネイル.jpg")
     description(info, song_dir(name) / f"{name}_YouTube_説明文.txt")
+    subtitles(name)
     print(song_dir(name) / f"{name}_YouTube_サムネイル.jpg")
 
 

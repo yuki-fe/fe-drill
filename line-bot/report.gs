@@ -16,82 +16,95 @@ function dailyReport() {
 }
 
 function morningMessages() {
-  const msgs = [{ type: "text", text: buildReport(true) }];
+  const msgs = [{ type: "text", text: buildReport() }];
+  const main = mainSite();
   if (gaReady() && new Date(fmt(new Date(), "yyyy/MM/dd")).getDay() === CONFIG.chartWeekday) {
-    const st = visitorStats();
-    if (st) { msgs[0].text += "\n\n" + TALK.chartWeekly; msgs.push(chartMessage(st)); }
+    const st = visitorStats(null, siteGa(main));
+    if (st) { msgs[0].text += "\n\n" + TALK.chartWeekly(main.name); msgs.push(chartMessage(st, main)); }
   }
   msgs.push({ type: "text", text: newsText(selectedGenres(), CONFIG.newsPerGenre, TALK.newsHead) });
   if (igReady()) [].concat(igDraftMessage()).forEach((m) => msgs.push(m));
   return msgs.slice(0, 5);
 }
 
-function buildReport(morning) {
-  const lines = [pick(morning ? TALK.morning : TALK.now), ""];
-  // 時間のかかる問い合わせは、先にまとめて同時に取りに行く
-  const reqs = { search: searchRequest(), update: updateRequest() };
-  if (gaReady()) Object.assign(reqs, { visitors: gaRequest(VISITORS_QUERY), igVisitors: gaRequest(IG_VISITORS_QUERY) });
+function buildReport() {
+  const lines = [pick(TALK.morning), ""];
+  // 時間のかかる問い合わせは、先にまとめて同時に取りに行く（サイトごとに i 番目の名前を付ける）
+  const reqs = {};
+  SITES.forEach((site, i) => {
+    reqs["open" + i] = healthRequest(site);
+    reqs["update" + i] = updateRequest(site);
+    if (siteGa(site)) reqs["visitors" + i] = gaRequest(VISITORS_QUERY, siteGa(site));
+    if (site.search) reqs["search" + i] = searchRequest(site);
+  });
+  if (gaReady()) reqs.igVisitors = gaRequest(IG_VISITORS_QUERY, siteGa(mainSite()));
   if (ytReady()) Object.assign(reqs, ytRequests(5));
-  if (CONFIG.ipGaPropertyId) reqs.ipVisitors = gaRequest(VISITORS_QUERY, CONFIG.ipGaPropertyId);
   if (CONFIG.checkUrl) reqs.check = checkRequest();
   const pre = fetchNamed(reqs);
-  if (gaReady()) {
-    const st = visitorStats(pre.visitors);
-    lines.push("【閲覧者：基本情報（FE用語ドリル）】");
-    if (!st) lines.push(TALK.gaError);
-    else {
-      const y = st.days[st.days.length - 1];
-      lines.push(TALK.visitorsDay(y.users, y.views), TALK.visitorsWeek(st.week, st.week - st.prevWeek));
-      const ig = igVisitorStats(pre.igVisitors);
-      if (ig) lines.push(TALK.visitorsIg(ig.yesterday, ig.week, ig.week - ig.prevWeek));
-      lines.push(st.week > st.prevWeek ? TALK.visitorsUp : st.week < st.prevWeek ? TALK.visitorsDown : TALK.visitorsSame);
-    }
-    lines.push("");
-  }
-  if (CONFIG.ipGaPropertyId) {
-    const ip = visitorStats(pre.ipVisitors, CONFIG.ipGaPropertyId);
-    const y = ip && ip.days[ip.days.length - 1];
-    lines.push("【閲覧者：ITパスポート】", ...(ip ? [TALK.visitorsDay(y.users, y.views), TALK.visitorsWeek(ip.week, ip.week - ip.prevWeek)] : [TALK.ipGaError]), "");
-  }
+  SITES.forEach((site, i) => lines.push(...siteLines(site, i, pre), ""));
   if (igReady()) {
     lines.push("【インスタ】", igStatsText());
-    const c = igNewCommentsText(morning);
+    const c = igNewCommentsText(true);
     if (c) lines.push(c);
     lines.push("");
   }
-  if (ytReady()) lines.push("【YouTube】", ytStatsText(morning, pre), "");
-  const s = searchStats(pre.search);
-  lines.push("【検索】");
-  if (s.error) lines.push(TALK.searchError);
-  else if (!s.latest) lines.push(TALK.searchNone);
-  else {
-    lines.push(`${s.latest.date} の分: 表示 ${s.latest.impressions} 回、クリック ${s.latest.clicks} 回`);
-    lines.push(`直近7日: 表示 ${s.week.impressions} 回、クリック ${s.week.clicks} 回`);
-    if (s.prev) {
-      const diff = s.latest.impressions - s.prev.impressions;
-      lines.push(diff > 0 ? TALK.searchUp(diff) : diff < 0 ? TALK.searchDown(-diff) : TALK.searchSame);
-    }
-  }
-  const h = siteHealth();
-  lines.push("", "【サイト】", h.ok ? TALK.siteOk(h.sec) : TALK.siteNg(h.why));
-  const ck = CONFIG.checkUrl ? checkSection(morning, pre.check) : "";
-  if (ck) lines.push("", "【サイトの点検】", ck);
-  const u = lastUpdate(pre.update);
-  lines.push("", "【最後の更新】", u ? TALK.updated(u.date, u.message) : TALK.updatedUnknown);
+  if (ytReady()) lines.push("【YouTube】", ytStatsText(true, pre), "");
+  const ck = CONFIG.checkUrl ? checkSection(pre.check) : "";
+  if (ck) lines.push("【サイトの点検】", ck, "");
   const n = openInquiries().length;
-  lines.push("", "【お問い合わせ】", n ? TALK.inquirySome(n) : TALK.inquiryNone);
+  lines.push("【お問い合わせ】", n ? TALK.inquirySome(n) : TALK.inquiryNone);
   return lines.join("\n");
 }
 
-/* ---------- 閲覧者（Google アナリティクス 4） ---------- */
-function gaReady() {
-  return !!prop("GA_PROPERTY_ID");
+/* 1サイトぶんの欄: 閲覧者・検索・開けるか・最後の更新。pre は buildReport が先に取った返事 */
+function siteLines(site, i, pre) {
+  const out = ["【" + site.name + "】"];
+  if (!siteGa(site)) out.push(TALK.gaNone);
+  else {
+    const st = visitorStats(pre["visitors" + i], siteGa(site));
+    if (!st) out.push(TALK.gaError);
+    else {
+      const y = st.days[st.days.length - 1];
+      out.push(TALK.visitors(y.users, y.views, st.week, st.week - st.prevWeek));
+      const ig = site.main ? igVisitorStats(pre.igVisitors) : null;
+      if (ig) out.push(TALK.visitorsIg(ig.yesterday, ig.week, ig.week - ig.prevWeek));
+    }
+  }
+  if (site.search) {
+    const s = searchStats(site, pre["search" + i]);
+    out.push(s.error ? TALK.searchError : !s.latest ? TALK.searchNone : TALK.search(s.latest, s.week));
+  }
+  const h = siteHealth(site, pre["open" + i]);
+  const u = lastUpdate(site, pre["update" + i]);
+  out.push((h.ok ? TALK.siteOk : TALK.siteNg(h.why)) + "／" + (u ? TALK.updated(u.date, u.message) : TALK.updatedUnknown));
+  return out;
 }
 
-/* propertyId: 別のサイト（ITパスポート）の数字を取るとき。なければ FE の GA_PROPERTY_ID */
+/* ---------- 用語サイト（config.gs の SITES） ---------- */
+const mainSite = () => SITES.find((s) => s.main) || SITES[0];
+
+/* GA4 のプロパティ ID。main のサイトはスクリプト プロパティの GA_PROPERTY_ID */
+function siteGa(site) {
+  return site.ga || (site.main ? prop("GA_PROPERTY_ID") : "");
+}
+
+/* 「簿記」「ip」「ITパスポート用語ドリル」などから、サイトを探す */
+function findSite(word) {
+  const w = word.normalize("NFKC").toLowerCase().trim();
+  return SITES.find((s) => [s.key, s.short, s.name].some((x) => x.normalize("NFKC").toLowerCase() === w)) ||
+    SITES.find((s) => s.name.normalize("NFKC").toLowerCase().indexOf(w) >= 0) || null;
+}
+
+/* ---------- 閲覧者（Google アナリティクス 4） ---------- */
+/* main のサイト（FE）のアナリティクスがつながっているか（「人気」・Instagram から来た人・月曜のグラフ） */
+function gaReady() {
+  return !!siteGa(mainSite());
+}
+
+/* propertyId: そのサイトの GA4 のプロパティ ID。なければ main のサイト */
 function gaRequest(body, propertyId) {
   return {
-    url: "https://analyticsdata.googleapis.com/v1beta/properties/" + (propertyId || prop("GA_PROPERTY_ID")) + ":runReport",
+    url: "https://analyticsdata.googleapis.com/v1beta/properties/" + (propertyId || siteGa(mainSite())) + ":runReport",
     method: "post", contentType: "application/json",
     headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
     payload: JSON.stringify(body),
@@ -127,7 +140,7 @@ const VISITORS_QUERY = {
 };
 
 /* 直近14日（昨日まで）の日ごとの閲覧者数。データのない日は 0 で埋める。
- * res: 先にまとめて取ってあれば、その返事（なければここで取りに行く）。propertyId: ITパスポートのサイトのとき */
+ * res: 先にまとめて取ってあれば、その返事（なければここで取りに行く）。propertyId: そのサイトの GA4 のプロパティ ID */
 function visitorStats(res, propertyId) {
   const r = res ? gaParse(res) : gaReport(VISITORS_QUERY, propertyId);
   if (!r) return null;
@@ -145,14 +158,16 @@ function visitorStats(res, propertyId) {
   return { days: days.slice(7), prevDays: days.slice(0, 7), week: sum(days.slice(7)), prevWeek: sum(days.slice(0, 7)) };
 }
 
-/* グラフの画像（QuickChart）。日本語の文字化けを避けるため、グラフの中は数字と日付だけにする */
-function chartUrl(st) {
+/* グラフの画像（QuickChart）。日本語の文字化けを避けるため、グラフの中は数字と日付だけにする。線の色はサイトの色 */
+function chartUrl(st, site) {
+  const c = site.color;
+  const fill = "rgba(" + [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16)).join(",") + ",0.12)";
   const cfg = {
     type: "line",
     data: {
       labels: st.days.map((d) => d.label),
       datasets: [
-        { data: st.days.map((d) => d.users), borderColor: "#c0435a", backgroundColor: "rgba(192,67,90,0.12)", fill: true, cubicInterpolationMode: "monotone", pointRadius: 6, pointBackgroundColor: "#c0435a", borderWidth: 4 },
+        { data: st.days.map((d) => d.users), borderColor: c, backgroundColor: fill, fill: true, cubicInterpolationMode: "monotone", pointRadius: 6, pointBackgroundColor: c, borderWidth: 4 },
         { data: st.prevDays.map((d) => d.users), borderColor: "#9aa5a6", borderDash: [8, 6], fill: false, cubicInterpolationMode: "monotone", pointRadius: 0, borderWidth: 3 },
       ],
     },
@@ -168,16 +183,29 @@ function chartUrl(st) {
   return "https://quickchart.io/chart?w=900&h=500&bkg=white&f=png&c=" + encodeURIComponent(JSON.stringify(cfg));
 }
 
-function chartMessage(st) {
-  const url = chartUrl(st);
+function chartMessage(st, site) {
+  const url = chartUrl(st, site);
   return { type: "image", originalContentUrl: url, previewImageUrl: url };
 }
 
-function chartReply() {
-  if (!gaReady()) return TALK.gaOff;
-  const st = visitorStats();
+/* LINE の「グラフ」: サイトを選ぶボタンを出す（アナリティクスを付けたサイトが1つだけなら、すぐそのグラフ）。
+ * 「グラフ 簿記」のようにサイトの名前を付けると、そのサイトのグラフ */
+function chartReply(word) {
+  const sites = SITES.filter(siteGa);
+  if (!sites.length) return TALK.gaOff;
+  let site = sites.length === 1 ? sites[0] : null;
+  if (word) {
+    site = findSite(word);
+    if (!site) return TALK.siteUnknown(word, sites.map((s) => s.short));
+    if (!siteGa(site)) return TALK.chartNoGa(site.name);
+  }
+  if (!site) {
+    const items = sites.map((s) => ({ type: "action", action: { type: "message", label: s.short, text: "グラフ " + s.short } }));
+    return { type: "text", text: TALK.chartPick(SITES.filter((s) => !siteGa(s)).map((s) => s.short)), quickReply: { items } };
+  }
+  const st = visitorStats(null, siteGa(site));
   if (!st) return TALK.gaError;
-  return [TALK.chartText(st.week, st.week - st.prevWeek), chartMessage(st)];
+  return [TALK.chartText(site.name, st.week, st.week - st.prevWeek), chartMessage(st, site)];
 }
 
 /* 直近7日でよく見られたページ（タイトルの「｜」より前だけを見せる） */
@@ -197,20 +225,20 @@ function rankingText() {
     `${i + 1}. ${row.dimensionValues[0].value.split("｜")[0]}（${row.metricValues[0].value} 回）`)).join("\n");
 }
 
-/* Search Console: 直近10日分を日ごとに取り、データがある最新の日と前の日を比べる */
-function searchRequest() {
+/* Search Console: 直近10日分を日ごとに取り、データがある最新の日と直近7日を出す */
+function searchRequest(site) {
   const day = (n) => fmt(new Date(Date.now() - n * 86400000), "yyyy-MM-dd");
   return {
-    url: "https://searchconsole.googleapis.com/webmasters/v3/sites/" + encodeURIComponent(CONFIG.siteUrl) + "/searchAnalytics/query",
+    url: "https://searchconsole.googleapis.com/webmasters/v3/sites/" + encodeURIComponent(site.url) + "/searchAnalytics/query",
     method: "post", contentType: "application/json",
     headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() },
     payload: JSON.stringify({ startDate: day(10), endDate: day(1), dimensions: ["date"] }),
   };
 }
 
-function searchStats(res) {
+function searchStats(site, res) {
   try {
-    res = res || fetchAll([searchRequest()])[0];
+    res = res || fetchAll([searchRequest(site)])[0];
     if (res.getResponseCode() !== 200) {
       console.warn("Search Console: " + res.getResponseCode() + " " + res.getContentText().slice(0, 300));
       return { error: true };
@@ -220,32 +248,35 @@ function searchStats(res) {
       .sort((a, b) => (a.key < b.key ? -1 : 1));
     if (!rows.length) return {};
     const week = rows.slice(-7).reduce((t, r) => ({ clicks: t.clicks + r.clicks, impressions: t.impressions + r.impressions }), { clicks: 0, impressions: 0 });
-    return { latest: rows[rows.length - 1], prev: rows[rows.length - 2], week };
+    return { latest: rows[rows.length - 1], week };
   } catch (e) {
     console.warn(e);
     return { error: true };
   }
 }
 
-function siteHealth() {
+/* サイトが開けるか（トップページ） */
+function healthRequest(site) {
+  return { url: site.url, followRedirects: true };
+}
+
+function siteHealth(site, res) {
   try {
-    const t = Date.now();
-    const res = UrlFetchApp.fetch(CONFIG.siteUrl, { muteHttpExceptions: true, followRedirects: true });
-    const code = res.getResponseCode();
-    return code === 200 ? { ok: true, sec: ((Date.now() - t) / 1000).toFixed(1) } : { ok: false, why: "エラー " + code };
+    const code = (res || fetchAll([healthRequest(site)])[0]).getResponseCode();
+    return code === 200 ? { ok: true } : { ok: false, why: "エラー " + code };
   } catch (e) {
     return { ok: false, why: "つながらない" };
   }
 }
 
 /* 最後の更新: GitHub の更新フィード（Atom）を読む。API は Apps Script からだと回数制限にかかりやすいため */
-function updateRequest() {
-  return { url: "https://github.com/" + CONFIG.githubRepo + "/commits/main.atom" };
+function updateRequest(site) {
+  return { url: "https://github.com/" + site.repo + "/commits/main.atom" };
 }
 
-function lastUpdate(res) {
+function lastUpdate(site, res) {
   try {
-    res = res || fetchAll([updateRequest()])[0];
+    res = res || fetchAll([updateRequest(site)])[0];
     if (res.getResponseCode() !== 200) return null;
     const ns = XmlService.getNamespace("http://www.w3.org/2005/Atom");
     const entry = XmlService.parse(res.getContentText()).getRootElement().getChild("entry", ns);
@@ -289,20 +320,19 @@ function checkSummary(d) {
 }
 
 /* 毎朝のレポートの【サイトの点検】の欄。新しい結果が出た朝に1回だけ出す。
- * 点検の曜日（月曜）は、結果が取れない・古いときも知らせる。「状況」では最新の結果をいつも出す */
-function checkSection(morning, res) {
+ * 点検の曜日（月曜）は、結果が取れない・古いときも知らせる */
+function checkSection(res) {
   const r = checkResult(res);
   const monday = new Date(fmt(new Date(), "yyyy/MM/dd")).getDay() === CONFIG.chartWeekday;
   if (r.data) {
     const days = Math.floor((Date.now() - new Date(r.data.checked_at).getTime()) / 86400000);
-    if (!morning) return checkSummary(r.data);
     if (r.data.checked_at !== prop("CHECK_SEEN")) {
       PROPS.setProperty("CHECK_SEEN", r.data.checked_at);
       return checkSummary(r.data);
     }
     return monday && days >= CONFIG.checkStaleDays ? TALK.checkStale(days) : "";
   }
-  if (morning && !monday) return "";
+  if (!monday) return "";
   return r.none ? TALK.checkNone : TALK.checkError;
 }
 

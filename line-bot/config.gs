@@ -3,12 +3,12 @@
  *
  * お問い合わせフォームの回答スプレッドシートに付ける Google Apps Script。
  * - フォームに投稿があったら LINE に知らせる
- * - 毎朝、閲覧者の数・検索の数字・サイトの状態・最後の更新・未対応のお問い合わせ・ITニュース・
+ * - 毎朝、公開中の用語サイトごとの閲覧者・検索の数字・サイトの状態・最後の更新と、未対応のお問い合わせ・ITニュース・
  *   Instagram の投稿の下書きを、1通にまとめて送る（月曜は先週の閲覧者のグラフも付ける）
- * - LINE で「状況」「グラフ」「人気」「問い合わせ」「済 3」「ニュース」「ジャンル」「インスタ」「使い方」と送ると返事をする
- * - Instagram は、LINE の「今すぐ投稿」「20時に投稿」ボタンを押したときだけ投稿する。
- *   曜日ごとに「用語クイズ」「トレースクイズ」「リール動画」の下書きを切り替え、
- *   リール動画は YouTube ショート用のタイトルと説明も届ける
+ * - LINE で「グラフ」「人気」「問い合わせ」「済 3」「コメント」「反応」「点検」「使い方」などと送ると返事をする
+ * - Instagram には投稿しない。曜日ごとに「用語クイズ」「トレースクイズ」「リール動画」の下書きを送り、
+ *   「素材を受け取る」でもらった画像・動画を運営者がアプリから投稿する。
+ *   リール動画は「投稿した」を押すと YouTube ショート用のタイトルと説明も届ける
  *
  * 合言葉（LINE や Instagram のトークンなど）はコードに書かず、「スクリプト プロパティ」に保存する。
  * 手順は「LINE運用ボットの作り方.pdf」「ニュースとInstagramの設定.pdf」「アクセス解析とグラフの設定.pdf」を参照。
@@ -17,8 +17,8 @@
  *   config.gs     サイトの設定・投稿の種類・ニュースのジャンル・共通の小さな関数・setup
  *   talk.gs       話し方の設定（先輩エンジニア）
  *   report.gs     毎朝のレポート・アクセス解析・Search Console・サイトの状態
- *   news.gs       ITニュース
- *   instagram.gs  Instagram の下書き・投稿・コメント・反応
+ *   news.gs       ITニュース（毎朝のレポートに載せる）
+ *   instagram.gs  Instagram の下書き・素材・コメント・反応
  *   youtube.gs    YouTube の数字とコメント（読むだけ）
  *   inquiry.gs    お問い合わせ（フォームの回答シート）
  *   line.gs       LINE から届いたメッセージ（Webhook）と、LINE へ送る処理
@@ -27,8 +27,7 @@
 /* ========== サイトの設定（公開されても困らない値） ========== */
 const CONFIG = {
   siteName: "FE用語ドリル",
-  siteUrl: "https://fe.yogo-drill.com/",        // サイトのURL（Search Console に登録したものと同じ）
-  githubRepo: "yuki-fe/fe-drill",                         // 最後の更新を調べるリポジトリ
+  siteUrl: "https://fe.yogo-drill.com/",        // サイトのURL（Instagram の投稿のストックを置いている）
   reportHour: 8,                                          // 毎朝のレポートを送る時刻（0〜23時）
   chartWeekday: 1,                                        // 先週のグラフを送る曜日（0=日曜, 1=月曜, … 6=土曜）
   newsPerGenre: 2,                                        // 毎朝のレポートに載せる、ジャンルごとのニュースの数
@@ -36,20 +35,30 @@ const CONFIG = {
   //   Facebook ログインで作った合言葉（Facebook ページのトークン）: https://graph.facebook.com/v23.0
   //   Instagram ログインで作った合言葉:                           https://graph.instagram.com/v23.0
   instagramApi: "https://graph.facebook.com/v23.0",
-  // 曜日ごとの投稿の種類（日・月・火・水・木・金・土）。term=用語クイズ、trace=トレースクイズ、reel=リール動画、news=今週のITニュース
-  rotation: ["reel", "term", "term", "trace", "term", "reel", "news"],
-  newsCandidates: 8,                                      // 今週のITニュース: LINE に出す候補の数
-  newsPostCount: 3,                                       // 今週のITニュース: 1回の投稿に載せるニュースの数（3まで）
-  // Instagram にボットが投稿するか（API で投稿）。false: 「今すぐ投稿」「〇時に投稿」を出さず、
-  //   「素材を受け取る」でもらった画像・動画を自分でアプリから投稿する。2026-10-16 から止めている。また使うときは true に
-  igAutoPost: false,
-  scheduleHour: 20,                                       // 「〇時に投稿」ボタンで投稿する時刻（igAutoPost が true のとき）
-  // 姉妹サイト「ITパスポート用語ドリル」の閲覧者も、毎朝のレポートに出す（GA4 のプロパティ ID。空にすると出さない）
-  ipGaPropertyId: "558662911",
+  // 曜日ごとの投稿の種類（日・月・火・水・木・金・土）。term=用語クイズ、trace=トレースクイズ、reel=リール動画
+  rotation: ["reel", "term", "term", "trace", "term", "reel", "term"],
   // サイトの点検（全サイト・毎週月曜の朝に GitHub の自動実行が点検する）の結果。空にすると出さない
   checkUrl: "https://raw.githubusercontent.com/yuki-fe/yogo-drill/check-results/result.json",
   checkStaleDays: 9,                                      // これより古い結果しかないときは「点検が止まっている」と知らせる
 };
+
+/* ========== 毎朝のレポートに出す、公開中の用語サイト ==========
+ * サイトを公開したら、ここに足す（入り口の yogo-drill の sites.json で "public" が true のもの。旅行は入れない）。
+ *   short: LINE で「グラフ 簿記」のように送るときの名前（ボタンにも出る）
+ *   repo:  最後の更新を調べるリポジトリ
+ *   ga:    GA4 のプロパティ ID（数字）。空ならアナリティクスの欄は「まだ」と出す。
+ *          main のサイト（FE）は、スクリプト プロパティの GA_PROPERTY_ID を使う
+ *   search: Search Console に URL プレフィックスで登録してあれば true（検索の数字を出す）
+ *   color:  グラフの線の色（sites.json の color） */
+const SITES = [
+  { key: "fe", name: "FE用語ドリル", short: "FE", url: "https://fe.yogo-drill.com/", repo: "yuki-fe/fe-drill", ga: "", main: true, search: true, color: "#c0435a" },
+  { key: "ip", name: "ITパスポート用語ドリル", short: "ITパスポート", url: "https://ip.yogo-drill.com/", repo: "yuki-fe/ip-drill", ga: "558662911", search: true, color: "#2d68a8" },
+  { key: "cloud", name: "クラウド用語ドリル", short: "クラウド", url: "https://cloud.yogo-drill.com/", repo: "yuki-fe/cloud-drill", ga: "", search: false, color: "#1a6f7a" },
+  { key: "genai", name: "生成AI用語ドリル", short: "生成AI", url: "https://genai.yogo-drill.com/", repo: "yuki-fe/genai-drill", ga: "", search: false, color: "#5a3fb0" },
+  { key: "dl", name: "ディープラーニング用語ドリル", short: "ディープラーニング", url: "https://dl.yogo-drill.com/", repo: "yuki-fe/dl-drill", ga: "", search: false, color: "#9b2f7a" },
+  { key: "boki", name: "簿記用語ドリル", short: "簿記", url: "https://boki.yogo-drill.com/", repo: "yuki-fe/boki-drill", ga: "", search: false, color: "#7a6a12" },
+  { key: "iryo", name: "医療事務用語ドリル", short: "医療事務", url: "https://iryo.yogo-drill.com/", repo: "yuki-fe/iryo-drill", ga: "", search: false, color: "#0b6e99" },
+];
 
 /* ========== Instagram の投稿の種類 ==========
  * file はサイトに置いた投稿のストック。make_ig_images.py / make_b_media.py が作る */
@@ -57,13 +66,11 @@ const IG_KINDS = {
   term: { file: "ig/posts.json", next: "IG_NEXT", label: "用語クイズ", maker: "make_ig_images.py" },
   trace: { file: "ig/trace-posts.json", next: "IG_NEXT_TRACE", label: "トレースクイズ", maker: "make_b_media.py" },
   reel: { file: "ig/reels.json", next: "IG_NEXT_REEL", label: "リール動画", maker: "make_b_media.py" },
-  // ストックではなく、その週に運営者が LINE で選ぶ（news.gs）。画像は GitHub の自動実行が作る
-  news: { file: null, next: "IG_NEWS_DONE", label: "今週のITニュース", maker: "" },
 };
 
 /* ========== 投稿に付ける、サイトの紹介コメント ==========
- * 投稿した直後に、自分のアカウントからコメントする（固定はアプリで手作業）。
- * コメントのリンクは押せないので、プロフィールのリンクへ案内する。空にすると付けない。 */
+ * 「素材を受け取る」の最後の吹き出しで送る。LINE の「紹介コメント」では、いちばん新しい投稿に自動で付ける（固定はアプリで手作業）。
+ * コメントのリンクは押せないので、プロフィールのリンクへ案内する。 */
 const PIN_COMMENTS = {
   term: [
     "📌 この問題は、無料の学習サイト「FE用語ドリル」から出しています",
@@ -84,24 +91,9 @@ const PIN_COMMENTS = {
   ].join("\n"),
 };
 PIN_COMMENTS.reel = PIN_COMMENTS.trace;
-PIN_COMMENTS.news = [
-  "📌 ニュースに出てきた用語の意味は、無料の学習サイト「FE用語ドリル」で確かめられます",
-  "・基本情報の用語345語を、カード・4択・書いて答えるで",
-  "・用語ごとの解説ページつき",
-  "登録なし・スマホでそのまま使えます",
-  "▶ プロフィールのリンクから",
-].join("\n");
-// 最初の紹介リール（LINE の「紹介リール」）用
-PIN_COMMENTS.intro = [
-  "📌 サイトはプロフィールのリンクから開けます",
-  "・科目A：用語345語（カード・4択・書いて答える・意味から答える）",
-  "・科目B：プログラムを1行ずつ再生するトレース練習",
-  "無料・登録なし・スマホでそのまま使えます",
-  "「この用語を取り上げてほしい」などのリクエストも、コメントでどうぞ",
-].join("\n");
-
 /* ========== ニュースのジャンル ==========
- * 「ジャンル 追加 〇〇」で、ここにない言葉もそのまま検索の言葉として追加できる。 */
+ * 毎朝のレポートに載せるジャンルは、スクリプト プロパティ NEWS_GENRES（["AI", "セキュリティ"] の形）。
+ * ここにない言葉も、そのまま検索の言葉として入れられる。 */
 const NEWS_GENRES = {
   "AI": "生成AI OR 人工知能 OR ChatGPT OR LLM",
   "セキュリティ": "サイバー攻撃 OR 脆弱性 OR 情報漏えい OR ランサムウェア",
@@ -114,16 +106,6 @@ const NEWS_GENRES = {
   "ゲーム": "ゲーム業界 OR ゲーム開発",
 };
 const DEFAULT_GENRES = ["AI", "セキュリティ", "IT資格"];
-
-/* 今週のITニュースの投稿文で、試験の用語が見つからなかったニュースに付けるひとこと（ジャンルごと） */
-const NEWS_NOTES = {
-  "AI": "機械学習など、AI の用語を思い出しながら読んでみよう。",
-  "セキュリティ": "攻撃の手口と対策は、試験のセキュリティの知識で読み解ける。",
-  "クラウド": "クラウドの仕組み（IaaS・PaaS・SaaS）とあわせて押さえよう。",
-  "プログラミング": "開発の進め方や手法の話は、マネジメント系の用語にもつながる。",
-  "IT資格": "資格や試験の動きは、受験の計画を立てるときの参考に。",
-  "": "IT の今の動きとして押さえておきたいニュース。",
-};
 
 /* ========== ここから下は、ふだん変えなくてよい部分 ========== */
 
@@ -157,7 +139,6 @@ function setup() {
   ScriptApp.newTrigger("onFormSubmit").forSpreadsheet(ss).onFormSubmit().create();
   ScriptApp.newTrigger("dailyReport").timeBased().atHour(CONFIG.reportHour).everyDays(1).inTimezone("Asia/Tokyo").create();
   ScriptApp.newTrigger("refreshInstagramToken").timeBased().everyWeeks(1).onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(4).create();
-  ScriptApp.newTrigger("igWorker").timeBased().everyMinutes(10).create();
   doneColumn(responseSheet());
   Logger.log("準備ができました。");
   Logger.log("Webhook の URL の最後に付ける文字: ?key=" + prop("WEBHOOK_KEY"));

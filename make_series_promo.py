@@ -15,6 +15,7 @@
 先に make_promo_shots.py でサイトの画面を撮っておく（notes/宣伝動画/画面/）。
 """
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -344,15 +345,33 @@ def encode(all_scenes, path, ffmpeg):
     return n / FPS
 
 
+def exam_short(s):
+    """投稿文の一覧用に、試験名のかっこ（シラバスや範囲の説明）を外す。医療事務は特定の試験に合わせていない"""
+    if s["key"] == "iryo":
+        return "医療事務の用語"
+    return re.sub(r"[（(][^）)]*[）)]", "", s["exam"]).strip()
+
+
 def caption():
-    lines = "\n".join(f'・{s["name"]}：{s["exam"]}／{s["terms"]}語' for s in SITES)
+    lines = "\n".join(f'・{exam_short(s)} → {s["name"]}（{s["terms"]}語）' for s in SITES)
     return ("【資格の用語、すきま時間に覚えよう】\n"
-            f"無料の単語帳サイト「用語ドリル」は、{len(SITES)}つの資格の用語をまとめています。\n\n"
-            f"{lines}\n\n"
-            "カード・4択・書いて答える・分野別ミニテスト・間違えた用語だけの復習。\n"
-            "どのサイトも無料・登録なしで、スマホでそのまま使えます。プロフィールのリンクから。\n\n"
+            "通学の電車や寝る前の5分で、試験に出る用語をカードとクイズで。\n"
+            f"無料の単語帳サイト「用語ドリル」の{len(SITES)}つのサイトを、まとめて紹介します。\n\n"
+            f"▶ {len(SITES)}つのサイト\n{lines}\n\n"
+            "▶ どのサイトでも\n"
+            "・カードで覚える／4択クイズ／書いて答える\n"
+            "・分野別ミニテストで、苦手な分野がわかる\n"
+            "・間違えた用語だけを集めて復習\n\n"
+            "無料・登録なしで、スマホのブラウザでそのまま使えます。\n"
+            f"サイトの一覧は、プロフィールのリンク（{URL}）から。\n\n"
+            "いま勉強している資格を、コメントで教えてください。これからのサイトづくりの参考にします。\n\n"
             "※各試験の実施団体とは関係のない、個人の学習サイトです。\n\n"
-            "#資格勉強 #IT資格 #基本情報技術者試験 #ITパスポート #G検定 #生成AIパスポート #簿記 #医療事務 #勉強垢 #スキマ時間")
+            "#資格勉強 #資格 #スキマ時間 #勉強垢 #IT資格 #基本情報技術者試験 #ITパスポート #G検定 #生成AIパスポート #簿記 #医療事務 #単語帳")
+
+
+def pin_comment():
+    return (f"📌 サイトの一覧は、プロフィールのリンク（{URL}）から。どれも無料・登録なしで使えます。\n"
+            "勉強中の資格や、ほしい機能があれば、気軽にコメントしてください。")
 
 
 def youtube():
@@ -368,6 +387,7 @@ def write_captions():
     yt_title, yt_desc = youtube()
     (OUT / "captions.txt").write_text(
         "■ リールの投稿文\n\n" + caption() +
+        "\n\n\n■ 紹介コメント（投稿したらコメントに貼って、長押し→「固定」）\n\n" + pin_comment() +
         "\n\n\n■ YouTube ショートのタイトル\n\n" + yt_title +
         "\n\n\n■ YouTube ショートの説明\n\n" + yt_desc + "\n", encoding="utf-8")
 

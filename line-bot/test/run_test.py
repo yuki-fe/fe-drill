@@ -19,14 +19,14 @@ FIRST = ["config.gs", "talk.gs"]
 
 gs = sorted(BOT.glob("*.gs"), key=lambda p: (FIRST.index(p.name) if p.name in FIRST else len(FIRST), p.name))
 code = "\n".join(p.read_text(encoding="utf-8") for p in gs)
-stock = {name: json.loads((SITE / "static" / "ig" / name).read_text(encoding="utf-8")) for name in ["posts.json", "trace-posts.json", "reels.json", "intro/intro.json"]}
+stock = {name: json.loads((SITE / "static" / "ig" / name).read_text(encoding="utf-8")) for name in ["posts.json", "trace-posts.json", "reels.json"]}
 
 MOCKS = r"""
-const sent = [], igCalls = [], dispatches = [];
-let newsReady = false, insightsDenied = false;
+const sent = [], igCalls = [];
+let insightsDenied = false;
 let ytDenied = false, ytHidden = false, ytSubsN = 35;
 const ytCalls = [];
-let gaDeniedIp = false;
+let gaDeniedIp = false, downSite = "";   // downSite: 開けないことにするサイトの URL
 let checkData = null, checkCode = 200;   // サイトの点検の結果（null のときは、まだ結果がない = 404）
 const store = { LINE_TOKEN: "t", WEBHOOK_KEY: "key", OWNER_USER_ID: "U1", IG_TOKEN: "ig", IG_USER_ID: "1789", YT_API_KEY: "ytkey" };
 const PropertiesService = { getScriptProperties: () => ({ getProperty: (k) => store[k] ?? null, setProperty: (k, v) => { store[k] = String(v); }, deleteProperty: (k) => { delete store[k]; } }) };
@@ -57,7 +57,7 @@ let status = "IN_PROGRESS", mediaN = 500;
 const UrlFetchApp = { fetch: (url, o) => {
   if (url.includes("api.line.me")) { sent.push(JSON.parse(o.payload)); return t_resp(200, "{}"); }
   if (url.includes("analyticsdata.googleapis.com")) {
-    // 閲覧者: 直近14日分。FE は1日 10 人、ITパスポート（558662911）は1日 5 人、インスタから来た人は1日 2 人
+    // 閲覧者: 直近14日分。FE（111）は1日 10 人、ITパスポート（558662911）は1日 5 人、インスタから来た人は1日 2 人
     const ip = url.includes("/558662911:");
     if (ip && gaDeniedIp) return t_resp(403, '{"error":{"message":"User does not have sufficient permissions for this property."}}');
     const ig = String(o.payload || "").includes("instagram");
@@ -98,10 +98,14 @@ const UrlFetchApp = { fetch: (url, o) => {
     if (w.includes("AI")) titles.unshift("IPO を目指すAIスタートアップ");
     return t_resp(200, JSON.stringify(titles.map((t, i) => ({ title: t + " - 媒体" + i, source: "媒体" + i, link: "https://example.com/" + i }))));
   }
-  if (url.includes("assets/terms.js")) return t_resp(200, 'window.FE_TERMS = [{"id": "0167", "f": "T", "sub": "セキュリティ", "term": "ランサムウェア", "desc": "身代金を要求するマルウェア。"}, {"id": "0100", "f": "T", "sub": "ネットワーク", "term": "IP", "desc": "x"}];');
-  if (url.includes("api.github.com")) { dispatches.push(JSON.parse(o.payload)); return t_resp(204, ""); }
+  if (url.includes("searchconsole.googleapis.com")) {
+    // 検索: 直近の日ごとの数字（FE は表示 100・クリック 3、ITパスポートは表示 40・クリック 1）
+    const ip = url.includes(encodeURIComponent("https://ip.yogo-drill.com/"));
+    const rows = [3, 2].map((n) => ({ keys: [Utilities.formatDate(new RealDate(NOW - n * 86400e3), "", "yyyy-MM-dd")], impressions: ip ? 40 : 100, clicks: ip ? 1 : 3 }));
+    return t_resp(200, JSON.stringify({ rows }));
+  }
+  if (downSite && url === downSite) return t_resp(404, "not found");
   if (url.includes("raw.githubusercontent.com/yuki-fe/yogo-drill/check-results/")) return checkData ? t_resp(checkCode, JSON.stringify(checkData)) : t_resp(404, "404: Not Found");
-  if (url.includes("/ig/news/")) return t_resp(newsReady || url.endsWith("cover.jpg") ? 200 : 404, "img");
   for (const name in STOCK) if (url.endsWith("/ig/" + name)) return t_resp(200, JSON.stringify(STOCK[name]));
   if (url.includes("graph.facebook.com") || url.includes("graph.instagram.com")) {
     const path = url.replace(/^https:\/\/graph\.(facebook|instagram)\.com\/v[0-9.]+/, "").replace(/[?&]access_token=[^&]*/, "");
@@ -133,12 +137,12 @@ const t_show = (m) => m.messages.map((x, i) => `[${i + 1}] ` + (x.type === "vide
 const lastMsg = () => sent[sent.length - 1];
 const t_last = () => (sent.length ? (lastMsg().to ? "PUSH " : "REPLY ") + t_show(lastMsg()) : "(なし)");
 const t_text = () => lastMsg().messages.map((x) => x.text || "").join("\n");
+const t_buttons = () => { const m = lastMsg().messages; const q = m[m.length - 1].quickReply; return q ? q.items.map((x) => x.action.label) : []; };
 const out = [], fails = [];
 const check = (name, cond) => { out.push((cond ? "  OK  " : "  NG  ") + name); if (!cond) fails.push(name); };
 try {
-  CONFIG.igAutoPost = true;   // 自動投稿ありのときの動き（いまは止めているが、また使うときのために確かめる）
   setup();
-  check("トリガーを作る", triggers.length >= 3);
+  check("トリガーを作る（お問い合わせ・毎朝・トークンの更新）", triggers.join(",") === "onFormSubmit,dailyReport,refreshInstagramToken");
   check("setup で YouTube のチャンネルを見つける", store.YT_CHANNEL_ID === "UCtest");
   check("金曜はリールの日", kindToday() === "reel");
   const mm = toMessages(morningMessages());
@@ -146,70 +150,87 @@ try {
   check("毎朝の吹き出しは5個まで", mm.length <= 5);
   check("自分の紹介コメントは新しいコメントに数えない", !JSON.stringify(mm).includes("📌 紹介コメント"));
   const mt = mm[0].text;
-  out.push("--- 【YouTube】の欄", mt.slice(mt.indexOf("【YouTube】"), mt.indexOf("【検索】")).trim());
+  out.push("--- 【YouTube】の欄", mt.slice(mt.indexOf("【YouTube】"), mt.indexOf("【お問い合わせ】")).trim());
   check("毎朝のレポートに【YouTube】の欄", mt.includes("【YouTube】") && mt.includes("最新の動画（10/8「二分探索を1行ずつ」）: 再生 1234、高く評価 20、コメント 2") && mt.includes("登録者 35 人"));
   check("YouTube の新しいコメント（自分のと古いのは出さない）", mt.includes("@fe_student（二分探索を1行ずつ）") && !mt.includes("📌 サイトはプロフィールから") && !mt.includes("old_viewer"));
   check("同じコメントを次の朝には出さない", !ytStatsText(true).includes("fe_student"));
+  const draftButtons = mm[mm.length - 1].quickReply.items.map((q) => q.action.label);
+  check("下書きのボタンは「素材を受け取る」から（自動投稿のボタンはない）", draftButtons[0] === "素材を受け取る" && !draftButtons.some((l) => l.includes("投稿")));
 
-  igCalls.length = 0;
-  const reel = STOCK["reels.json"][0];
-  t_tap("ig=post&k=reel&id=" + reel.key); out.push("--- リールを今すぐ投稿", t_last());
-  check("リールは処理待ちになる", !!store.IG_PENDING);
-  t_tap("ig=post&k=reel&id=" + reel.key);
-  check("処理中は二重に投稿しない", t_text().includes("処理中"));
-  const before = sent.length; igWorker();
-  check("処理中の見回りでは何も送らない", sent.length === before);
-  status = "FINISHED"; igCalls.length = 0; igWorker(); out.push("--- 見回り（処理が完了）", t_last(), ...igCalls);
-  check("リールを公開して知らせる", t_text().includes("投稿したよ"));
-  check("リールに紹介コメントを付ける", igCalls.some((c) => c.includes("/comments [📌 科目B")));
-  check("YouTube のセットも届く", lastMsg().messages.length >= 3);
-  check("リールのストックが進む", store.IG_NEXT_REEL === "1");
+  // 公開中の用語サイトごとの欄
+  out.push("--- サイトごとの欄", mt.slice(mt.indexOf("【FE用語ドリル】"), mt.indexOf("【インスタ】")).trim());
+  check("公開中の7サイトの欄がある", SITES.length === 7 && SITES.every((s) => mt.includes("【" + s.name + "】")));
+  check("ITパスポートの閲覧者と検索", mt.includes("【ITパスポート用語ドリル】\n閲覧者: 昨日 5 人（ページ 10 回）、直近7日 35 人（その前の7日より +0）\n検索: 10/7 表示 40・クリック 1、直近7日 表示 80・クリック 2\nサイト: 開ける／"));
+  check("アナリティクスがないサイトは「まだ」、検索の欄は出さない", mt.includes("【簿記用語ドリル】\n閲覧者: アナリティクスはまだ付けてないよ\nサイト: 開ける／"));
+  check("FE のアナリティクスがないときも、FE の検索とサイトの様子は出す", mt.includes("【FE用語ドリル】\n閲覧者: アナリティクスはまだ付けてないよ\n検索: 10/7 表示 100"));
+  check("前の【検索】【サイト】【最後の更新】の欄はなくなった", !mt.includes("【検索】") && !mt.includes("【サイト】") && !mt.includes("【最後の更新】"));
+  store.GA_PROPERTY_ID = "111";
+  const both = buildReport();
+  check("FE の閲覧者とインスタから来た人", both.includes("【FE用語ドリル】\n閲覧者: 昨日 10 人（ページ 20 回）、直近7日 70 人（その前の7日より +0）\nうちインスタから: 昨日 2 人") && both.includes("【ITパスポート用語ドリル】\n閲覧者: 昨日 5 人"));
+  gaDeniedIp = true;
+  const den = buildReport();
+  check("ITパスポートの数字が取れなくても、ほかのサイトの数字は出す", den.includes("【ITパスポート用語ドリル】\n閲覧者: 取れなかった") && den.includes("閲覧者: 昨日 10 人"));
+  gaDeniedIp = false;
+  downSite = "https://boki.yogo-drill.com/";
+  check("開けないサイトを知らせる", buildReport().includes("【簿記用語ドリル】\n閲覧者: アナリティクスはまだ付けてないよ\nサイト: 開けないみたい！（エラー 404）"));
+  downSite = "";
 
-  // 紹介リール: 素材を LINE に送るだけ（投稿はアプリで手動）
-  igCalls.length = 0;
-  t_say("紹介リール"); out.push("--- 紹介リール", t_last());
-  const kit = lastMsg().messages;
-  check("紹介リールは動画・表紙・手順・投稿文・紹介コメントの5つ", kit.length === 5 && kit[0].type === "video" && kit[1].type === "image");
-  check("紹介リールの手順に音楽の付け方", kit[2].text.includes("音楽"));
-  check("紹介リールの投稿文と紹介コメント", kit[3].text.includes("FE用語ドリル") && kit[4].text.startsWith("📌 サイトはプロフィール"));
-  check("紹介リールでは Instagram に投稿しない", igCalls.length === 0 && store.IG_NEXT_REEL === "1");
-
-  t_say("インスタ トレース");
-  check("「インスタ トレース」でトレースの下書き", t_text().includes("トレースクイズ"));
-  const tr = STOCK["trace-posts.json"][0];
-  t_tap("ig=sched&k=trace&id=" + tr.no);
-  check("20時の予約", !!store.IG_SCHEDULE);
-  NOW = new Date("2026-10-09T20:05:00+09:00").getTime(); igCalls.length = 0;
-  igWorker(); out.push("--- 見回り（20:05）", t_last(), ...igCalls);
-  check("予約した時刻に投稿する", t_text().includes("投稿したよ") && store.IG_NEXT_TRACE === "1");
-  check("トレースに紹介コメントを付ける", igCalls.some((c) => c.includes("/comments [📌 科目B")));
-
-  igCalls.length = 0;
-  const term = STOCK["posts.json"][0];
-  t_tap("ig=post&k=term&id=" + term.no);
-  check("用語クイズに用語向けの紹介コメント", igCalls.some((c) => c.includes("/comments [📌 この問題は")));
-  t_tap("ig=post&k=term&id=" + term.no);
-  check("古い下書きのボタンでは投稿しない", !t_text().includes("投稿したよ"));
+  // グラフ（サイトごと）
+  t_say("グラフ"); out.push("--- グラフ", t_last());
+  check("「グラフ」でサイトを選ぶボタン（アナリティクスのあるサイトだけ）", t_buttons().join(",") === "FE,ITパスポート" && t_text().includes("簿記"));
+  check("ボタンを押すと「グラフ サイト名」を送る", lastMsg().messages[0].quickReply.items[1].action.text === "グラフ ITパスポート");
+  t_say("グラフ ITパスポート"); out.push("--- グラフ ITパスポート", t_last());
+  check("「グラフ ITパスポート」でそのサイトのグラフ（サイトの色）", t_text().includes("ITパスポート用語ドリルの、直近7日の閲覧者のグラフ") && t_text().includes("合計 35 人") &&
+    lastMsg().messages[1].type === "image" && lastMsg().messages[1].originalContentUrl.includes(encodeURIComponent("#2d68a8")));
+  t_say("グラフ ip");
+  check("「グラフ ip」のように短い名前でもよい", t_text().includes("ITパスポート用語ドリルの"));
+  t_say("グラフ fe");
+  check("「グラフ fe」で FE のグラフ", t_text().includes("FE用語ドリルの、直近7日") && t_text().includes("合計 70 人"));
+  t_say("グラフ 簿記");
+  check("アナリティクスがないサイトは、そう知らせる", t_text().includes("簿記用語ドリルは、まだアナリティクスを付けてない"));
+  t_say("グラフ 宇宙");
+  check("知らないサイトの名前", t_text().includes("「宇宙」のサイトは見つからなかった"));
+  delete store.GA_PROPERTY_ID;
+  t_say("グラフ");
+  check("グラフを出せるサイトが1つだけなら、すぐそのグラフ", t_text().includes("ITパスポート用語ドリルの") && lastMsg().messages[1].type === "image");
+  store.GA_PROPERTY_ID = "111";
+  NOW = new Date("2026-10-12T08:00:00+09:00").getTime();
+  const mon = toMessages(morningMessages());
+  check("月曜は用語クイズの日", kindToday() === "term");
+  check("月曜の朝は FE の先週のグラフ", mon[0].text.includes("先週1週間のFE用語ドリルの閲覧者") && mon[1].type === "image" && mon.length <= 5);
+  NOW = new Date("2026-10-09T10:00:00+09:00").getTime();
+  delete store.GA_PROPERTY_ID;
 
   // 素材を受け取って、自分でアプリから投稿する
   igCalls.length = 0;
-  const term2 = STOCK["posts.json"][1];
-  t_tap("ig=kit&k=term&id=" + term2.no); out.push("--- 素材を受け取る（用語クイズ）", t_last());
+  const term = STOCK["posts.json"][0];
+  t_tap("ig=kit&k=term&id=" + term.no); out.push("--- 素材を受け取る（用語クイズ）", t_last());
   const km = lastMsg().messages;
-  check("素材は画像2枚・手順・投稿文・紹介コメント", km.length === 5 && km[0].type === "image" && km[1].type === "image" && km[3].text === term2.caption && km[4].text.startsWith("📌"));
+  check("素材は画像2枚・手順・投稿文・紹介コメント", km.length === 5 && km[0].type === "image" && km[1].type === "image" && km[3].text === term.caption && km[4].text.startsWith("📌"));
   check("素材の最後に「投稿した」ボタン", km[4].quickReply.items[0].action.label === "投稿した");
-  check("素材を送っても投稿しない・進めない", igCalls.length === 0 && store.IG_NEXT === "1");
-  t_tap("ig=done&k=term&id=" + term2.no); out.push("--- 投稿した", t_last());
-  check("「投稿した」で次の下書きに進む", store.IG_NEXT === "2" && t_text().includes("おつかれ"));
-  t_tap("ig=done&k=term&id=" + term2.no);
-  check("「投稿した」を2回押しても1つしか進まない", store.IG_NEXT === "2");
-  const reel2 = STOCK["reels.json"][1];
-  t_say("インスタ リール");
-  check("下書きに「素材を受け取る」ボタン", lastMsg().messages[lastMsg().messages.length - 1].quickReply.items.some((q) => q.action.label === "素材を受け取る"));
-  t_say("素材"); out.push("--- 素材（リール）", t_last());
-  check("「素材」で今日のリールの動画と表紙", lastMsg().messages[0].type === "video" && lastMsg().messages[1].type === "image" && lastMsg().messages.length === 5);
-  t_tap("ig=done&k=reel&id=" + reel2.key);
-  check("リールを手で投稿したら次へ進んで YouTube のセット", store.IG_NEXT_REEL === "2" && lastMsg().messages.length >= 3 && igCalls.length === 0);
+  check("素材を送っても投稿しない・進めない", igCalls.length === 0 && !store.IG_NEXT);
+  t_tap("ig=done&k=term&id=" + term.no); out.push("--- 投稿した", t_last());
+  check("「投稿した」で次の下書きに進む", store.IG_NEXT === "1" && t_text().includes("おつかれ"));
+  t_tap("ig=done&k=term&id=" + term.no);
+  check("「投稿した」を2回押しても1つしか進まない", store.IG_NEXT === "1" && t_text().includes("前の下書きのボタン"));
+  const reel = STOCK["reels.json"][0];
+  t_tap("ig=kit&k=reel&id=" + reel.key); out.push("--- 素材（リール）", t_last());
+  check("リールの素材は動画と表紙", lastMsg().messages[0].type === "video" && lastMsg().messages[1].type === "image" && lastMsg().messages.length === 5);
+  t_tap("ig=done&k=reel&id=" + reel.key); out.push("--- 投稿した（リール）", t_last());
+  check("リールを手で投稿したら次へ進んで YouTube のセット", store.IG_NEXT_REEL === "1" && t_text().includes("YouTube ショートにも出そう") && igCalls.length === 0);
+  t_tap("ig=next&k=trace&id=" + STOCK["trace-posts.json"][0].no);
+  check("「別のにする」で次の下書き", store.IG_NEXT_TRACE === "1" && t_text().includes("別のにしたよ"));
+  t_tap("ig=kind&k=reel&id=" + STOCK["reels.json"][1].key);
+  check("「種類を変える」で次の種類", kindToday() === "term" && t_text().includes("用語クイズに変えたよ"));
+  igCalls.length = 0;
+  t_tap("ig=post&k=term&id=" + STOCK["posts.json"][1].no);
+  check("前にあった「今すぐ投稿」のボタンを押しても投稿しない", igCalls.length === 0 && store.IG_NEXT === "1");
+
+  // 消したことば（「使い方」に案内する）
+  ["状況", "インスタ", "インスタ リール", "素材", "投稿", "紹介リール", "ニュース", "ニュース AI", "ジャンル", "ニュース投稿 1 2"].forEach((w) => {
+    t_say(w);
+    check(`「${w}」はもう使わない`, t_text().includes("「使い方」"));
+  });
 
   t_say("紹介コメント"); out.push("--- 紹介コメント", t_last());
   check("「紹介コメント」で最新の投稿に付ける", t_text().includes("紹介コメントを付けたよ"));
@@ -219,10 +240,10 @@ try {
   check("反応", t_text().includes("リーチ"));
   t_say("ユーチューブ 反応"); out.push("--- ユーチューブ 反応", t_last());
   check("「ユーチューブ 反応」で最近の動画の数字", t_text().includes("■ 10/8「二分探索を1行ずつ」\n再生 1234／高く評価 20／コメント 2") && t_text().includes("バブルソート"));
+  t_say("ユーチューブ");
+  check("「ユーチューブ」だけでも最近の動画の数字", t_text().includes("再生 1234"));
   t_say("ユーチューブ コメント"); out.push("--- ユーチューブ コメント", t_last());
   check("「ユーチューブ コメント」で1週間のコメント", t_text().includes("fe_student") && !t_text().includes("📌") && !t_text().includes("old_viewer"));
-  t_say("ユーチューブ");
-  check("「ユーチューブ」だけなら今までどおりショートのセット", t_text().includes("YouTube ショートにも出そう"));
   NOW += 86400e3; ytSubsN = 37;
   check("登録者の増減", ytStatsText(false).includes("登録者 37 人（前の記録より +2）"));
   ytHidden = true;
@@ -236,96 +257,29 @@ try {
   check("「ユーチューブ コメント」は取れない理由を出す", t_text().includes("コメントを読むとき"));
   store.YT_API_KEY = "ytkey";
   ytHidden = false; ytDenied = true;
-  const rd = buildReport(false);
-  check("YouTube が取れなくても理由を出して、ほかの欄は出す", rd.includes("YouTube の数字は取れなかった（チャンネル: YouTube Data API v3 has not been used") && rd.includes("【検索】"));
+  const rd = buildReport();
+  check("YouTube が取れなくても理由を出して、ほかの欄は出す", rd.includes("YouTube の数字は取れなかった（チャンネル: YouTube Data API v3 has not been used") && rd.includes("【ITパスポート用語ドリル】"));
   ytDenied = false;
-  const ipr = buildReport(false); out.push("--- 【閲覧者：ITパスポート】の欄", ipr.slice(ipr.indexOf("【閲覧者：ITパスポート】"), ipr.indexOf("【インスタ】")).trim());
-  check("ITパスポートのサイトの閲覧者（FE のアナリティクスがなくても出す）", ipr.includes("【閲覧者：ITパスポート】\n昨日: 5 人（ページ 10 回）\n直近7日: 35 人（その前の7日より +0 人）") && !ipr.includes("基本情報（FE用語ドリル）"));
-  store.GA_PROPERTY_ID = "111";
-  const both = buildReport(false);
-  check("FE と ITパスポートの閲覧者を分けて出す", both.includes("【閲覧者：基本情報（FE用語ドリル）】\n昨日: 10 人（ページ 20 回）") && both.includes("うちインスタから: 昨日 2 人") && both.includes("【閲覧者：ITパスポート】\n昨日: 5 人"));
-  gaDeniedIp = true;
-  const den = buildReport(false);
-  check("ITパスポートの数字が取れなくても、FE の数字は出す", den.includes("ITパスポートのサイトの閲覧者は取れなかった") && den.includes("昨日: 10 人"));
-  gaDeniedIp = false; delete store.GA_PROPERTY_ID;
   const ytId = store.YT_CHANNEL_ID; delete store.YT_CHANNEL_ID; const ytN = ytCalls.length;
   t_say("ユーチューブ 反応");
-  check("YouTube の設定がないときは知らせるだけ", t_text().includes("まだつながってない") && !buildReport(false).includes("【YouTube】") && ytCalls.length === ytN);
+  check("YouTube の設定がないときは知らせるだけ", t_text().includes("まだつながってない") && !buildReport().includes("【YouTube】") && ytCalls.length === ytN);
   store.YT_CHANNEL_ID = ytId; NOW -= 86400e3;
   igMediaCache = null; fetchAllCalls = 0;
   const igBefore = igCalls.length;
-  t_say("状況");
-  check("「状況」はまとめて取りに行く（Instagram の一覧は1回だけ）", t_text().includes("【インスタ】") && fetchAllCalls <= 4 &&
+  const all = buildReport();
+  check("レポートはまとめて取りに行く（Instagram の一覧は1回だけ）", all.includes("【インスタ】") && fetchAllCalls <= 4 &&
     igCalls.slice(igBefore).filter((c) => c.includes("/media?fields")).length === 1);
   insightsDenied = true;
   check("数字が取れないときは理由も出す", igStatsText().includes("理由: (#10)") && igStatsText().includes("instagram_manage_insights"));
   check("リーチが取れなくても、いいねとフォロワーは出す", igStatsText().includes("いいね 30") && igStatsText().includes("フォロワー 152"));
   check("「反応」もリーチが取れなくても、いいねは出す", igRecentText().includes("いいね 30") && igRecentText().includes("理由: (#10)"));
   insightsDenied = false;
-  t_say("使い方");
-  check("使い方に「紹介コメント」がある", t_text().includes("紹介コメント"));
-  check("使い方に「ユーチューブ 反応」がある", t_text().includes("ユーチューブ 反応"));
-  // 今週のITニュース（土曜）: 候補 → 番号で選ぶ → GitHub に画像を頼む → できたら下書き → 投稿
   NOW = new Date("2026-10-10T08:00:00+09:00").getTime();
-  check("土曜は今週のITニュースの日", kindToday() === "news");
-  const sat = toMessages(morningMessages());
-  const pick = sat[sat.length - 1];
-  out.push("--- 土曜の朝（ニュースの候補）", t_show({ messages: [pick] }));
-  check("候補の一覧と「おまかせで作る」ボタン", pick.text.includes("ニュース投稿") && pick.quickReply.items[0].action.label === "おまかせで作る");
-  check("用語が出てくる候補に印", pick.text.includes("試験の用語「ランサムウェア」"));
-  check("IP は IPO に一致させない", !pick.text.includes("試験の用語「IP」"));
-  t_say("ニュース投稿 1 9");
-  check("番号の間違いを知らせる", t_text().includes("番号は"));
-  store.GITHUB_TOKEN = "gh";
-  t_say("ニュース投稿 1 2"); out.push("--- ニュース投稿 1 2", t_last());
-  check("GitHub に画像を頼む", dispatches.length === 1 && dispatches[0].event_type === "news-image" && dispatches[0].client_payload.items.length === 2);
-  check("画像を作っている間は待つ", t_text().includes("画像を作ってる"));
-  const before2 = sent.length; igWorker();
-  check("画像ができるまでは知らせない", sent.length === before2);
-  newsReady = true; igWorker(); out.push("--- 見回り（ニュースの画像ができた）", t_last());
-  const nd = lastMsg().messages;
-  check("画像ができたら画像つきの下書きを送る", !!lastMsg().to && nd[1].type === "image" && nd[nd.length - 1].quickReply.items[0].action.label === "今すぐ投稿");
-  const st = JSON.parse(store.IG_NEWS);
-  check("投稿文に見出し・媒体名・ひとこと", st.caption.includes("（媒体") && st.caption.includes("→ ") && st.caption.includes("見出しと媒体名を紹介"));
-  check("投稿文に使わない言葉がない", !/公式|IPA|必ず合格|ここだけ/.test(st.caption));
-  igCalls.length = 0;
-  t_tap("ig=post&k=news&id=" + st.no); out.push("--- ニュースを今すぐ投稿", t_last(), ...igCalls);
-  check("ニュースを投稿して紹介コメント", t_text().includes("投稿したよ") && igCalls.some((c) => c.includes("/comments [📌 ニュースに出てきた")));
-  check("投稿済みにする", store.IG_NEWS_DONE === "2026-10-10");
-  t_say("インスタ ニュース");
-  check("投稿済みなら二重に出さない", t_text().includes("もう投稿してある"));
-  // 合言葉 GITHUB_TOKEN がないときは、決まった表紙で作る
-  NOW = new Date("2026-10-17T08:00:00+09:00").getTime(); delete store.GITHUB_TOKEN;
-  t_say("インスタ ニュース");
-  t_tap("ig=newsauto&k=news"); out.push("--- おまかせ（合言葉なし）", t_last());
-  const st2 = JSON.parse(store.IG_NEWS);
-  check("合言葉なしは表紙の画像で、すぐ下書き", st2.images.length === 1 && st2.images[0].endsWith("cover.jpg") && lastMsg().messages.some((m) => m.type === "image"));
-  check("おまかせは用語の出てくるものを先に、ジャンルを分けて", st2.items[0].term === "ランサムウェア" && new Set(st2.items.map((i) => i.genre)).size === st2.items.length);
-  check("表紙1枚のときは投稿文に「2枚目」と書かない", !st2.caption.includes("2枚目") && st.caption.includes("2枚目"));
-  t_tap("ig=newsrepick&k=news&id=" + st2.no);
-  check("選び直すと候補に戻る", t_text().includes("ニュース投稿"));
-
-  NOW = new Date("2026-10-12T08:00:00+09:00").getTime();
-  check("月曜は用語クイズの日", kindToday() === "term");
-
-  // 自動投稿を止めたとき（CONFIG.igAutoPost = false。2026-10-16 から）
-  CONFIG.igAutoPost = false;
-  delete store.IG_PENDING;
-  store.IG_SCHEDULE = JSON.stringify({ kind: "term", id: "1", at: 0 });
-  igCalls.length = 0; igWorker();
-  check("自動投稿を止めると、前の予約は投稿せずに取り消す", !store.IG_SCHEDULE && !igCalls.some((c) => c.includes("media")));
-  t_say("インスタ 用語"); out.push("--- 自動投稿を止めたときの下書き", t_last());
-  const offLabels = lastMsg().messages[lastMsg().messages.length - 1].quickReply.items.map((q) => q.action.label);
-  check("下書きに「今すぐ投稿」「〇時に投稿」を出さない", offLabels.includes("素材を受け取る") && !offLabels.includes("今すぐ投稿") && !offLabels.some((l) => l.endsWith("時に投稿")));
-  igCalls.length = 0;
-  t_say("投稿"); out.push("--- 自動投稿を止めたときに「投稿」", t_last());
-  check("「投稿」と送っても投稿しない", t_text().includes("自動投稿を止めて") && igCalls.length === 0);
-  t_say("素材");
-  check("素材は受け取れる", lastMsg().messages.length >= 3 && lastMsg().messages.some((m) => m.type === "image"));
+  check("土曜は用語クイズの日（今週のITニュースはやめた）", kindToday() === "term");
 
   // サイトの点検（毎週月曜に GitHub の自動実行が点検した結果を読む）
   NOW = new Date("2026-10-23T08:00:00+09:00").getTime();
-  check("点検の結果がまだなくても、月曜以外の朝は何も言わない", !buildReport(true).includes("【サイトの点検】"));
+  check("点検の結果がまだなくても、月曜以外の朝は何も言わない", !buildReport().includes("【サイトの点検】"));
   const ckSite = (key, name, items) => ({ key, name, url: `https://${key}.yogo-drill.com/`, pages: 300, items, more: 0,
     problems: items.filter((i) => i.level === "問題").length, warnings: items.filter((i) => i.level === "注意").length });
   checkData = { checked_at: "2026-10-26T04:10:00+09:00", result_url: "https://github.com/yuki-fe/yogo-drill/blob/check-results/result.md",
@@ -336,26 +290,26 @@ try {
       ckSite("ip", "ITパスポート用語ドリル", [{ level: "問題", kind: "JavaScript のエラー", page: "https://ip.yogo-drill.com/", detail: "x is not defined" }]),
       ckSite("boki", "簿記用語ドリル", [{ level: "情報", kind: "アクセス解析なし", page: "https://boki.yogo-drill.com/", detail: "" }])] };
   NOW = new Date("2026-10-26T08:00:00+09:00").getTime();
-  const ckm = buildReport(true);
-  out.push("--- 【サイトの点検】の欄（月曜）", ckm.slice(ckm.indexOf("【サイトの点検】"), ckm.indexOf("【最後の更新】")).trim());
+  const ckm = buildReport();
+  out.push("--- 【サイトの点検】の欄（月曜）", ckm.slice(ckm.indexOf("【サイトの点検】"), ckm.indexOf("【お問い合わせ】")).trim());
   check("新しい点検の結果を朝のレポートに出す", ckm.includes("【サイトの点検】\n10/26 の点検で、問題が 2 件・注意が 1 件 見つかったよ。") &&
     ckm.includes("・FE用語ドリル: リンク切れ（/about.html）") && ckm.includes("・ITパスポート用語ドリル: JavaScript のエラー（/）") && ckm.includes("「点検」"));
-  check("同じ結果は次の朝には出さない", !buildReport(true).includes("【サイトの点検】"));
-  check("「状況」ではいつも最新の結果を出す", buildReport(false).includes("10/26 の点検で、問題が 2 件"));
+  check("同じ結果は次の朝には出さない", !buildReport().includes("【サイトの点検】"));
   t_say("点検"); out.push("--- 点検", t_last());
   check("「点検」でサイトごとの問題と注意", t_text().includes("■ FE用語ドリル（問題 1・注意 1）") && t_text().includes("・[問題] リンク切れ: /about.html") &&
     t_text().includes("問題なし: 簿記用語ドリル") && t_text().includes("check-results/result.md") && !t_text().includes("アクセス解析なし"));
   NOW = new Date("2026-11-09T08:00:00+09:00").getTime();
-  check("点検が止まっていたら月曜に知らせる", buildReport(true).includes("点検が 14 日動いてない"));
+  check("点検が止まっていたら月曜に知らせる", buildReport().includes("点検が 14 日動いてない"));
   NOW = new Date("2026-11-10T08:00:00+09:00").getTime();
-  check("月曜以外は、止まっていても毎朝は言わない", !buildReport(true).includes("【サイトの点検】"));
+  check("月曜以外は、止まっていても毎朝は言わない", !buildReport().includes("【サイトの点検】"));
   checkData = Object.assign({}, checkData, { checked_at: "2026-11-09T04:00:00+09:00", summary: { sites: 8, pages: 2300, problems: 0, warnings: 0, infos: 6 }, sites: [] });
-  check("問題がない週は「問題なし！」", buildReport(true).includes("11/9 に 8 サイト・2300 ページを点検したよ。問題なし！"));
+  check("問題がない週は「問題なし！」", buildReport().includes("11/9 に 8 サイト・2300 ページを点検したよ。問題なし！"));
   checkCode = 500; NOW = new Date("2026-11-16T08:00:00+09:00").getTime();
-  check("結果が取れない月曜は知らせる", buildReport(true).includes("点検の結果が取れなかった"));
+  check("結果が取れない月曜は知らせる", buildReport().includes("点検の結果が取れなかった"));
   checkCode = 200;
-  t_say("使い方");
-  check("使い方に「点検」がある", t_text().includes("・点検 …"));
+  t_say("使い方"); out.push("--- 使い方", t_last());
+  check("使い方に「グラフ 簿記」「紹介コメント」「ユーチューブ」「点検」がある", ["グラフ 簿記", "・紹介コメント …", "・ユーチューブ …", "・点検 …"].every((w) => t_text().includes(w)));
+  check("使い方に消したことばがない", !["・状況 …", "・インスタ …", "・素材 …", "・ニュース …", "・ジャンル …", "紹介リール"].some((w) => t_text().includes(w)));
 } catch (e) { out.push("ERROR " + e.stack); fails.push("例外"); }
 out.push("", fails.length ? "FAILED: " + fails.join("、") : "ALL OK");
 document.getElementById("out").textContent = out.join("\n");

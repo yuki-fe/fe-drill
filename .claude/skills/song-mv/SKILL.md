@@ -18,16 +18,17 @@ description: 運営者が Suno で作った新しい曲から、歌詞に合わ�
 
 ## 手順
 1. **曲と歌詞を受け取る**: 曲は `notes/動画のサンプル/` か `~/Downloads` にあることが多い。`notes/曲の動画/<曲名>/<曲名>.mp3` に置く。同じ中身のファイルでないか md5 で確かめる（音の比べ方は `song_tools/cmp_audio.py`）（前に、ちがう曲名で同じ音が届いたことがある）。歌詞は `<曲名>_歌詞.txt` に、`[見出し]` でまとまりを分けて保存し、`(Piano …)` のような演奏の説明の行は外す
-2. **長さを測る**（ファイルの大きさから推測しない。ffmpeg の Duration を見る）
-3. **音声認識**: 曲を 16kHz・モノラルの raw（s16le）に変えてから、`.venv-asr\Scripts\python -I -X utf8 song_tools/asr_run.py 曲.raw 結果.json 歌詞.txt` で言葉ごとの時間を取る（faster-whisper・large-v3-turbo。`.venv-asr` は av==19.0.1 に固定。新しい版の av は Windows のアプリ制御に止められる）。最初の語りなどが取れないときは `song_tools/asr_intro.py`
+2. **長さと音量を測る**（ファイルの大きさから推測しない。ffmpeg の Duration を見る）。音量は `-af ebur128=peak=true` で測り、YouTube の目安 -14 LUFS との差を `mc.AUDIO_GAIN_DB` に入れる（いちばん大きい音が -1 dB を超えないように）
+3. **音声認識**: 結果の JSON は、`mc.configure(..., words=結果.json)` に渡すと、カラオケの色が言葉ごとに進む（行を一定の速さで塗るより、歌とずれない）。曲を 16kHz・モノラルの raw（s16le）に変えてから、`.venv-asr\Scripts\python -I -X utf8 song_tools/asr_run.py 曲.raw 結果.json 歌詞.txt` で言葉ごとの時間を取る（faster-whisper・large-v3-turbo。`.venv-asr` は av==19.0.1 に固定。新しい版の av は Windows のアプリ制御に止められる）。最初の語りなどが取れないときは `song_tools/asr_intro.py`
 4. **歌詞と時間の突き合わせ**: `song_tools/align.py` で自動で合わせる。**サビがくり返す曲は自動だとまざる**ので、認識の区切り（segments）を見て1行ずつ手で割り当てる。取れなかった行は、前後の区切りから推測し、運営者に伝える。`<曲名>_時間.json` に保存
 5. **場面の図を書く**: `make_mv_commit.py` などをもとに `make_mv_<曲>.py` を作る。歌詞のまとまり（見出し）ごとに場面を1つ、歌詞の1行ごとに図を1つ進める。図は用語の意味が正しく伝わるように（数字や式は確かめる）。キャラクターは入れない
-6. **背景の映像**: Mixkit から、**ライセンスが Free（copyrightNotice が "Free"）のものだけ**を `song_tools/mixkit_get.py`（候補さがしは `song_tools/mixkit_list.py`）で `notes/曲の動画/背景素材/` にダウンロードする（Restricted は使わない）。曲の気持ちに合う映像を、場面ごとに選ぶ（`CLIPS`）
+6. **背景の映像**: Mixkit から、**ライセンスが Free（copyrightNotice が "Free"）のものだけ**を `song_tools/mixkit_get.py`（候補さがしは `song_tools/mixkit_list.py`）で `notes/曲の動画/背景素材/` にダウンロードする（Restricted は使わない）。Mixkit で合うものが少ないときは **Pexels** も探す（`song_tools/pexels_list.py 言葉`→`song_tools/pexels_get.py notes/曲の動画/背景素材 p番号 …`。Pexels License は商用・クレジット不要。映っている人を悪く見せない・人やブランドが宣伝しているように見せない。`CLIPS` には `"p番号"` と書く）。人の顔が大きく映る映像より、図の邪魔をしない景色・抽象的な映像を選ぶ。曲の気持ちに合う映像を、場面ごとに選ぶ（`CLIPS`）
 7. **静止画で確かめる**: `python make_mv_<曲>.py --at 秒 秒 …` で、文字の重なり・はみ出しを見て直す
 8. **書き出し（1曲ずつ順番に。2曲を同時に動かすとメモリが足りなくなって止まる）**
    - 縦長: `python make_mv_<曲>.py --jobs 4`（背景の動画を先に作る。止まっても、できた部分は飛ばして続きから）
-   - リール版: `make_reel_cut.py` の `CUTS` に、**小節の区切り**（テンポから計算）で切る場所を足して `python make_reel_cut.py <曲名>`。3分以内にする
-   - サムネイル・説明文: `make_youtube.py` の `SONGS` と `THUMBS`（曲に合った字体＝`notes/曲の動画/フォント/` の Google Fonts と、景色）を足して `python make_youtube.py --meta <曲名>`
+   - **リール用の縦長**: `python make_mv_<曲>.py --safe --jobs 4`（`_MV_リール用.mp4`）。見出しと図を上下 290〜1320px に縮めて収め、歌詞を右のボタンの列をよけて上げる（Instagram・ショートの表示に文字が隠れない）。最初の場面は、1枚目から文字が出る「問いかけ」にする（`mc.SAFE` のときの `sc_title`。例: リカーシブルキングの `sc_hook`）
+   - リール版: `make_reel_cut.py` の `CUTS` に、**小節の区切り**（テンポから計算）で切る場所を足して `python make_reel_cut.py <曲名>`。3分以内にする。`_MV_リール用.mp4` があればそちらを使い、上の案内と宣伝の画面も隠れない位置に出す
+   - サムネイル・説明文・字幕: `make_youtube.py` の `SONGS` と `THUMBS`（曲に合った字体＝`notes/曲の動画/フォント/` の Google Fonts と、景色）を足して `python make_youtube.py --meta <曲名>`。字幕ファイル `<曲名>_字幕.srt`（横長）と `<曲名>_ショート_字幕.srt` もできる（運営者が YouTube Studio の「字幕」から上げる）。チャプターは1つ10秒以上
    - 横長: `python make_mv_<曲>.py --youtube --jobs 4`
    - 長い作業は、まとめたシェルスクリプトを裏で動かし、終わったら知らせる。書き出し中は、パソコンをスリープさせない（運営者に伝える）
 9. **できたものを確かめる**: 長さ・画面の大きさ・音、つなぎ目、いくつかの場面の画像を見る

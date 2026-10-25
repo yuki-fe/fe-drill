@@ -1,12 +1,12 @@
 /* 用語タイピング（typing.html）。用語ドリルの各サイトで同じファイルを使う。
-   用語は terms.js（window.SITE_TERMS、FE は window.FE_TERMS）の y（読み）を打つ。
+   用語は terms.js（window.SITE_TERMS、FE は window.FE_TERMS、ITパスポートは window.IP_TERMS）の y（読み）を打つ。
    練習: 用語・読み・ローマ字・意味が出る。腕だめし: 意味だけを見て、用語を思い出して打つ。
    意味も打つ: 用語のあとに、意味の要点（terms.js の mt＝画面に出す文、my＝打つ読み）も打つ。データがないサイトでは出さない。
    制限時間は TIMES から選ぶ。 */
 (function () {
   "use strict";
   const root = document.getElementById("typing");
-  const TERMS = (window.SITE_TERMS || window.FE_TERMS || []).filter((t) => t.y);
+  const TERMS = (window.SITE_TERMS || window.FE_TERMS || window.IP_TERMS || []).filter((t) => t.y);
   if (!root) return;
   if (!TERMS.length) {
     // サイトを新しくした直後は、保存してある古い terms.js（読みがない）が使われることがある

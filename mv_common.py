@@ -24,8 +24,19 @@ W, H, FPS = 1080, 1920, 60
 HZ = False
 OW, OH = W, H
 KARAOKE = True   # 歌詞を、歌う時間に合わせて左から金色に変える。--no-karaoke で白い文字のままにする
+# Instagram リール・YouTube ショート用の配置（--safe）。アプリの表示（上の約14%・右下のボタンの列・下のユーザー名と
+# 説明文の約400px）に文字が隠れないように、見出しと図を上下 SAFE_TOP〜SAFE_BOTTOM に縮めて収め、歌詞を上げる。
+# 広告向けの目安（下の35%）まで避けると図の文字が小さくなりすぎる（0.63倍）ので、ふつうのリールの表示に合わせた（0.7倍）
+SAFE = False
+SAFE_TOP, SAFE_BOTTOM = 290, 1320
+SAFE_LYRIC_Y = 1410          # 歌詞の帯のまん中（下は 1480 まで。下から約440px をあける）
+SAFE_LYRIC_X = (90, 900)     # 歌詞の帯の左右（右は Instagram のボタンの列をよける）
+# 曲の音量を、仕上げのときに何 dB 上げ下げするか（YouTube の目安 -14 LUFS に合わせるため。曲ごとに入れる）
+AUDIO_GAIN_DB = 0.0
 FONT_R = "C:/Windows/Fonts/BIZ-UDGothicR.ttc"
 FONT_B = "C:/Windows/Fonts/BIZ-UDGothicB.ttc"
+# 見出し（場面のタイトル）だけに使う字体。曲ごとに make_mv_<曲>.py で TTF のパスを入れる。None なら FONT_B
+HEAD_FONT = None
 _fonts = {}
 
 BG1, BG2 = (14, 32, 28), (22, 18, 30)
@@ -50,10 +61,14 @@ BLOCKS, ROWS = [], []
 TITLE = ""
 
 
-def font(size, bold=True):
-    k = (int(size), bold)
+def font(size, bold=True, face=None):
+    """face に TTF のパスを渡すと、その字体（見出し用など）。"""
+    k = (int(size), bold, face)
     if k not in _fonts:
-        _fonts[k] = ImageFont.truetype(FONT_B if bold else FONT_R, int(size), index=1)
+        if face:
+            _fonts[k] = ImageFont.truetype(str(face), int(size))
+        else:
+            _fonts[k] = ImageFont.truetype(FONT_B if bold else FONT_R, int(size), index=1)
     return _fonts[k]
 
 
@@ -98,7 +113,35 @@ def read_lyrics(path):
     return blocks
 
 
-def configure(song, lyrics, times, title):
+def row_knots(r, words):
+    """音声認識の言葉ごとの時間から、その行を「どの時刻に、行の何割まで歌ったか」の折れ線にする。
+    認識の文字と歌詞の文字は合わないことがあるので、文字の数の割合だけを使う。"""
+    ws = [w for w in words if r["s"] - 0.15 <= w[0] <= r["e"] + 0.15]
+    lens = [max(1, len("".join(ch for ch in w[2] if ch.strip() and ch not in "、。,.!?！？…"))) for w in ws]
+    if len(ws) < 2:
+        return None
+    total, acc, ts, fs = sum(lens), 0, [], []
+    for w, n in zip(ws, lens):
+        ts.append(w[0])
+        fs.append(acc / total)
+        acc += n
+    ts.append(max(ws[-1][1], ts[-1] + 0.05))
+    fs.append(1.0)
+    for i in range(1, len(ts)):          # 時刻が戻らないようにする
+        ts[i] = max(ts[i], ts[i - 1] + 0.01)
+    return ts, fs
+
+
+def karaoke_prog(r, t):
+    """歌詞の帯の色が進んだ割合（0〜1）。言葉ごとの時間があればそれに合わせる。"""
+    if r.get("knots"):
+        ts, fs = r["knots"]
+        return float(np.interp(t, ts, fs))
+    return ease((t - r["s"]) / max(0.5, r["e"] - r["s"]))
+
+
+def configure(song, lyrics, times, title, words=None):
+    """words: 音声認識の結果（song_tools/asr_run.py の JSON）。渡すと、カラオケの色が言葉ごとに進む。"""
     global SONG, BPM, T0, DUR, BEAT, LEVEL, BLOCKS, ROWS, TITLE
     SONG, TITLE = song, title
     BPM, T0, DUR, LEVEL = analyze(song)
@@ -113,6 +156,10 @@ def configure(song, lyrics, times, title):
             k += 1
     if k != len(tm):
         sys.exit(f"歌詞の行の数（{k}）と時間の数（{len(tm)}）が合いません")
+    if words:
+        ws = json.loads(Path(words).read_text(encoding="utf-8"))["words"]
+        for r in ROWS:
+            r["knots"] = row_knots(r, ws)
 
 
 def beat(t):
@@ -178,8 +225,8 @@ def rbox(d, x, y, w, h, fill=CELL, line=CELL_LINE, r=18, width=4):
     d.rounded_rectangle((x, y, x + w, y + h), radius=r, fill=fill, outline=line, width=width)
 
 
-def label(d, x, y, s, size=56, fill=CREAM, bold=True, anchor="mm"):
-    d.text((x, y), s, font=font(size, bold), fill=fill, anchor=anchor)
+def label(d, x, y, s, size=56, fill=CREAM, bold=True, anchor="mm", face=None):
+    d.text((x, y), s, font=font(size, bold, face), fill=fill, anchor=anchor)
 
 
 def chip(d, cx, cy, s, w=150, h=110, fill=CELL, line=CELL_LINE, tcol=CREAM, size=52):
@@ -292,7 +339,7 @@ def header(d, num, title, sub):
     label(d, W / 2, 130, TITLE, 36, MUTED, bold=False)
     if num:
         label(d, W / 2, 215, f"#{num}", 42, GOLD)
-    label(d, W / 2, 300, title, 84 if len(title) <= 9 else 66, CREAM)
+    label(d, W / 2, 300, title, 84 if len(title) <= 9 else 66, CREAM, face=HEAD_FONT)
     label(d, W / 2, 382, sub, 34, MUTED, bold=False)
 
 
@@ -315,7 +362,7 @@ def lyric_band(img, t):
     d.rounded_rectangle((40, 1590, W - 40, 1770), radius=34, fill=mix(BG1, (6, 14, 12), a))
     x0, y = (W - tw) / 2, 1680
     d.text((x0, y), text, font=f, fill=mix(BG1, CREAM, a), anchor="lm")
-    prog = ease((t - cur["s"]) / max(0.5, cur["e"] - cur["s"])) if KARAOKE else 0
+    prog = karaoke_prog(cur, t) if KARAOKE else 0
     if prog > 0:
         hl = Image.new("L", (W, 120), 0)
         ImageDraw.Draw(hl).text((x0, 60), text, font=f, fill=255, anchor="lm")
@@ -413,7 +460,7 @@ def lyric_band_h(img, t):
     d.rounded_rectangle(((OW - bw) / 2, 952, (OW + bw) / 2, 1052), radius=40, fill=mix(BG1, (6, 14, 12), a))
     x0, y = (OW - tw) / 2, 1002
     d.text((x0, y), text, font=f, fill=mix(BG1, CREAM, a), anchor="lm")
-    prog = ease((t - cur["s"]) / max(0.5, cur["e"] - cur["s"])) if KARAOKE else 0
+    prog = karaoke_prog(cur, t) if KARAOKE else 0
     if prog > 0:
         hl = Image.new("L", (OW, 100), 0)
         ImageDraw.Draw(hl).text((x0, 50), text, font=f, fill=255, anchor="lm")
@@ -440,9 +487,9 @@ def render_h(t, scenes, plan):
         if num:
             label(d, cx, 360, f"#{num}", 52, mix(BG1, GOLD, a))
         size = 84
-        while font(size).getlength(title) > x - 120 and size > 40:
+        while font(size, face=HEAD_FONT).getlength(title) > x - 120 and size > 40:
             size -= 4
-        label(d, cx, 470, title, size, mix(BG1, CREAM, a))
+        label(d, cx, 470, title, size, mix(BG1, CREAM, a), face=HEAD_FONT)
         size = 30
         while font(size, False).getlength(sub) > x - 120 and size > 18:
             size -= 2
@@ -514,6 +561,48 @@ def compose(canvas, bg):
     return Image.fromarray(out.astype(np.uint8), "RGB")
 
 
+def lyric_band_safe(img, t):
+    """リール用の歌詞の帯（右のボタンの列をよけて、少し上に出す）。"""
+    cur = None
+    for r in ROWS:
+        if r["s"] - 0.35 <= t < r["e"] + 0.6:
+            cur = r
+    if not cur:
+        return
+    nxt = [r for r in ROWS if r["s"] > cur["s"]]
+    a = ease(min((t - cur["s"] + 0.35) / 0.3, (cur["e"] + 0.6 - t) / 0.3 if not (nxt and nxt[0]["s"] - 0.35 <= t) else 1))
+    x0b, x1b = SAFE_LYRIC_X
+    text = cur["text"]
+    size = 50
+    while font(size).getlength(text) > (x1b - x0b) - 60 and size > 26:
+        size -= 2
+    f = font(size)
+    tw = f.getlength(text)
+    d = ImageDraw.Draw(img)
+    cy = SAFE_LYRIC_Y
+    d.rounded_rectangle((x0b, cy - 70, x1b, cy + 70), radius=34, fill=mix(BG1, (6, 14, 12), a))
+    x0 = (x0b + x1b - tw) / 2
+    d.text((x0, cy), text, font=f, fill=mix(BG1, CREAM, a), anchor="lm")
+    prog = karaoke_prog(cur, t) if KARAOKE else 0
+    if prog > 0:
+        hl = Image.new("L", (W, 120), 0)
+        ImageDraw.Draw(hl).text((x0, 60), text, font=f, fill=255, anchor="lm")
+        hl.paste(0, (int(x0 + tw * prog), 0, W, 120))
+        img.paste(Image.new("RGB", (W, 120), mix(BG1, GOLD, a)), (0, cy - 60), hl)
+
+
+def render_safe(t, scenes, plan):
+    """リール用の1枚: 縦長の画面の見出しと図を縮めて SAFE_TOP〜SAFE_BOTTOM に収め、歌詞は lyric_band_safe。"""
+    v = render(t, scenes, plan, lyrics=False, head=True)
+    fig = v.crop((0, 100, W, 1570))
+    s = (SAFE_BOTTOM - SAFE_TOP) / fig.height
+    fig = fig.resize((int(fig.width * s), SAFE_BOTTOM - SAFE_TOP), Image.LANCZOS)
+    img = Image.new("RGB", (W, H), BG1)
+    img.paste(fig, ((W - fig.width) // 2, SAFE_TOP))
+    lyric_band_safe(img, t)
+    return img
+
+
 def render_on(t, scenes, plan, bg):
     """背景の映像つきで1枚を描く。"""
     global _bg, DOTS
@@ -521,7 +610,7 @@ def render_on(t, scenes, plan, bg):
     _bg = Image.new("RGB", (W, H), BG1)   # 図は何もない色の上に描く
     DOTS = KEEP_DOTS                       # 本物の映像の上では、ふだんは光る点の格子を出さない（--dots で出す）
     try:
-        img = render_h(t, scenes, plan) if HZ else render(t, scenes, plan)
+        img = render_h(t, scenes, plan) if HZ else (render_safe(t, scenes, plan) if SAFE else render(t, scenes, plan))
     finally:
         _bg, DOTS = keep, keep_dots
     return compose(img, bg)
@@ -538,6 +627,7 @@ def main(scenes, plan, out_path, check_dir, clips=None):
     ap.add_argument("--dots", action="store_true", help="本物の映像の背景でも、光る点の格子を出す")
     ap.add_argument("--name", default="", help="できあがりのファイル名の後ろに付ける言葉（例: _丸あり）")
     ap.add_argument("--youtube", action="store_true", help="YouTube 用の横長（1920×1080）で書き出す")
+    ap.add_argument("--safe", action="store_true", help="リール・ショート用の配置（アプリの表示に隠れない）で書き出す。ファイル名は _MV_リール用")
     ap.add_argument("--no-karaoke", action="store_true", help="歌詞を白い文字のままにする（色が変わる動きをなくす）")
     ap.add_argument("--jobs", type=int, default=1, help="曲をいくつに分けて同時に書き出すか（速くなる）")
     ap.add_argument("--chunk", default="", help="（内部用）分けた1つ分を、音なしでこのファイルに書く")
@@ -549,6 +639,11 @@ def main(scenes, plan, out_path, check_dir, clips=None):
     base_stem = out_path.stem   # 背景の動画は、名前の後ろの言葉に関係なく同じものを使う
     global HZ, OW, OH, KARAOKE
     KARAOKE = not a.no_karaoke
+    global SAFE
+    if a.safe:
+        SAFE = True
+        if not a.name:
+            out_path = out_path.with_name(out_path.stem + "_リール用.mp4")
     if a.youtube:
         HZ, OW, OH = True, 1920, 1080
         out_path = out_path.with_name(out_path.stem.replace("_MV", "") + "_YouTube.mp4")
@@ -613,7 +708,7 @@ def main(scenes, plan, out_path, check_dir, clips=None):
            "-ss", f"{start:.3f}", "-t", f"{end - start:.3f}", "-i", str(SONG),
            "-map", "0:v", "-map", "1:a", "-shortest",
            "-c:v", "libx264", "-preset", "slow", "-tune", tune, "-crf", crf, "-profile:v", "high", "-level", "4.2",
-           "-pix_fmt", "yuv420p", "-g", str(FPS * 2), "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart"]
+           "-pix_fmt", "yuv420p", "-g", str(FPS * 2)] + gain_args() + ["-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart"]
     # 途中は「_作成中」に書き、できあがったら名前を入れ替える（前の版は「_前の版」として残す）
     work = out.with_name(out.stem + "_作成中.mp4")
     p = subprocess.Popen(cmd + [str(work)], stdin=subprocess.PIPE)
@@ -636,6 +731,11 @@ def main(scenes, plan, out_path, check_dir, clips=None):
         out.replace(out.with_name(out.stem + "_前の版.mp4"))
     work.replace(out)
     print(out)
+
+
+def gain_args():
+    """AUDIO_GAIN_DB が 0 でなければ、曲の音量を変える ffmpeg の引数。"""
+    return ["-af", f"volume={AUDIO_GAIN_DB:+.1f}dB"] if AUDIO_GAIN_DB else []
 
 
 def render_chunk(f0, fn, path, scenes, plan, bgv, tune, crf):
@@ -682,6 +782,8 @@ def render_parallel(jobs, out, check_dir, tune, crf):
             args.append("--dots")
         if HZ:
             args.append("--youtube")
+        if SAFE:
+            args.append("--safe")
         if not KARAOKE:
             args.append("--no-karaoke")
         procs.append(subprocess.Popen(args, env=dict(os.environ, PYTHONIOENCODING="utf-8")))
@@ -692,7 +794,7 @@ def render_parallel(jobs, out, check_dir, tune, crf):
     work = out.with_name(out.stem + "_作成中.mp4")
     ff = imageio_ffmpeg.get_ffmpeg_exe()
     cmd = [ff, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lst), "-i", str(SONG),
-           "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", str(work)]
+           "-map", "0:v", "-map", "1:a", "-c:v", "copy"] + gain_args() + ["-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", str(work)]
     if subprocess.run(cmd).returncode != 0:
         sys.exit("つなぐのに失敗しました")
     if out.exists():

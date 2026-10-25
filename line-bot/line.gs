@@ -42,39 +42,16 @@ function handleEvent(ev) {
 /* 文字列か、LINE のメッセージの形（クイックリプライ付きなど）を返す */
 function answer(text) {
   let m;
-  if (/^(状況|じょうきょう|レポート|様子)/.test(text)) return buildReport(false);
-  if (/^(グラフ|ぐらふ|アクセス|閲覧者)/.test(text)) return chartReply();
+  if ((m = text.match(/^(グラフ|ぐらふ|アクセス|閲覧者)\s*(.*)$/))) return chartReply(m[2].trim());
   if (/^(人気|ランキング|にんき)/.test(text)) return rankingText();
   if (/^(問い合わせ|問合せ|といあわせ|お問い合わせ)/.test(text)) return listText();
   if ((m = text.match(/^(済|対応済み?|done)\s*(\d+)/i))) return markDone(Number(m[2]));
-  if ((m = text.match(/^ニュース\s*投稿\s*([\d\s、,]*)$/))) {
-    if (!igReady()) return TALK.igOff;
-    const nums = (m[1].match(/\d+/g) || []).map(Number);
-    return nums.length ? newsChoose(nums) : newsDraftMessage();
-  }
-  if ((m = text.match(/^ニュース\s*(.*)$/))) {
-    const g = m[1].trim();
-    return g ? newsText([g], 5, TALK.newsGenreHead(g)) : newsText(selectedGenres(), 3, TALK.newsHead);
-  }
-  if ((m = text.match(/^ジャンル\s*(.*)$/))) {
-    return m[1].trim() ? changeGenres(m[1].trim()) : TALK.genreList(selectedGenres(), Object.keys(NEWS_GENRES));
-  }
-  if ((m = text.match(/^(インスタ|instagram|下書き)\s*(.*)$/i))) {
-    if (!igReady()) return TALK.igOff;
-    const k = kindFromWord(m[2]);
-    if (k) setKindToday(k);
-    return igDraftMessage(undefined, k || kindToday());
-  }
-  if (/^投稿(する)?$/.test(text)) return igAction("post", kindToday());
-  if (/^(素材|そざい)/.test(text)) return igAction("kit", kindToday());
-  if (/^紹介リール/.test(text)) return igIntroKit();
   if (/^紹介コメント/.test(text)) return igReady() ? igPinLatest() : TALK.igOff;
   if (/^(コメント|こめんと)/.test(text)) return igReady() ? igCommentsList() : TALK.igOff;
-  if ((m = text.match(/^(ユーチューブ|ゆーちゅーぶ|youtube)\s*(反応|はんのう|数字|コメント|こめんと)/i))) {
+  if ((m = text.match(/^(ユーチューブ|ゆーちゅーぶ|youtube)\s*(反応|はんのう|数字|コメント|こめんと)?/i))) {
     if (!ytReady()) return TALK.ytOff;
-    return /コメント|こめんと/.test(m[2]) ? ytCommentsList() : ytRecentText();
+    return /コメント|こめんと/.test(m[2] || "") ? ytCommentsList() : ytRecentText();
   }
-  if (/^(ユーチューブ|ゆーちゅーぶ|youtube)/i.test(text)) return ytKitReply();
   if (/^(反応|はんのう|インサイト)/.test(text)) return igReady() ? igRecentText() : TALK.igOff;
   if (/^(リンク|りんく)/.test(text)) return TALK.igLink(igProfileLink());
   if (/^(点検|てんけん|チェック)/.test(text)) return checkDetailText();

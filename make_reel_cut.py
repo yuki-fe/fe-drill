@@ -37,6 +37,16 @@ CUTS = {
     # コミットしないで（68BPM・1小節 3.529秒）。① 2進数〜1回目のサビ ② ブリッジ〜最後のサビ〜アウトロ（曲の終わりまで）
     # 曲がアウトロのすぐあとで終わるので、宣伝の画面のあいだは音なし（None）
     "コミットしないで": ([(11.41, 99.64), (184.35, 254.0)], 250.0, None),
+    # リカーシブルキング（92.25BPM・1小節 2.602秒）。最初から最後のサビの終わりまで（アウトロの前の小節の区切りで切る）。
+    # 宣伝の画面のあいだは、アウトロの「return」の続きを流す
+    "リカーシブルキング": ([(0.0, 159.11)], 174.0, 159.11),
+    # ビットバイト・ダンス（136BPM・1小節 1.765秒）。① イントロの歌い出し（つかみ）② 1番〜2回目のサビ ③ 最後のサビ。
+    # イントロの間奏（約20秒）とブリッジは切る。宣伝の画面のあいだは、最後のサビの続きを流す（全部で約2分59.7秒）
+    "ビットバイト・ダンス": ([(0.0, 7.27), (26.69, 164.33), (194.33, 224.33)], 241.0, 224.33),
+    # ハードウェア・レイヴ（129.25BPM・1小節 1.857秒）。① イントロ（つかみ）② 1番〜最初のドロップ ③ RGB・CMYK〜ドロップ2
+    # ④ クロック〜最後のドロップ（1回目の「終わらない!」まで）。イントロの間奏・USB〜HDMI・ブリッジは切る。
+    # 宣伝の画面のあいだは、最後のドロップの続きを流す（全部で約2分52秒）
+    "ハードウェア・レイヴ": ([(0.0, 20.54), (31.68, 104.1), (128.24, 161.66), (183.95, 224.8)], 250.0, 224.8),
 }
 # --shorts のときは YouTube ショート用（案内の文を「チャンネルのリンクから」に、ファイル名を _ショート に）
 LINK_TEXT = "プロフィールのリンクから"
@@ -54,25 +64,27 @@ def grab(src, t):
     return Image.frombytes("RGB", (W, H), raw[: W * H * 3])
 
 
-def promo_card(bg, path):
-    """宣伝の画面: MV の最後の映像をぼかして暗くし、サイトの名前とアドレスを出す。"""
+def promo_card(bg, path, safe=False):
+    """宣伝の画面: MV の最後の映像をぼかして暗くし、サイトの名前とアドレスを出す。
+    safe: リール用の配置（下のユーザー名・説明文に隠れないよう、全体を 100px 上げる）。"""
+    dy = -100 if safe else 0
     img = bg.filter(ImageFilter.GaussianBlur(14))
     img = Image.blend(img, Image.new("RGB", (W, H), BG1), 0.62)
     d = ImageDraw.Draw(img)
 
     def text(y, s, size, col, bold=True):
-        d.text((W / 2, y), s, font=font(size, bold), fill=col, anchor="mm")
+        d.text((W / 2, y + dy), s, font=font(size, bold), fill=col, anchor="mm")
 
     text(430, "用語の意味は、サイトで確認", 60, CREAM)
     text(510, "この曲に出てきた用語も、まとめて覚えられる", 36, MUTED, False)
     for k, (name, url, col) in enumerate(SITES):
         y = 680 + k * 250
-        d.rounded_rectangle((110, y - 90, W - 110, y + 110), radius=30, fill=mix(BG1, CELL, 0.9), outline=col, width=5)
+        d.rounded_rectangle((110, y - 90 + dy, W - 110, y + 110 + dy), radius=30, fill=mix(BG1, CELL, 0.9), outline=col, width=5)
         text(y - 20, name, 56, CREAM)
         text(y + 55, url, 46, GOLD)
     for k, s in enumerate(["カード・4択・書いて答える", "無料・登録なし・スマホで使える"]):
         text(1260 + k * 70, s, 40, CREAM, False)
-    d.rounded_rectangle((200, 1430, W - 200, 1530), radius=50, fill=GOLD)
+    d.rounded_rectangle((200, 1430 + dy, W - 200, 1530 + dy), radius=50, fill=GOLD)
     text(1480, LINK_TEXT, 44, BG1)
     img.save(path)
 
@@ -90,14 +102,17 @@ def banner(path):
 
 
 def cut(name, segs, promo_at, promo_audio):
-    src = song_dir(name) / f"{name}_MV.mp4"
+    # リール用の配置で書き出した MV（make_mv_<曲>.py --safe）があれば、そちらを使う
+    safe_src = song_dir(name) / f"{name}_MV_リール用.mp4"
+    safe = safe_src.exists()
+    src = safe_src if safe else song_dir(name) / f"{name}_MV.mp4"
     out = song_dir(name) / f"{name}{OUT_SUFFIX}.mp4"
     tmp = WORK
     tmp.mkdir(exist_ok=True)
     card, ban = tmp / f"{name}_宣伝{OUT_SUFFIX}.png", tmp / f"上の案内{OUT_SUFFIX}.png"
     # 宣伝の画面の背景は、文字の入っていない背景の映像から取る（なければ MV から）
     bgv = tmp / f"{name}_MV_背景.mp4"
-    promo_card(grab(bgv if bgv.exists() else src, promo_at), card)
+    promo_card(grab(bgv if bgv.exists() else src, promo_at), card, safe)
     banner(ban)
     ff = imageio_ffmpeg.get_ffmpeg_exe()
     L = [b - a for a, b in segs] + [PROMO_SEC]
@@ -119,7 +134,8 @@ def cut(name, segs, promo_at, promo_audio):
         fc.append(f"[{alast}][a{k}]acrossfade=d={XFADE}[y{k}]")
         vlast, alast = f"x{k}", f"y{k}"
         total = off + L[k]
-    fc.append(f"[{vlast}][2:v]overlay=0:0:format=auto[ov]")
+    # 上の案内: リール用の配置では、アプリの上の表示（約270px）の下に出す。宣伝の画面の見出しと重なるので、宣伝の画面になったら消す
+    fc.append(f"[{vlast}][2:v]overlay=0:{235 if safe else 0}:format=auto:enable='lt(t,{total - PROMO_SEC:.3f})'[ov]")
     fc.append(f"[ov]fade=t=out:st={total - FADE_OUT:.3f}:d={FADE_OUT}[vout]")
     fc.append(f"[{alast}]afade=t=out:st={total - FADE_OUT:.3f}:d={FADE_OUT}[aout]")
     work = out.with_name(out.stem + "_作成中.mp4")
