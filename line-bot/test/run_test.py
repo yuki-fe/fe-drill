@@ -141,6 +141,9 @@ const t_buttons = () => { const m = lastMsg().messages; const q = m[m.length - 1
 const out = [], fails = [];
 const check = (name, cond) => { out.push((cond ? "  OK  " : "  NG  ") + name); if (!cond) fails.push(name); };
 try {
+  check("公開中の7サイトのうち、FE 以外はアナリティクスのプロパティ ID が入っている", SITES.filter((x) => !x.main).every((x) => /^\d{9}$/.test(x.ga)));
+  // ここから下は、アナリティクスがあるのは FE・ITパスポートだけ、という形で確かめる（ないサイトの動きも見るため）
+  SITES.forEach((x) => { if (!["fe", "ip"].includes(x.key)) x.ga = ""; });
   setup();
   check("トリガーを作る（お問い合わせ・毎朝・トークンの更新）", triggers.join(",") === "onFormSubmit,dailyReport,refreshInstagramToken");
   check("setup で YouTube のチャンネルを見つける", store.YT_CHANNEL_ID === "UCtest");

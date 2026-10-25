@@ -53,11 +53,11 @@ const CONFIG = {
 const SITES = [
   { key: "fe", name: "FE用語ドリル", short: "FE", url: "https://fe.yogo-drill.com/", repo: "yuki-fe/fe-drill", ga: "", main: true, search: true, color: "#c0435a" },
   { key: "ip", name: "ITパスポート用語ドリル", short: "ITパスポート", url: "https://ip.yogo-drill.com/", repo: "yuki-fe/ip-drill", ga: "558662911", search: true, color: "#2d68a8" },
-  { key: "cloud", name: "クラウド用語ドリル", short: "クラウド", url: "https://cloud.yogo-drill.com/", repo: "yuki-fe/cloud-drill", ga: "", search: false, color: "#1a6f7a" },
-  { key: "genai", name: "生成AI用語ドリル", short: "生成AI", url: "https://genai.yogo-drill.com/", repo: "yuki-fe/genai-drill", ga: "", search: false, color: "#5a3fb0" },
-  { key: "dl", name: "ディープラーニング用語ドリル", short: "ディープラーニング", url: "https://dl.yogo-drill.com/", repo: "yuki-fe/dl-drill", ga: "", search: false, color: "#9b2f7a" },
-  { key: "boki", name: "簿記用語ドリル", short: "簿記", url: "https://boki.yogo-drill.com/", repo: "yuki-fe/boki-drill", ga: "", search: false, color: "#7a6a12" },
-  { key: "iryo", name: "医療事務用語ドリル", short: "医療事務", url: "https://iryo.yogo-drill.com/", repo: "yuki-fe/iryo-drill", ga: "", search: false, color: "#0b6e99" },
+  { key: "cloud", name: "クラウド用語ドリル", short: "クラウド", url: "https://cloud.yogo-drill.com/", repo: "yuki-fe/cloud-drill", ga: "560673744", search: false, color: "#1a6f7a" },
+  { key: "genai", name: "生成AI用語ドリル", short: "生成AI", url: "https://genai.yogo-drill.com/", repo: "yuki-fe/genai-drill", ga: "560644762", search: false, color: "#5a3fb0" },
+  { key: "dl", name: "ディープラーニング用語ドリル", short: "ディープラーニング", url: "https://dl.yogo-drill.com/", repo: "yuki-fe/dl-drill", ga: "560689908", search: false, color: "#9b2f7a" },
+  { key: "boki", name: "簿記用語ドリル", short: "簿記", url: "https://boki.yogo-drill.com/", repo: "yuki-fe/boki-drill", ga: "560565665", search: false, color: "#7a6a12" },
+  { key: "iryo", name: "医療事務用語ドリル", short: "医療事務", url: "https://iryo.yogo-drill.com/", repo: "yuki-fe/iryo-drill", ga: "560599396", search: false, color: "#0b6e99" },
 ];
 
 /* ========== Instagram の投稿の種類 ==========

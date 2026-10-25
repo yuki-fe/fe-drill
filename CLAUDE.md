@@ -97,7 +97,7 @@ python notes/src/make_pdf.py 名前        # notes/src/名前.html から notes/
 - スクリプト プロパティ: `LINE_TOKEN` `WEBHOOK_KEY` `SETUP_CODE` `OWNER_USER_ID` `NEWS_GENRES` `GA_PROPERTY_ID` `IG_TOKEN` `IG_USER_ID` `YT_CHANNEL_ID`（setup が自動で入れる）`YT_API_KEY`（YouTube のコメントを読む API キー。YouTube Data API v3 だけに制限）ほか、`IG_`・`YT_` で始まる状態の記録
 - トリガー: `onFormSubmit`、`dailyReport`（毎朝8時）、`refreshInstagramToken`（毎週）。関数名を変えるとトリガーが切れる（`igWorker` は 2026-10-25 になくした。残っていたら setup をもう一度実行して消す）
 - **サイトの点検**（`report.gs` の `checkSection`・`checkDetailText`）: 入り口の yogo-drill のリポジトリで GitHub の自動実行が毎週月曜 4:00 に全サイトを点検し、結果を `check-results` のブランチの `result.json` に置く（`CONFIG.checkUrl`）。新しい結果が出た朝のレポートに【サイトの点検】の欄（既読は `CHECK_SEEN`）、月曜は結果が取れない・`checkStaleDays` 日より古いときも知らせる。LINE の「点検」でサイトごとの問題・注意。点検の中身は yogo-drill の `check/`
-- 毎朝のレポートは、**公開中の用語サイトごとの欄**（`config.gs` の `SITES`。閲覧者・検索・開けるか・最後の更新）→【インスタ】【YouTube】【サイトの点検】【お問い合わせ】。サイトを公開したら `SITES` に足す。`ga` は GA4 のプロパティ ID（空なら「アナリティクスはまだ」。FE は `main: true` でスクリプト プロパティの `GA_PROPERTY_ID`）、`search: true` は Search Console に URL プレフィックスで登録したサイト（今は FE・ITパスポートだけ）
+- 毎朝のレポートは、**公開中の用語サイトごとの欄**（`config.gs` の `SITES`。閲覧者・検索・開けるか・最後の更新）→【インスタ】【YouTube】【サイトの点検】【お問い合わせ】。サイトを公開したら `SITES` に足す。`ga` は GA4 のプロパティ ID（2026-10-25 に全サイトに付けた。空なら「アナリティクスはまだ」。FE は `main: true` でスクリプト プロパティの `GA_PROPERTY_ID`）、`search: true` は Search Console に URL プレフィックスで登録したサイト（今は FE・ITパスポートだけ）
 - LINE の「グラフ」はサイトを選ぶボタン（アナリティクスのあるサイトだけ）、「グラフ 簿記」でそのサイトのグラフ（線はサイトの色 `color`）。月曜の朝は FE のグラフ。「人気」は FE だけ
 - LINE のことばは「グラフ」「人気」「問い合わせ」「済 3」「コメント」「紹介コメント」「反応」「ユーチューブ（反応・コメント）」「リンク」「点検」「使い方」。「状況」「インスタ」「素材」「投稿」「紹介リール」「ニュース」「ジャンル」「ニュース投稿」は 2026-10-25 になくした（運営者が決めた）
 - GCP は標準プロジェクト「fe-drill-line」（Search Console API・Analytics Data API・YouTube Data API v3 を有効化）
