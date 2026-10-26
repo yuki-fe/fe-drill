@@ -132,7 +132,10 @@ def page(path, title, desc, body, rel, body_class="", jsonld=None, scripts="", i
 <meta property="og:description" content="{escape(desc)}">
 <meta property="og:url" content="{escape(url)}">
 <meta property="og:site_name" content="{escape(SITE)}">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="{BASE}/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
@@ -267,6 +270,10 @@ def build_home():
   <p><a href="typing.html">用語タイピング</a>では、制限時間（30〜180秒）の中で何語打てるかに挑戦しながら、用語と意味を打って覚えられます。読みを見て打つ「練習」と、意味だけを見て用語を思い出して打つ「腕だめし」があります。</p>
   <h2>科目Bの対策</h2>
   <p>科目Bでは、プログラムの動きを追う「トレース」が鍵になります。このサイトでは、擬似言語のプログラムを<b>1行ずつ再生</b>して、どの行で変数がどう変わるかを目で見て確かめられます。<a href="b/trace.html">トレース練習</a>（{len(B["trace"])}問）のほか、アルゴリズム図鑑、穴埋め問題、情報セキュリティの事例問題、自分で書いたプログラムを動かせるシミュレータも用意しています。<a href="b/index.html">科目Bのページへ</a></p>
+  <h2>出題範囲の見直しについて</h2>
+  <p>IPA の試験制度は2027年度から見直しが予定されており、基本情報技術者試験もシラバスが改訂される見込みです。このサイトの用語は今の出題範囲に合わせています。新しいシラバスが決まったら、用語を見直します。</p>
+  <h2>間違いを見つけたら</h2>
+  <p>用語の説明は、運営者が AI の支援を受けて作り、確かめたうえで載せています。説明の誤りや、足りない用語に気づいたら、{contact_html()}から教えてください。</p>
 </section>
 """
     ld = [{"@context": "https://schema.org", "@type": "WebSite", "name": SITE, "url": BASE + "/", "description": config["description"]}]
