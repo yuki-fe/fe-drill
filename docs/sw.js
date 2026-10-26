@@ -1,5 +1,5 @@
 // FE用語ドリル のサービスワーカー（build.py が作る。直接編集しない）
-const CACHE = "fe-drill-96e6118412";
+const CACHE = "fe-drill-5834eccf6d";
 const PRECACHE = ["./", "index.html", "offline.html", "app.html", "terms/index.html", "b/index.html", "b/trace.html", "b/fill.html", "b/notation.html", "b/security.html", "b/simulator.html", "favicon.svg", "icon-192.png", "manifest.webmanifest", "assets/app.js", "assets/b-data.js", "assets/b.js", "assets/fig.js", "assets/layout.css", "assets/pseudo.js", "assets/style.css", "assets/term.js", "assets/terms.js", "assets/typing.js"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
