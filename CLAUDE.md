@@ -32,7 +32,7 @@
 | `build.py` | サイトを生成する（`docs/` に書き出す）。運営者情報・プライバシーポリシーの文面もここ |
 | `data/terms.json` | 用語データ。`id` は URL（`terms/0001.html`）になるので、**公開後に変えたり使い回したりしない** |
 | `data/yomi.json` | 用語の読み（用語 id → ひらがな・半角英数字）。**用語タイピング**（`typing.html`、`static/assets/typing.js`）で打つ文字。用語を足したら読みも足す（ないと build.py が注意を出し、その用語はタイピングに出ない）。英語の略語は英字のまま、かっこの中は打たない |
-| `data/imi.json` | 用語の **意味の要点**（用語 id → [画面に出す短い文, 打つ読み]）。タイピングの「意味も打つ」（初めは「する」）で、用語のあとに打つ。10〜20文字ほどで、説明文（desc）の要点だけ。読みの文字の決まりは yomi.json と同じ（「・」などの記号は読みに入れない）。用語を足したらここにも足す（ないと build.py が注意を出し、その用語は意味を飛ばす）。制限時間は 30・60・90・120・180秒から選べ、自己ベストは時間・意味も打つかごとに分かれる（`typing.js` の `TIMES`・`bestKey`） |
+| `data/imi.json` | 用語の **意味の要点**（用語 id → [画面に出す短い文, 打つ読み]）。タイピングの「意味も打つ」（初めは「する」）で、用語のあとに打つ。10〜20文字ほどで、説明文（desc）の要点だけ。読みの文字の決まりは yomi.json と同じ（「・」などの記号は読みに入れない）。用語を足したらここにも足す（ないと build.py が注意を出し、その用語は意味を飛ばす）。制限時間は 1分・2分・3分（60・120・180秒）から選べ、自己ベストは時間・意味も打つかごとに分かれる（`typing.js` の `TIMES`・`bestKey`） |
 | `data/b/*.json` | 科目Bの問題（algorithms / trace / fill / security / notation） |
 | `static/` | `docs/` にそのままコピーされる。`assets/`（CSS・JS）、`ig/`（Instagram の画像・動画と投稿文の JSON） |
 | `static/assets/pseudo.js` | 擬似言語のインタプリタ。ビューア・答え合わせ・リール動画すべてがこれで動く |
@@ -53,7 +53,7 @@
 | `make_series_promo.py`・`make_promo_shots.py` | **用語ドリル全体**（yogo-drill.com と公開中の7サイト）の宣伝リール（約36秒・60fps・音なし）・表紙・投稿文を `static/ig/series-promo/` に作る。デザインはサイトのレイアウトと同じ「ミニマル・スイス」（ui-ux-pro-max）、文字は Noto Sans JP、上のふちに7サイトの色の帯。サイトの一覧は `../yogo-drill/sites.json`（`public` のもの。旅行は入らない）。先に `..\yogo-drill\.venv\Scripts\python make_promo_shots.py` で各サイトのスマホの画面を `notes/宣伝動画/画面/` に撮る（playwright が要る）。`--stills` で場面ごとの静止画、`--captions` で投稿文だけ作り直す。FE だけの宣伝リール（クレイ風・紫）は `make_promo_media.py`（`static/ig/promo/`） |
 | `media_fx.py` | 動画の飾りの仕組み。**リール動画は音なし（BGM も効果音もなし）**（2026-10-16 に運営者が決めた。`SFX_ON = False`・`BGM_STYLE = None`。動画には無音の音声トラックだけ入る）。効果音・BGM（`chip` 8ビット・`band` 楽器・`healing` ヒーリング風）・キャラクターのドット絵（`POSES`・`POSES_B`）を作る仕組みは残っているが、今は使っていない |
 | `line-bot/` | LINE ボットのプログラム。役割ごとの .gs（`config` 設定・setup / `talk` 話し方 / `report` 毎朝のレポート / `news` / `instagram` / `youtube` 数字とコメント / `inquiry` お問い合わせ / `line` Webhook と送信）と `appsscript.json`。合言葉（トークン）は入れない |
-| `ranking/` | 用語タイピングの **ランキング**（2026-10-27）。`ranking.gs` は LINE ボットとは別の GAS（スプレッドシート「タイピングランキング」に付ける。ウェブアプリ・全員）。ランキングは「練習・意味も打つ・180秒・分野すべて」（`practice-180-imi`）の1つだけ（2026-10-27 に運営者が決めた）。順位は **点数 = 文字数 × 正確さ³ × 10**（`typing.js` の `points` と `ranking.gs` の `points` は同じ式。点数は GAS 側で計算する）、結果のランク S〜D は1分あたりの点数（`GRADES`）。自己ベストも点数（`typing-pt-`）。`doGet` で上位20人（今週＝月曜0時 JST 区切り・全期間）、`doPost` で文字数・打鍵・ミスを受ける（ありえない値・NG語の名前ははじく。シート「記録」の「非表示」列で運営者が消せる）。サイトは `config.json` の `typing_rank_url`（空ならランキングを出さない）と `site_key`（`typing.js` の `BOARD`）。テストは `python ranking/test/run_test.py`（最後に ALL OK）。手順は「タイピングランキングの設定.pdf」。今は FE だけ（`RANK.sites`） |
+| `ranking/` | 用語タイピングの **ランキング**（2026-10-27）。`ranking.gs` は LINE ボットとは別の GAS（スプレッドシート「タイピングランキング」に付ける。ウェブアプリ・全員）。ランキングは「練習・意味も打つ・2分・分野すべて」（`practice-120-imi`）の1つだけ（2026-10-27 に運営者が決めた）。順位は **点数 = 文字数 × 正確さ³ × 10**（`typing.js` の `points` と `ranking.gs` の `points` は同じ式。点数は GAS 側で計算する）、結果のランク S〜D は1分あたりの点数（`GRADES`）。自己ベストも点数（`typing-pt-`）。`doGet` で上位20人（今週＝月曜0時 JST 区切り・全期間）、`doPost` で文字数・打鍵・ミスを受ける（ありえない値・NG語の名前ははじく。シート「記録」の「非表示」列で運営者が消せる）。サイトは `config.json` の `typing_rank_url`（空ならランキングを出さない）と `site_key`（`typing.js` の `BOARD`）。テストは `python ranking/test/run_test.py`（最後に ALL OK）。手順は「タイピングランキングの設定.pdf」。今は FE だけ（`RANK.sites`） |
 | `line-bot/test/run_test.py` | ボットの動作テスト（モックで動かす。Google や LINE には接続しない） |
 | `notes/` | **公開しない**（`.gitignore` 済み）。`pdf/` 手順書の PDF、`src/` その元の HTML、`brand/` アイコン画像 |
 

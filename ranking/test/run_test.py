@@ -41,7 +41,7 @@ const out = [], fails = [];
 function check(name, ok) { out.push((ok ? "OK   " : "NG   ") + name); if (!ok) fails.push(name); }
 const P = (o) => JSON.parse(doPost({ postData: { contents: JSON.stringify(o) } }));
 const G = (site, board) => JSON.parse(doGet({ parameter: { site, board } }));
-const B = "practice-180-imi";
+const B = "practice-120-imi";
 const pid = (n) => "p" + String(n).padStart(4, "0") + "-aaaaaaaaaaaaaaaa";
 // chars 文字・ミスなし（打鍵は文字数の2倍）→ 点数は chars × 10
 const ent = (n, chars, o) => Object.assign({ site: "fe", board: B, pid: pid(n), name: "名前" + n, chars, words: Math.floor(chars / 5), keys: chars * 2, miss: 0 }, o || {});
@@ -86,10 +86,10 @@ try {
 
   // はじくもの
   check("知らないサイト", send(9, 50, { site: "zz" }).error === "bad request");
-  check("ランキングのない区分（60秒・腕だめし・意味なし）", ["practice-60-imi", "test-180-imi", "practice-180-term"].every((b) => send(9, 50, { board: b }).error === "bad request") && G("fe", "practice-60-imi").ok === false);
+  check("ランキングのない区分（60秒・180秒・腕だめし・意味なし）", ["practice-60-imi", "test-120-imi", "practice-180-imi", "practice-120-term"].every((b) => send(9, 50, { board: b }).error === "bad request") && G("fe", "practice-60-imi").ok === false);
   check("短い pid", send(9, 50, { pid: "abc" }).error === "pid");
   check("打鍵より文字数が多い", send(9, 50, { keys: 40 }).error === "score");
-  check("速すぎる（180秒で3601打鍵）", send(9, 1500, { keys: 3601 }).error === "score");
+  check("速すぎる（120秒で2401打鍵）", send(9, 1000, { keys: 2401 }).error === "score");
   check("小数・負の数", send(9, 50.5).error === "score" && send(9, 50, { miss: -1 }).error === "score");
   check("文字数0", send(9, 0, { keys: 0, words: 0 }).error === "score");
   check("前の形（score）で送るとはじく", send(9, 50, { chars: undefined, score: 50 }).error === "score");

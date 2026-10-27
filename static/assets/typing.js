@@ -16,7 +16,7 @@
     return;
   }
   const FIELDS = window.SITE_FIELDS || JSON.parse(root.dataset.fields || "{}");
-  const TIMES = [30, 60, 90, 120, 180];
+  const TIMES = [60, 120, 180];   // 1分・2分・3分
   const HAS_IMI = TERMS.some((t) => t.my);
   const REL = document.body.dataset.root || "";
 
@@ -97,9 +97,9 @@
   const GRADES = [["S", 2400], ["A", 1800], ["B", 1200], ["C", 700], ["D", 0]];
   function grade(pt, sec) { const m = pt / (sec / 60); return GRADES.find(([, n]) => m >= n)[0]; }
 
-  // ---------- ランキング（data-rank に GAS の URL があるサイトだけ。「練習・意味も打つ・180秒・すべて」だけ） ----------
+  // ---------- ランキング（data-rank に GAS の URL があるサイトだけ。「練習・意味も打つ・2分・すべて」だけ） ----------
   const RANK_URL = HAS_IMI ? root.dataset.rank || "" : "", SITE_KEY = root.dataset.site || "";
-  const BOARD = { mode: "practice", imi: true, sec: 180, field: "all", key: "practice-180-imi", name: "練習・意味も打つ・180秒・分野「すべて」" };
+  const BOARD = { mode: "practice", imi: true, sec: 120, field: "all", key: "practice-120-imi", name: "練習・意味も打つ・2分・分野「すべて」" };
   const rankOn = () => !!RANK_URL && state.mode === BOARD.mode && state.imi === BOARD.imi && state.sec === BOARD.sec && state.field === BOARD.field;
   function useBoard() { state.mode = BOARD.mode; state.imi = BOARD.imi; state.sec = BOARD.sec; state.field = BOARD.field; }
   // ブラウザごとのランダムな ID（自分の行に印を付ける・ベストを1つにまとめるため）
@@ -297,7 +297,7 @@
       .map(([k, b, s]) => `<button type="button" class="ty-mode" data-mode="${k}" aria-pressed="${state.mode === k}"><b>${b}</b><small>${s}</small></button>`).join("");
     const imiBtns = [[true, "する"], [false, "しない（用語だけ）"]]
       .map(([v, s]) => `<button type="button" class="ty-chip" data-imi="${v ? 1 : 0}" aria-pressed="${state.imi === v}">${s}</button>`).join("");
-    const secBtns = TIMES.map((s) => `<button type="button" class="ty-chip" data-sec="${s}" aria-pressed="${state.sec === s}">${s}秒</button>`).join("");
+    const secBtns = TIMES.map((s) => `<button type="button" class="ty-chip" data-sec="${s}" aria-pressed="${state.sec === s}">${s / 60}分</button>`).join("");
     return `<div class="ty-menu">
       <p class="label">遊び方</p><div class="ty-modes">${modeBtns}</div>
       ${HAS_IMI ? `<p class="label">意味も打つ</p><div class="ty-chips">${imiBtns}</div>` : ""}
@@ -307,7 +307,7 @@
       ${RANK_URL ? `<p class="ty-rank-link"><button type="button" class="btn ghost" data-act="rank">ランキングを見る</button>${rankOn() ? '<span class="muted">この設定でランキングに挑戦できます</span>'
         : `<button type="button" class="btn ghost" data-act="useboard">ランキングの設定にする</button><span class="muted">ランキングは「${esc(BOARD.name)}」だけです</span>`}</p>` : ""}
       <button type="button" class="btn primary ty-start" data-act="start">スタート（スペースキー）</button>
-      <p class="muted">${state.sec}秒で何語打てるか挑戦します。${state.imi ? "用語を打ったあとに、意味の要点も打ちます。" : ""}ローマ字入力は半角英数で打ってください（スマホは、ひらがなのキーボードでも打てます）。</p>
+      <p class="muted">${state.sec / 60}分で何語打てるか挑戦します。${state.imi ? "用語を打ったあとに、意味の要点も打ちます。" : ""}ローマ字入力は半角英数で打ってください（スマホは、ひらがなのキーボードでも打てます）。</p>
     </div>`;
   }
 
@@ -318,7 +318,7 @@
     const list = missed.map((t) => `<li><a href="${REL}terms/${t.id}.html">${esc(t.term)}</a><span>${esc(t.y)}</span>`
       + (t.mt ? `<small class="ty-m">${esc(t.mt)}</small>` : "") + `</li>`).join("");
     return `<div class="ty-result">
-      <p class="ty-mode-name">${state.mode === "practice" ? "練習" : "腕だめし"}・${esc(state.field === "all" ? "すべて" : FIELDS[state.field])}・${state.sec}秒${state.imi ? "・意味も打つ" : ""}</p>
+      <p class="ty-mode-name">${state.mode === "practice" ? "練習" : "腕だめし"}・${esc(state.field === "all" ? "すべて" : FIELDS[state.field])}・${state.sec / 60}分${state.imi ? "・意味も打つ" : ""}</p>
       ${state.newBest ? '<p class="ty-new">自己ベスト更新！</p>' : ""}
       <p class="ty-total"><b class="mono">${pt}</b><small>点</small><span class="ty-grade g-${grade(pt, state.sec)}">${grade(pt, state.sec)}</span></p>
       <p class="ty-formula muted">${state.score}文字 × 正確さ${acc}%の3乗 × 10</p>
