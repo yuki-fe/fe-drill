@@ -15,3 +15,4 @@ checks/
 
 # LINE ボットのテストで作られるページ
 line-bot/test/test.html
+ranking/test/test.html
