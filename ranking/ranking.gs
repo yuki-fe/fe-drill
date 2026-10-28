@@ -1,13 +1,15 @@
 /* 用語タイピングのランキング（Google Apps Script のウェブアプリ）。
    LINE ボットとは別のプロジェクト。スプレッドシート「タイピングランキング」の Apps Script に貼る。
    サイトの typing.js が、上位を読む（doGet）・記録を送る（doPost）。
-   ランキングは「練習・意味も打つ・2分（120秒）・分野すべて」（区分 practice-120-imi）の1つだけ。
+   ランキングは「練習・意味も打つ・2分（120秒）・分野すべて」（区分 practice-120-imi）の1つだけで、用語ドリルの全サイト共通。
+   どのサイトで遊んだかは「サイト」の列に残し、表には sites の名前で出す。
    点数 = 文字数 × 正確さ³ × 10（正確さ = 打鍵 ÷（打鍵 + ミス））。typing.js の points と同じ式で、ここで計算する。
    シート「記録」は 1行 = サイト・区分・期間・利用者（pid）ごとのベスト（点数の高いもの）。
    運営者が「非表示」の列に何か書くと、その行は表に出ない（同じ pid の行は、ほかの期間も出さない）。 */
 
 const RANK = {
-  sites: ["fe"],                 // ランキングを使うサイト（config.json の site_key）
+  // ランキングを使うサイト（config.json の site_key → 表に出す名前）
+  sites: { fe: "FE", ip: "ITパスポート", cloud: "クラウド", genai: "生成AI", dl: "ディープラーニング", boki: "簿記", iryo: "医療事務" },
   boards: { "practice-120-imi": 120 },   // 区分 → 制限時間（秒）
   top: 20,                       // 表に出す人数
   nameMax: 10,
@@ -19,13 +21,13 @@ const COLS = ["サイト", "区分", "期間", "pid", "名前", "点数", "文�
 
 function doGet(e) {
   const p = (e && e.parameter) || {};
-  if (!RANK.sites.includes(p.site) || !validBoard(p.board)) return json({ ok: false, error: "bad request" });
-  const ckey = `top-${p.site}-${p.board}-${weekKey()}`;
+  if (!validSite(p.site) || !validBoard(p.board)) return json({ ok: false, error: "bad request" });
+  const ckey = `top-${p.board}-${weekKey()}`;
   const cache = CacheService.getScriptCache();
   const hit = cache.get(ckey);
   if (hit) return json(JSON.parse(hit));
   const rows = readRows(), hidden = hiddenPids(rows), wk = weekKey();
-  const res = { ok: true, week: topList(rows, p.site, p.board, "w" + wk, hidden), all: topList(rows, p.site, p.board, "all", hidden) };
+  const res = { ok: true, week: topList(rows, p.board, "w" + wk, hidden), all: topList(rows, p.board, "all", hidden) };
   cache.put(ckey, JSON.stringify(res), 60);
   return json(res);
 }
@@ -59,21 +61,22 @@ function doPost(e) {
         sh.getRange(r.row, 1, 1, COLS.length).setValues([toRow(r)]);
       }
       const hidden = hiddenPids(rows);
-      res[k] = hidden.has(d.pid) ? null : Object.assign(rankOf(rows, d.site, d.board, period, r.points, hidden), { best: r.points, points: rec.points });
+      res[k] = hidden.has(d.pid) ? null : Object.assign(rankOf(rows, d.board, period, r.points, hidden), { best: r.points, points: rec.points });
     });
     pruneWeeks(sh, rows, wk);
-    cache.remove(`top-${d.site}-${d.board}-${wk}`);
+    cache.remove(`top-${d.board}-${wk}`);
     return json(res);
   } finally { lock.releaseLock(); }
 }
 
 // ---------- 確かめる ----------
+function validSite(s) { return Object.prototype.hasOwnProperty.call(RANK.sites, String(s || "")); }
 function validBoard(b) { return Object.prototype.hasOwnProperty.call(RANK.boards, String(b || "")); }
 function accuracy(keys, miss) { return keys + miss ? keys / (keys + miss) : 0; }
 function points(chars, keys, miss) { return Math.round(chars * Math.pow(accuracy(keys, miss), 3) * 10); }
 function checkEntry(d) {
   if (!d || typeof d !== "object") return "bad request";
-  if (!RANK.sites.includes(d.site) || !validBoard(d.board)) return "bad request";
+  if (!validSite(d.site) || !validBoard(d.board)) return "bad request";
   if (!/^[A-Za-z0-9-]{16,40}$/.test(String(d.pid || ""))) return "pid";
   const sec = RANK.boards[d.board];
   const ints = ["chars", "words", "keys", "miss"].every((k) => Number.isInteger(d[k]) && d[k] >= 0);
@@ -119,17 +122,18 @@ function readRows() {
 }
 function toRow(r) { return [r.site, r.board, r.period, r.pid, r.name, r.points, r.chars, r.acc, r.words, r.at, r.hidden]; }
 function hiddenPids(rows) { return new Set(rows.filter((r) => r.hidden).map((r) => r.pid)); }
-function visible(rows, site, board, period, hidden) {
-  return rows.filter((r) => r.site === site && r.board === board && r.period === period && !hidden.has(r.pid));
+// 表は全サイト共通（サイトで分けない）
+function visible(rows, board, period, hidden) {
+  return rows.filter((r) => validSite(r.site) && r.board === board && r.period === period && !hidden.has(r.pid));
 }
-function topList(rows, site, board, period, hidden) {
-  return visible(rows, site, board, period, hidden)
+function topList(rows, board, period, hidden) {
+  return visible(rows, board, period, hidden)
     .sort((a, b) => b.points - a.points || new Date(a.at) - new Date(b.at))
-    .slice(0, RANK.top).map((r) => ({ name: r.name, points: r.points, chars: r.chars, acc: r.acc, words: r.words, pid: r.pid.slice(0, 6) }));
+    .slice(0, RANK.top).map((r) => ({ name: r.name, site: RANK.sites[r.site], points: r.points, chars: r.chars, acc: r.acc, words: r.words, pid: r.pid.slice(0, 6) }));
 }
 // 順位は、自分より高い点数の人数 + 1（同じ点数は同じ順位）
-function rankOf(rows, site, board, period, pt, hidden) {
-  const v = visible(rows, site, board, period, hidden);
+function rankOf(rows, board, period, pt, hidden) {
+  const v = visible(rows, board, period, hidden);
   return { rank: v.filter((r) => r.points > pt).length + 1, of: v.length };
 }
 // 古い週の行を消す（下の行から消すと、行の番号がずれない）

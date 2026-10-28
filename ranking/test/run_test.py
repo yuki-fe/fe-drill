@@ -83,6 +83,12 @@ try {
   check("キャッシュがあれば、それを返す（60秒）", G("fe", B).all.length === 2);
   cacheMap = {};
   check("キャッシュが切れたら新しい表", G("fe", B).all.length === 3);
+  r = send(20, 130, { site: "ip" });
+  check("ほかのサイトの記録も同じ表に入る（全サイト共通）", r.ok && r.all.of === 4 && r.all.rank === 3);
+  g = G("ip", B);
+  check("どのサイトから見ても同じ表・サイト名つき", JSON.stringify(g.all) === JSON.stringify(G("fe", B).all)
+    && g.all.some((x) => x.site === "ITパスポート" && x.points === 1300) && g.all.some((x) => x.site === "FE"));
+  check("7サイトとも送れる", ["cloud", "genai", "dl", "boki", "iryo"].every((k, i) => send(30 + i, 20, { site: k }).ok));
 
   // はじくもの
   check("知らないサイト", send(9, 50, { site: "zz" }).error === "bad request");
