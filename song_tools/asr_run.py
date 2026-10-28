@@ -1,6 +1,13 @@
 """曲を文字に起こして、言葉ごとの時間を JSON に書く。"""
 import json
 import sys
+import types
+# av（音声の読み込み）は Windows のアプリ制御に止められることがある（19.0.1 も 2026-10-28 に止められた）。
+# 音は raw を numpy で渡すので av は使わない。読み込めないときは空のモジュールで代える
+try:
+    import av  # noqa: F401
+except ImportError:
+    sys.modules["av"] = types.ModuleType("av")
 from faster_whisper import WhisperModel
 
 src, out, lyr = sys.argv[1], sys.argv[2], sys.argv[3]

@@ -157,6 +157,59 @@ SONGS["デュプレックス・ハート"] = {
     "tags": "#基本情報技術者試験 #ITパスポート #システム構成 #勉強ソング #資格勉強",
     "desc": "基本情報技術者試験・ITパスポート試験に出てくる、システム構成（クライアントサーバ・P2P・デュプレックスシステム・デュアルシステム・ホットスタンバイ・稼働率）・OS（カーネル・デバイスドライバ・スプーリング・パス）・性能の指標（レスポンスタイム・スループット）の用語を、80年代ロックのパワーバラードにしました。",
 }
+SONGS["テザリングサマー"] = {
+    "title": "テザリング・サマー", "sub": "Tethering Summer",
+    "lead": ["ネットワークの用語で", "海までドライブする、", "夏のポップス"],
+    "terms": ["LAN・WAN", "5G（高速・大容量・低遅延）", "テザリング・ハンドオーバー", "アクセスポイント・SSID・WPA3",
+              "スイッチ・ハブ・MACアドレス", "SMTP・POP3・IMAP", "Cookie・プロキシ・HTTPS", "bps"],
+    "thumb_at": 60.5,
+    "thumb_big": ["テザリング・サマー", "ネットワークの用語"],
+    "thumb_small": "LAN・5G・SSID・SMTP・HTTPS…",
+    "chapters": [(0, "イントロ"), (8, "LAN と WAN"), (21, "5G"), (35, "テザリング"), (47, "ハンドオーバー（サビ）"),
+                 (76, "アクセスポイント・SSID・WPA3"), (90, "スイッチとハブ"), (104, "SMTP・POP3・IMAP"),
+                 (117, "ハンドオーバー（サビ2）"), (140, "Cookie・プロキシ・HTTPS"), (168, "bps（最後のサビ）"), (190, "アウトロ")],
+    "yt_title": "【勉強ソング】LAN・5G・SSID・SMTPのネットワーク用語で夏のドライブ｜テザリング・サマー（基本情報・ITパスポート）",
+    "tags": "#基本情報技術者試験 #ITパスポート #ネットワーク #勉強ソング #資格勉強",
+    "desc": "基本情報技術者試験・ITパスポート試験に出てくる、ネットワーク（LAN・WAN・5G・テザリング・ハンドオーバー）・無線LAN（アクセスポイント・SSID・WPA3）・スイッチとハブ・メール（SMTP・POP3・IMAP）・Web（Cookie・プロキシ・HTTPS）・bps の用語を、夏のドライブのポップスにしました。",
+    "credit": "映像：コードで描いた、シルクスクリーン印刷の旅行ポスター風のアニメーション（Lemo-Opuscar の画風。MIT License）\n字体：Big Shoulders Display・Zen Kaku Gothic New・Dela Gothic One（SIL Open Font License）",
+}
+SONGS["ゼロトラスト"] = {
+    "title": "ゼロトラスト", "sub": "Zero Trust",
+    "lead": ["攻撃の手口と守り方を", "セキュリティの用語で歌う、", "ダークなロック"],
+    "terms": ["マルウェア・ウイルス・ワーム・トロイの木馬", "ボット・スパイウェア・キーロガー", "ショルダーハッキング・トラッシング",
+              "ゼロトラスト", "標的型・水飲み場型・中間者攻撃", "XSS・DNSキャッシュポイズニング", "認証局・ワンタイムパスワード",
+              "ハニーポット・サンドボックス・ペネトレーションテスト", "リスクアセスメント・ISMS・CSIRT", "生体認証・シングルサインオン"],
+    "thumb_at": 79.5,
+    "thumb_big": ["ゼロトラスト", "セキュリティの用語"],
+    "thumb_small": "マルウェア・XSS・ISMS・CSIRT…",
+    "chapters": [(0, "イントロ（誰も信じるな）"), (24, "マルウェア・ウイルス・ワーム・トロイの木馬"), (42, "ボット・スパイウェア・キーロガー"),
+                 (56, "ショルダーハッキング・トラッシング"), (70, "ゼロトラスト（サビ）"), (97, "標的型・水飲み場型・中間者攻撃"),
+                 (112, "XSS・DNSキャッシュポイズニング"), (125, "認証局・ワンタイムパスワード"), (139, "ゼロトラスト（サビ2）"),
+                 (167, "ハニーポット・サンドボックス・ペネトレーションテスト"), (187, "リスクアセスメント・ISMS・CSIRT"),
+                 (215, "生体認証・シングルサインオン（最後のサビ）"), (240, "セキュリティパッチ（アウトロ）")],
+    "yt_title": "【勉強ソング】マルウェア・XSS・ゼロトラストのセキュリティ用語で歌うロック｜ゼロトラスト（基本情報・ITパスポート）",
+    "tags": "#基本情報技術者試験 #ITパスポート #情報セキュリティ #勉強ソング #資格勉強",
+    "desc": "基本情報技術者試験・ITパスポート試験に出てくる、情報セキュリティ（マルウェア・ソーシャルエンジニアリング・標的型攻撃・中間者攻撃・クロスサイトスクリプティング・DNSキャッシュポイズニング・認証局・ワンタイムパスワード・ゼロトラスト・ハニーポット・サンドボックス・ペネトレーションテスト・リスクアセスメント・ISMS・CSIRT・生体認証・シングルサインオン）の用語を、ダークなロックにしました。",
+    "credit": "映像：コードで描いた、網点印刷の調書風のアニメーション（Lemo-Opuscar の画風。MIT License）\n字体：Noto Serif JP・Bagel Fat One・JetBrains Mono・Zen Kaku Gothic New（SIL Open Font License）",
+}
+SONGS["アイティルダンス"] = {
+    "title": "アイティル・ダンス", "sub": "ITIL Dance",
+    "lead": ["サービスマネジメントと", "監査の用語で踊る、", "アシッドなダンス曲"],
+    "terms": ["サービスデスク・SPOC", "インシデント管理・問題管理", "変更管理・リリース管理・構成管理（CMDB）", "サービスレベル管理・SLA",
+              "可用性管理・キャパシティ管理", "ファシリティマネジメント・UPS・自家発電", "免震構造・入退室管理", "ファンクションポイント法・類推見積法",
+              "システム監査人・職務分掌", "内部統制・ITガバナンス"],
+    "thumb_at": 20.0,
+    "thumb_big": ["アイティル・ダンス", "サービスマネジメント"],
+    "thumb_small": "SLA・CMDB・UPS・内部統制…",
+    "chapters": [(0, "イントロ（サービス・スタート）"), (24, "サービスデスクと SPOC"), (38, "インシデント・問題・変更・リリース管理"),
+                 (46, "構成管理（CMDB）"), (54, "サービスレベル管理・SLA・可用性・キャパシティ（サビ）"), (87, "ファシリティマネジメント・UPS"),
+                 (102, "自家発電・免震構造・入退室管理"), (110, "ファンクションポイント法"), (117, "サービスレベル管理（サビ2）"),
+                 (147, "類推見積法・システム監査人・職務分掌"), (172, "内部統制・ITガバナンス（最後のサビ）"), (198, "アウトロ（シャットダウン）")],
+    "yt_title": "【勉強ソング】SLA・CMDB・内部統制のサービスマネジメント用語で踊る｜アイティル・ダンス（基本情報・ITパスポート）",
+    "tags": "#基本情報技術者試験 #ITパスポート #サービスマネジメント #勉強ソング #資格勉強",
+    "desc": "基本情報技術者試験・ITパスポート試験に出てくる、サービスマネジメント（サービスデスク・インシデント管理・問題管理・変更管理・リリース管理・構成管理・サービスレベル管理・SLA・可用性管理・キャパシティ管理）・ファシリティマネジメント（UPS・自家発電・免震構造・入退室管理）・見積もり（ファンクションポイント法・類推見積法）・システム監査（独立性・職務分掌・内部統制・ITガバナンス）の用語を、アシッドなダンス曲にしました。",
+    "credit": "映像：コードで描いた、等角投影のインフォグラフィック風のアニメーション（Lemo-Opuscar の画風。MIT License）\n字体：Jost・Zen Kaku Gothic New（SIL Open Font License）\nITIL は PeopleCert グループの登録商標です。この動画はその団体とは関係ありません",
+}
 SITES = [("ITパスポート用語ドリル", "https://ip.yogo-drill.com/", GREEN), ("FE用語ドリル", "https://fe.yogo-drill.com/", BLUE)]
 
 
@@ -228,6 +281,16 @@ THUMBS = {
     "デュプレックス・ハート": {"font": "RampartOne-Regular.ttf", "clip": 44154, "at": 6.0, "size": 92,
                            "tint": (16, 10, 24), "dark": 0.3, "snow": False, "title_col": (255, 46, 136), "glow": (64, 156, 255),
                            "sub": "Duplex Heart", "line": "システム構成と OS の用語で歌う、80年代ロック"},
+    # Lemo-Opuscar のシルクスクリーン旅行ポスターの MV。背景は横長版の1コマ（基地局 B のポスター）、色はポスターのインク
+    "テザリングサマー": {"font": "DelaGothicOne-Regular.ttf", "title": "テザリング・サマー", "frame": "テザリングサマー_YouTube.mp4", "at": 206.0, "size": 92,
+                       "tint": (21, 48, 74), "dark": 0.25, "snow": False, "title_col": (243, 234, 214), "glow": (239, 106, 62),
+                       "sub": "Tethering Summer", "line": "ネットワークの用語で、海までドライブする夏の歌"},
+    "ゼロトラスト": {"font": "DelaGothicOne-Regular.ttf", "frame": "ゼロトラスト_YouTube.mp4", "at": 3.5, "size": 104,
+                   "tint": (30, 27, 46), "dark": 0.3, "snow": False, "title_col": (242, 180, 44), "glow": (215, 53, 43),
+                   "sub": "Zero Trust", "line": "攻撃の手口と守り方を、セキュリティの用語で歌うロック"},
+    "アイティルダンス": {"font": "DelaGothicOne-Regular.ttf", "title": "アイティル・ダンス", "frame": "アイティルダンス_YouTube.mp4", "at": 20.0, "size": 84,
+                      "tint": (60, 127, 177), "dark": 0.35, "snow": False, "title_col": (251, 244, 230), "glow": (60, 127, 177),
+                      "sub": "ITIL Dance", "line": "サービスマネジメントと監査の用語で踊る、ダンス曲"},
 }
 
 
@@ -236,7 +299,9 @@ def thumbnail(name, info, path):
     from PIL import ImageFont
     import random
     cfg = THUMBS[name]
-    bg = grab(SONGS_DIR / "背景素材" / f"{cfg['clip']}.mp4", cfg["at"], 1920, 1080).resize((1280, 720), Image.LANCZOS)
+    # Lemo-Opuscar で描いた MV は、背景の映像の代わりに横長版の1コマを使う（"frame": ファイル名）
+    src = song_dir(name) / cfg["frame"] if cfg.get("frame") else SONGS_DIR / "背景素材" / f"{cfg['clip']}.mp4"
+    bg = grab(src, cfg["at"], 1920, 1080).resize((1280, 720), Image.LANCZOS)
     if cfg.get("tint"):
         bg = Image.blend(bg, Image.new("RGB", bg.size, cfg["tint"]), 0.25)
     # 左側を暗くして、曲名を読みやすく
@@ -252,7 +317,7 @@ def thumbnail(name, info, path):
             x, y, r = rnd.uniform(0, 1280), rnd.uniform(0, 720), rnd.uniform(1.2, 3.6)
             d.ellipse((x - r, y - r, x + r, y + r), fill=(236, 242, 250))
     f = ImageFont.truetype(str(FONTS / cfg["font"]), cfg["size"])
-    title = name
+    title = cfg.get("title", name)   # 曲名の書き方がフォルダ名とちがう曲は THUMBS に "title"
     x0, y0 = 70, 300
     # 光（ぼかした曲名）
     glow = Image.new("RGBA", bg.size, (0, 0, 0, 0))
@@ -298,7 +363,7 @@ def description(info, path):
 {"・".join(info["terms"])}
 
 曲：Suno で作成
-映像素材：Mixkit
+{info.get('credit', '映像素材：Mixkit')}
 
 {info['tags']}
 """

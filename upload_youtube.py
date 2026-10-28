@@ -6,6 +6,7 @@
     python upload_youtube.py コミットしないで     # 1曲を上げる
     python upload_youtube.py --check              # ログインと、上げた記録だけ確かめる
     python upload_youtube.py --short コミットしないで   # 縦長のショート版（make_reel_cut.py --shorts で作る）を上げる
+    python upload_youtube.py --lesson 二分探索    # 科目Bの解説動画（notes/科目B解説動画/二分探索/）の本編と宣伝のショート
 
 使うファイル（どれも notes/ の中で、公開しない）
 - notes/曲の動画/youtube_client_secret.json   Google Cloud で作った OAuth クライアント（デスクトップ アプリ）
@@ -142,8 +143,77 @@ def upload_short(yt, name):
     print(f"非公開で上げました（ショート）: https://youtu.be/{vid}")
 
 
+# ───────── 科目Bの解説動画（notes/科目B解説動画/<名前>/）
+LESSON_DIR = ROOT / "notes" / "科目B解説動画"
+LESSON_TAGS = ["基本情報技術者試験", "科目B", "アルゴリズム", "擬似言語", "資格勉強"]
+
+
+def upload_lesson(yt, name):
+    """本編（<名前>_本編_YouTube.mp4）と、宣伝のショート（<名前>_宣伝_リール・ショート.mp4）を非公開で上げる。
+    タイトルは YouTubeのタイトル.txt、説明文は YouTubeの説明文.txt。ショートの説明文には本編の URL を入れる。
+    上げた記録は youtube.json・youtube_short.json（同じものを二重に上げない）。"""
+    from googleapiclient.http import MediaFileUpload
+    d = LESSON_DIR / name
+    video, short = d / f"{name}_本編_YouTube.mp4", d / f"{name}_宣伝_リール・ショート.mp4"
+    thumb, tfile, dfile = d / f"{name}_サムネイル.jpg", d / "YouTubeのタイトル.txt", d / "YouTubeの説明文.txt"
+    for p in (video, short, thumb, tfile, dfile):
+        if not p.exists():
+            sys.exit(f"ファイルがありません: {p}")
+    title = tfile.read_text(encoding="utf-8").strip()[:100]
+    body = dfile.read_text(encoding="utf-8").strip()[:5000]
+
+    def send(path, meta):
+        media = MediaFileUpload(str(path), mimetype="video/mp4", chunksize=8 * 1024 * 1024, resumable=True)
+        req = yt.videos().insert(part="snippet,status", body=meta, media_body=media)
+        print(f"上げています: {path.name}", flush=True)
+        res = None
+        while res is None:
+            status, res = req.next_chunk()
+            if status:
+                print(f"  {int(status.progress() * 100)}%", flush=True)
+        return res["id"]
+
+    def meta(t, b):
+        return {"snippet": {"title": t, "description": b, "tags": LESSON_TAGS, "categoryId": CATEGORY,
+                            "defaultLanguage": "ja", "defaultAudioLanguage": "ja"},
+                # ナレーションが合成音声なので、「改変・合成されたコンテンツ」の申告をする
+                "status": {"privacyStatus": "private", "selfDeclaredMadeForKids": False, "containsSyntheticMedia": True}}
+
+    rec = d / "youtube.json"
+    if rec.exists():
+        vid = json.loads(rec.read_text(encoding="utf-8"))["id"]
+        print(f"本編はもう上げてあります: https://youtu.be/{vid}")
+    else:
+        vid = send(video, meta(title, body))
+        rec.write_text(json.dumps({"id": vid, "title": title, "privacy": "private"}, ensure_ascii=False, indent=1), encoding="utf-8")
+        try:
+            yt.thumbnails().set(videoId=vid, media_body=MediaFileUpload(str(thumb), mimetype="image/jpeg")).execute()
+            print("サムネイルを設定しました", flush=True)
+        except Exception as e:
+            print(f"サムネイルを設定できませんでした（YouTube Studio で設定してください）: {e}", flush=True)
+        print(f"非公開で上げました（本編）: https://youtu.be/{vid}")
+
+    srec = d / "youtube_short.json"
+    if srec.exists():
+        print(f"ショートはもう上げてあります: https://youtu.be/{json.loads(srec.read_text(encoding='utf-8'))['id']}")
+        return
+    stitle = f"{name}、何回で見つかる？｜基本情報 科目B #Shorts"[:100]
+    sbody = (f"基本情報技術者試験の科目Bに出る「{name}」を、ホワイトボードで1行ずつ。\n"
+             f"本番と同じ形の穴埋め問題の答えと解説は、本編で。\n\n▼ 本編\nhttps://youtu.be/{vid}\n\n"
+             f"▼ 練習はこちら（FE用語ドリル 科目B）\nhttps://fe.yogo-drill.com/\n\n"
+             f"※ ナレーションは合成音声です。\n#Shorts #基本情報技術者試験 #科目B #{name}")
+    sid = send(short, meta(stitle, sbody))
+    srec.write_text(json.dumps({"id": sid, "title": stitle, "privacy": "private"}, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"非公開で上げました（ショート）: https://youtu.be/{sid}")
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
+    if args and args[0] == "--lesson":     # python upload_youtube.py --lesson 二分探索
+        yt = service()
+        for n in args[1:]:
+            upload_lesson(yt, n)
+        sys.exit()
     shorts = "--short" in args
     args = [a for a in args if a != "--short"]
     yt = service()
