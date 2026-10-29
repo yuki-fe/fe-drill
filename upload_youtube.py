@@ -149,14 +149,14 @@ LESSON_TAGS = ["基本情報技術者試験", "科目B", "アルゴリズム", "
 
 
 def upload_lesson(yt, name):
-    """本編（<名前>_本編_YouTube.mp4）と、宣伝のショート（<名前>_宣伝_リール・ショート.mp4）を非公開で上げる。
+    """本編（<名前>_本編_YouTube.mp4）を非公開で上げる。宣伝のショート（<名前>_宣伝_リール・ショート.mp4）があれば、それも上げる（今は作らない）。
     タイトルは YouTubeのタイトル.txt、説明文は YouTubeの説明文.txt。ショートの説明文には本編の URL を入れる。
     上げた記録は youtube.json・youtube_short.json（同じものを二重に上げない）。"""
     from googleapiclient.http import MediaFileUpload
     d = LESSON_DIR / name
     video, short = d / f"{name}_本編_YouTube.mp4", d / f"{name}_宣伝_リール・ショート.mp4"
     thumb, tfile, dfile = d / f"{name}_サムネイル.jpg", d / "YouTubeのタイトル.txt", d / "YouTubeの説明文.txt"
-    for p in (video, short, thumb, tfile, dfile):
+    for p in (video, thumb, tfile, dfile):
         if not p.exists():
             sys.exit(f"ファイルがありません: {p}")
     title = tfile.read_text(encoding="utf-8").strip()[:100]
@@ -193,15 +193,22 @@ def upload_lesson(yt, name):
             print(f"サムネイルを設定できませんでした（YouTube Studio で設定してください）: {e}", flush=True)
         print(f"非公開で上げました（本編）: https://youtu.be/{vid}")
 
+    # 2026-10-30 からショート（縦長の宣伝）は作らない。ファイルがない回は本編だけ上げて終わる
+    if not short.exists():
+        return
     srec = d / "youtube_short.json"
     if srec.exists():
         print(f"ショートはもう上げてあります: https://youtu.be/{json.loads(srec.read_text(encoding='utf-8'))['id']}")
         return
-    stitle = f"{name}、何回で見つかる？｜基本情報 科目B #Shorts"[:100]
-    sbody = (f"基本情報技術者試験の科目Bに出る「{name}」を、ホワイトボードで1行ずつ。\n"
+    # ショートの題名は回ごとに YouTubeのショートのタイトル.txt に書く（ないときは止める。題名を使い回さないため）
+    sfile = d / "YouTubeのショートのタイトル.txt"
+    if not sfile.exists():
+        sys.exit(f"ショートの題名のファイルがありません: {sfile}")
+    stitle = sfile.read_text(encoding="utf-8").strip()[:100]
+    sbody = (f"基本情報技術者試験の科目B「{name.replace('_', ' ')}」を、ホワイトボードで1行ずつ。\n"
              f"本番と同じ形の穴埋め問題の答えと解説は、本編で。\n\n▼ 本編\nhttps://youtu.be/{vid}\n\n"
              f"▼ 練習はこちら（FE用語ドリル 科目B）\nhttps://fe.yogo-drill.com/\n\n"
-             f"※ ナレーションは合成音声です。\n#Shorts #基本情報技術者試験 #科目B #{name}")
+             f"※ ナレーションは合成音声です。\n#Shorts #基本情報技術者試験 #科目B #擬似言語")
     sid = send(short, meta(stitle, sbody))
     srec.write_text(json.dumps({"id": sid, "title": stitle, "privacy": "private"}, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"非公開で上げました（ショート）: https://youtu.be/{sid}")
