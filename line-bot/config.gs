@@ -5,7 +5,8 @@
  * - フォームに投稿があったら LINE に知らせる
  * - 毎朝、公開中の用語サイトごとの閲覧者・検索の数字・サイトの状態・最後の更新と、未対応のお問い合わせ・ITニュース・
  *   Instagram の投稿の下書きを、1通にまとめて送る（月曜は先週の閲覧者のグラフも付ける）
- * - LINE で「グラフ」「人気」「問い合わせ」「済 3」「コメント」「反応」「点検」「使い方」などと送ると返事をする
+ * - 試験の主催者などのページが変わったら朝のレポートで知らせ、Google カレンダーに「見直す」予定と試験の予定・月に1回の用語の確認を入れる
+ * - LINE で「グラフ」「人気」「問い合わせ」「済 3」「コメント」「反応」「点検」「試験」「使い方」などと送ると返事をする
  * - Instagram には投稿しない。曜日ごとに「用語クイズ」「トレースクイズ」「リール動画」の下書きを送り、
  *   「素材を受け取る」でもらった画像・動画を運営者がアプリから投稿する。
  *   リール動画は「投稿した」を押すと YouTube ショート用のタイトルと説明も届ける
@@ -20,6 +21,7 @@
  *   news.gs       ITニュース（毎朝のレポートに載せる）
  *   instagram.gs  Instagram の下書き・素材・コメント・反応
  *   youtube.gs    YouTube の数字とコメント（読むだけ）
+ *   watch.gs      試験の変更の見張りの結果・試験の予定・Google カレンダー
  *   inquiry.gs    お問い合わせ（フォームの回答シート）
  *   line.gs       LINE から届いたメッセージ（Webhook）と、LINE へ送る処理
  */
@@ -40,7 +42,30 @@ const CONFIG = {
   // サイトの点検（全サイト・毎週月曜の朝に GitHub の自動実行が点検する）の結果。空にすると出さない
   checkUrl: "https://raw.githubusercontent.com/yuki-fe/yogo-drill/check-results/result.json",
   checkStaleDays: 9,                                      // これより古い結果しかないときは「点検が止まっている」と知らせる
+  // 試験の変更の見張り（GitHub の自動実行が毎朝、試験の主催者などのページを見る。yogo-drill の check/watch.json）の結果。空にすると出さない
+  watchUrl: "https://raw.githubusercontent.com/yuki-fe/yogo-drill/watch-results/watch.json",
+  watchStaleDays: 3,                                      // これより古い結果しかないときは、月曜に「見張りが止まっている」と知らせる
+  // Google カレンダー: スクリプトの持ち主のアカウントに、この名前のカレンダーを作って予定を入れる。空にすると入れない
+  calendarName: "用語ドリルの運用",
+  calendarRemindDays: [7, 1],                             // 試験の予定を、何日前の朝9時に知らせるか（カレンダーの通知）
+  examNoticeDays: [7, 1, 0],                              // 毎朝のレポートで「あと何日」と知らせる日
+  examListDays: 60,                                       // LINE の「試験」で出す、これからの予定の日数
+  termReviewDay: 1,                                       // 毎月この日に「用語の確認」の予定（カレンダーと朝のレポート）
 };
+
+/* ========== 試験の予定（カレンダーに入れる・朝のレポートで「あと何日」と知らせる） ==========
+ * 試験の主催者のページで確かめた日付だけを書く（推測で書かない）。過ぎた予定は残しておいてよい（入れ直さない）。
+ *   key: 予定ごとにちがう名前（一度入れたらカレンダーに入れ直さない目印）
+ *   site: SITES の key / date・end: "yyyy-MM-dd"（end は何日か続くとき） / note: カレンダーの説明に書くこと */
+const EXAM_DATES = [
+  { key: "dl-2026-6", site: "dl", date: "2026-11-06", end: "2026-11-07", title: "G検定 2026年 第6回", note: "日程は https://www.jdla.org/certificate/general/ で確かめた（2026-10-30）" },
+  { key: "boki-174", site: "boki", date: "2026-11-15", title: "簿記 第174回 統一試験（1〜3級）", note: "日程は https://www.kentei.ne.jp/calendar_2026 で確かめた（2026-10-30）" },
+  { key: "dl-2027-onsite-1", site: "dl", date: "2027-01-15", end: "2027-01-17", title: "G検定 会場試験", note: "日程は https://www.jdla.org/certificate/general/ で確かめた（2026-10-30）" },
+  { key: "genai-2027-02-apply", site: "genai", date: "2027-01-31", title: "生成AIパスポート 2月試験の申込の締め切り", note: "https://guga.or.jp/generativeaiexam/ の年間スケジュール（2026-10-30）" },
+  { key: "genai-2027-02", site: "genai", date: "2027-02-01", end: "2027-02-28", title: "生成AIパスポート 2月試験（2027年試験のシラバス）", note: "新しいシラバスの最初の試験。サイトの用語が新しいシラバスに合っているか、前に見直す" },
+  { key: "boki-175", site: "boki", date: "2027-02-28", title: "簿記 第175回 統一試験（2級・3級）", note: "日程は https://www.kentei.ne.jp/calendar_2026 で確かめた（2026-10-30）" },
+  { key: "boki-kubun-2027", site: "boki", date: "2027-04-01", title: "簿記 2027年度の出題区分表の試験が始まる", note: "2027年度適用の出題区分表（https://www.kentei.ne.jp/51147）。サイトの用語が合っているか、前に見直す" },
+];
 
 /* ========== 毎朝のレポートに出す、公開中の用語サイト ==========
  * サイトを公開したら、ここに足す（入り口の yogo-drill の sites.json で "public" が true のもの。旅行は入れない）。
@@ -150,4 +175,8 @@ function setup() {
     try { Logger.log("YouTube: チャンネル「" + ytFindChannel() + "」を見つけました"); }
     catch (e) { Logger.log("YouTube: まだ設定されていません（" + e.message + "）。チャンネルが別のアカウントなら YT_CHANNEL_ID を入れてください"); }
   } else Logger.log("YouTube: チャンネル " + prop("YT_CHANNEL_ID"));
+  if (calendarReady()) {
+    try { Logger.log("カレンダー: 「" + CONFIG.calendarName + "」に " + calendarSync(null) + " 件入れました"); }
+    catch (e) { Logger.log("カレンダー: 入れられませんでした（" + e.message + "）"); }
+  }
 }

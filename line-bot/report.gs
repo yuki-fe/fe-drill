@@ -13,6 +13,8 @@ function testPush() {
 /* ---------- 毎朝のレポート（1回の送信にまとめて、送信数を1通に抑える） ---------- */
 function dailyReport() {
   if (prop("OWNER_USER_ID")) push(morningMessages());
+  // カレンダーに試験の予定・見直す予定を入れる（うまくいかなくてもレポートは送ってある）
+  try { calendarSync(CONFIG.watchUrl ? watchResult().data : null); } catch (e) { console.error("カレンダー: " + e); }
 }
 
 function morningMessages() {
@@ -40,6 +42,7 @@ function buildReport() {
   if (gaReady()) reqs.igVisitors = gaRequest(IG_VISITORS_QUERY, siteGa(mainSite()));
   if (ytReady()) Object.assign(reqs, ytRequests(5));
   if (CONFIG.checkUrl) reqs.check = checkRequest();
+  if (CONFIG.watchUrl) reqs.watch = watchRequest();
   const pre = fetchNamed(reqs);
   SITES.forEach((site, i) => lines.push(...siteLines(site, i, pre), ""));
   if (igReady()) {
@@ -51,6 +54,8 @@ function buildReport() {
   if (ytReady()) lines.push("【YouTube】", ytStatsText(true, pre), "");
   const ck = CONFIG.checkUrl ? checkSection(pre.check) : "";
   if (ck) lines.push("【サイトの点検】", ck, "");
+  const ex = [CONFIG.watchUrl ? watchSection(pre.watch) : "", ...examNotices()].filter((x) => x);
+  if (ex.length) lines.push("【試験の変更・予定】", ...ex, "");
   const n = openInquiries().length;
   lines.push("【お問い合わせ】", n ? TALK.inquirySome(n) : TALK.inquiryNone);
   return lines.join("\n");

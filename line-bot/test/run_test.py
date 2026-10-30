@@ -28,6 +28,18 @@ let ytDenied = false, ytHidden = false, ytSubsN = 35;
 const ytCalls = [];
 let gaDeniedIp = false, downSite = "";   // downSite: 開けないことにするサイトの URL
 let checkData = null, checkCode = 200;   // サイトの点検の結果（null のときは、まだ結果がない = 404）
+let watchData = null, watchCode = 200;   // 試験の変更の見張りの結果（null のときは、まだ結果がない = 404）
+// Google カレンダー: 入れた予定は calEvents に残す
+const calEvents = [];
+let calMade = false;
+const t_cal = { getId: () => "cal1",
+  createAllDayEvent: (title, start, a, b) => {
+    const ev = { title, start, end: a instanceof Date ? a : null, desc: (a instanceof Date ? b : a).description, reminders: [],
+      removeAllReminders() { this.reminders = []; }, addPopupReminder(m) { this.reminders.push(m); } };
+    calEvents.push(ev); return ev; },
+  createAllDayEventSeries: (title, start, rule, o) => { calEvents.push({ title, start, series: true, desc: o.description }); return {}; } };
+const CalendarApp = { getCalendarById: (id) => (calMade && id === "cal1" ? t_cal : null), getCalendarsByName: () => (calMade ? [t_cal] : []),
+  createCalendar: (name) => { calMade = name; return t_cal; }, newRecurrence: () => t_chain };
 const store = { LINE_TOKEN: "t", WEBHOOK_KEY: "key", OWNER_USER_ID: "U1", IG_TOKEN: "ig", IG_USER_ID: "1789", YT_API_KEY: "ytkey" };
 const PropertiesService = { getScriptProperties: () => ({ getProperty: (k) => store[k] ?? null, setProperty: (k, v) => { store[k] = String(v); }, deleteProperty: (k) => { delete store[k]; } }) };
 const grid = [["タイムスタンプ", "お問い合わせの種類"]];
@@ -105,6 +117,7 @@ const UrlFetchApp = { fetch: (url, o) => {
     return t_resp(200, JSON.stringify({ rows }));
   }
   if (downSite && url === downSite) return t_resp(404, "not found");
+  if (url.includes("raw.githubusercontent.com/yuki-fe/yogo-drill/watch-results/")) return watchData ? t_resp(watchCode, JSON.stringify(watchData)) : t_resp(404, "404: Not Found");
   if (url.includes("raw.githubusercontent.com/yuki-fe/yogo-drill/check-results/")) return checkData ? t_resp(checkCode, JSON.stringify(checkData)) : t_resp(404, "404: Not Found");
   for (const name in STOCK) if (url.endsWith("/ig/" + name)) return t_resp(200, JSON.stringify(STOCK[name]));
   if (url.includes("graph.facebook.com") || url.includes("graph.instagram.com")) {
@@ -147,6 +160,8 @@ try {
   setup();
   check("トリガーを作る（お問い合わせ・毎朝・トークンの更新）", triggers.join(",") === "onFormSubmit,dailyReport,refreshInstagramToken");
   check("setup で YouTube のチャンネルを見つける", store.YT_CHANNEL_ID === "UCtest");
+  check("setup でカレンダー「用語ドリルの運用」を作って、試験の予定と月に1回の用語の確認を入れる",
+    calMade === "用語ドリルの運用" && calEvents.filter((e) => !e.series).length === EXAM_DATES.length && calEvents.filter((e) => e.series).length === 1);
   check("金曜はリールの日", kindToday() === "reel");
   const mm = toMessages(morningMessages());
   out.push("--- 毎朝のレポート（吹き出し " + mm.length + " 個）", t_show({ messages: mm }));
@@ -310,8 +325,65 @@ try {
   checkCode = 500; NOW = new Date("2026-11-16T08:00:00+09:00").getTime();
   check("結果が取れない月曜は知らせる", buildReport().includes("点検の結果が取れなかった"));
   checkCode = 200;
+
+  // 試験の変更の見張り（GitHub の自動実行が毎朝、試験の主催者などのページを見た結果を読む）・試験の予定・カレンダー
+  NOW = new Date("2026-10-27T08:00:00+09:00").getTime();   // 火曜
+  check("見張りの結果がまだなくても、月曜以外の朝は何も言わない", !buildReport().includes("【試験の変更・予定】"));
+  const wc = (id, name, sites, at, added, removed) => ({ id, name, url: "https://example.jp/" + id, sites, site_names: [], found_at: at, added, removed, added_n: added.length, removed_n: removed.length });
+  watchData = { checked_at: "2026-10-30T05:00:00+09:00", result_url: "https://github.com/yuki-fe/yogo-drill/blob/watch-results/watch.md", pages: 12, errors: [],
+    changes: [wc("ipa-syllabus", "IPA 出題範囲・シラバス等の改訂関連情報", ["fe", "ip"], "2026-10-30T05:00:00+09:00", ["基本情報技術者試験 シラバス Ver.10.0 を公開", "2", "3"], ["シラバス案 Ver.0.1"])] };
+  NOW = new Date("2026-10-30T08:00:00+09:00").getTime();
+  const wm = buildReport();
+  out.push("--- 【試験の変更・予定】の欄", wm.slice(wm.indexOf("【試験の変更・予定】"), wm.indexOf("【お問い合わせ】")).trim());
+  check("新しい変更を朝のレポートに出す", wm.includes("【試験の変更・予定】\n試験の主催者などのページが 1 か所変わったよ。") && wm.includes("・10/30【FE・ITパスポート】IPA 出題範囲・シラバス等の改訂関連情報") &&
+    wm.includes("  ＋ 基本情報技術者試験 シラバス Ver.10.0 を公開") && wm.includes("  － シラバス案 Ver.0.1") && wm.includes("  ほか 1 行") && wm.includes("「試験」"));
+  check("1週間前の試験の予定を知らせる", wm.includes("あと 7 日: 11/6〜11/7【ディープラーニング】G検定 2026年 第6回"));
+  check("同じ変更は次の朝には出さない", !buildReport().includes("か所変わった"));
+  watchData.changes.unshift(wc("jdla-g", "JDLA ジェネラリスト検定", ["dl"], "2026-10-31T05:00:00+09:00", ["2027年 試験日程"], []));
+  watchData.checked_at = "2026-10-31T05:00:00+09:00";
+  NOW = new Date("2026-10-31T08:00:00+09:00").getTime();
+  const wm2 = buildReport();
+  check("次の日は新しい変更だけ", wm2.includes("1 か所変わった") && wm2.includes("【ディープラーニング】JDLA") && !wm2.includes("IPA 出題範囲"));
+  t_say("試験"); out.push("--- 試験", t_last());
+  check("「試験」で30日の変更と、これから60日の試験の予定", t_text().includes("直近30日で変わったのは 2 件") && t_text().includes("IPA 出題範囲") &&
+    t_text().includes("・11/6〜11/7【ディープラーニング】G検定 2026年 第6回") && t_text().includes("・11/15【簿記】簿記 第174回") && !t_text().includes("第175回") && t_text().includes("watch-results/watch.md"));
+  NOW = new Date("2026-11-01T08:00:00+09:00").getTime();
+  check("毎月1日は用語の確認の日", buildReport().includes("今日は月に1回の用語の確認の日") && !buildReport().includes("か所変わった"));
+  NOW = new Date("2026-11-02T08:00:00+09:00").getTime();   // 月曜
+  watchData.errors = [{ id: "aws-clf", name: "AWS Certified Cloud Practitioner", url: "", sites: ["cloud"], error: "エラー 404", fail_days: 3 }];
+  check("何日も開けないページは月曜に知らせる", buildReport().includes("何日も開けないページがあるよ（AWS Certified Cloud Practitioner）"));
+  NOW = new Date("2026-11-03T08:00:00+09:00").getTime();
+  check("開けないページは月曜以外は言わない", !buildReport().includes("何日も開けない"));
+  NOW = new Date("2026-11-09T08:00:00+09:00").getTime();
+  check("見張りが止まっていたら月曜に知らせる", buildReport().includes("試験の見張りが 9 日動いてない"));
+  watchCode = 500;
+  check("見張りの結果が取れない月曜は知らせる", buildReport().includes("試験の見張りの結果が取れなかった"));
+  watchCode = 200;
+  t_say("予定");
+  check("「予定」でも同じ", t_text().includes("・11/15【簿記】簿記 第174回"));
+
+  // カレンダー
+  NOW = new Date("2026-10-31T08:00:00+09:00").getTime();
+  calEvents.length = 0; delete store.CAL_DONE;
+  const nAdd = calendarSync(watchData);
+  out.push("--- カレンダーに入れた予定", calEvents.map((e) => (e.series ? "（毎月）" : "") + Utilities.formatDate(e.start, "", "yyyy-MM-dd") + " " + e.title).join("\n"));
+  const ev = (s) => calEvents.find((e) => e.title.includes(s));
+  check("試験の予定・見直す予定2つ・月に1回の用語の確認を入れる", nAdd === EXAM_DATES.length + 3);
+  check("試験の予定は終日で、7日前と前の日の朝9時に知らせる", ev("【簿記】簿記 第174回").reminders.join(",") === "9540,900" && Utilities.formatDate(ev("第174回").start, "", "yyyy-MM-dd") === "2026-11-15");
+  check("何日か続く予定は、終わりの次の日まで", Utilities.formatDate(ev("G検定 2026年").end, "", "yyyy-MM-dd") === "2026-11-08");
+  check("見直す予定は変わった日に、変わったところを説明に", ev("【見直す】FE・ITパスポート: IPA 出題範囲・シラバス等の改訂関連情報が変わった").desc.includes("＋ 基本情報技術者試験 シラバス Ver.10.0") &&
+    Utilities.formatDate(ev("【見直す】FE").start, "", "yyyy-MM-dd") === "2026-10-30");
+  check("用語の確認は毎月1日（次の1日から）", ev("用語の確認").series && Utilities.formatDate(ev("用語の確認").start, "", "yyyy-MM-dd") === "2026-11-01" && ev("用語の確認").desc.includes("/term-review"));
+  check("同じ予定は2回入れない", calendarSync(watchData) === 0 && calEvents.length === nAdd);
+  NOW = new Date("2027-03-01T08:00:00+09:00").getTime();
+  calEvents.length = 0; delete store.CAL_DONE;
+  check("過ぎた試験の予定は入れない", calendarSync(null) === 2 && !ev("第175回") && ev("出題区分表"));
+  calMade = false;
+  calendarSync(null);
+  check("カレンダーが消されていたら作り直す", calMade === "用語ドリルの運用");
+
   t_say("使い方"); out.push("--- 使い方", t_last());
-  check("使い方に「グラフ 簿記」「紹介コメント」「ユーチューブ」「点検」がある", ["グラフ 簿記", "・紹介コメント …", "・ユーチューブ …", "・点検 …"].every((w) => t_text().includes(w)));
+  check("使い方に「グラフ 簿記」「紹介コメント」「ユーチューブ」「点検」「試験」がある", ["グラフ 簿記", "・紹介コメント …", "・ユーチューブ …", "・点検 …", "・試験 …"].every((w) => t_text().includes(w)));
   check("使い方に消したことばがない", !["・状況 …", "・インスタ …", "・素材 …", "・ニュース …", "・ジャンル …", "紹介リール"].some((w) => t_text().includes(w)));
 } catch (e) { out.push("ERROR " + e.stack); fails.push("例外"); }
 out.push("", fails.length ? "FAILED: " + fails.join("、") : "ALL OK");

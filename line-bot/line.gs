@@ -55,6 +55,7 @@ function answer(text) {
   if (/^(反応|はんのう|インサイト)/.test(text)) return igReady() ? igRecentText() : TALK.igOff;
   if (/^(リンク|りんく)/.test(text)) return TALK.igLink(igProfileLink());
   if (/^(点検|てんけん|チェック)/.test(text)) return checkDetailText();
+  if (/^(試験|しけん|予定|よてい)/.test(text)) return watchDetailText();
   if (/^(使い方|つかいかた|ヘルプ|help|\?)/i.test(text)) return TALK.help;
   return pick(TALK.unknown);
 }

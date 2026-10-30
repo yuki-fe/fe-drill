@@ -22,7 +22,7 @@ description: 基本情報技術者試験の科目Bのアルゴリズム（二分
 ## 手順
 1. **アルゴリズムと構成を決める**: 科目Bでよく出るもの（`data/b/algorithms.json` の一覧も参考に）。章立ては見本と同じ11章（つかみ → 比べる → 考え方 → 擬似言語の読み方 → コードを1行ずつ → トレース①② → 穴埋め問題 → 答え合わせ → 計算量 → まとめ）を基本に、アルゴリズムに合わせて変える
 2. **台本を PDF にして確認してもらう**: `notes/src/<名前>の解説動画_台本.html` → `python notes/src/make_pdf.py <名前>の解説動画_台本`（見本: `二分探索の解説動画_台本`）。ナレーションの全文（行ごとの番号 a01…）・ボードに書くもの・ボードの配置図・使うコード・トレース表・穴埋め問題と解答群を書く。**トレース表と穴埋めの正解・不正解の理由は、手で計算して確かめる**（不正解の選択肢は、どれも「なぜ違うか」を説明できるものだけ）。運営者の OK が出るまで先へ進まない（**基礎回②から、運営者は台本の PDF の確認なしで作ってよいと言っている**。その場合は PDF を作らず、できあがった動画を見てもらう）
-3. **作業フォルダを作る**: `~/lemo-opuscar/films/fe-<英数字>-long/` に、見本の `engine/`（縦長・横長の両方と、紙を貼る `under` に対応させた wb.js）・`fonts/`・`index.html`・`main.js`・`mix.py`・`tools/meta.mjs`・`build.sh` をコピーする（`build.sh` の「宣伝」の4行は消す。サムネイルの秒は `film.js` の `thumbT` に合わせる）。`film.js`・`lines.json` は書き直す
+3. **作業フォルダを作る**（2026-10-30 から道具を使う。`~/lemo-opuscar/films/_fe_template/`）: `sh films/_fe_template/new_episode.sh fe-<英数字>-long` でフォルダを作り、`lines.json`・`parts/`（header・config・content・answer・thumb の5つ。書き方は最大値の回 `films/fe-max-long/parts/` が見本）・`audio/bgm_plan.json` を書く → `python films/_fe_template/assemble.py films/<作業>` で `film.js` を組み立てる。部品で使える道具（draw・mtext・codeLines・mag・varBox・boxSet・table・cells・partsLine など）は `assemble.py` の説明と `helpers.js`。長い部品は Bash のヒアドキュメントでなく Write で書く（失敗しやすい）
 4. **声**: `lines.json`（`text` は字幕に出す字、`say` は読ませ方）。英字は読み方をカタカナで `say` に書く（low → ロー、mid → ミッド、data[3] → データ かっこ 3、≦ → 以下、÷ → わる、-1 → マイナス1、科目B → 科目ビー）。`cd ~/lemo-opuscar` で `PYTHONIOENCODING=utf-8 .venv/Scripts/python core/tts/tts_zh.py films/<作業>/lines.json films/<作業>/voices --voice ja-JP-NanamiNeural --rate +10% --pitch +6Hz`（**声は Nanami の明るめ**＝速さ +10%・高さ +6Hz。2026-10-30 に運営者が9つのサンプル `notes/科目B解説動画/声のサンプル/` から選んだ。基礎回②までは +5%・高さそのまま。edge-tts。ネットが要る。読み上げの文章は Microsoft に送られる）
 5. **聞き取りチェック**: faster-whisper で行ごとに文字起こしして台本と並べ、読み間違いがないか見る（`.venv-asr` の Python。PyAV を通さず wav を numpy で読んで渡す。同じ音の別の字は気にしなくてよい）
 6. **絵（film.js）**: 見本の作りに合わせる
@@ -30,11 +30,11 @@ description: 基本情報技術者試験の科目Bのアルゴリズム（二分
    - 字は `mtext`（英数字は1本線の手書き EMS Tech、日本語は Klee One をなぞったところから出す）。描く指示はためて、最後に時刻順に実行する（ペンは1本ずつしか書けないため）
    - 磁石（low・high・今の行を指す矢印）、消しゴム、問題用紙（`board.under` に描く印刷物）、左上の章の見出し、カウントダウン、字幕（句読点・小さい字が行頭に来ないように）
    - 区画は、字幕の帯（下 約130px）と左上の章の見出しに字がかからない範囲に収める
-7. **静止画で確かめる**: 各章の終わりのコマを `node core/render/still.mjs <作業> 秒 … --q nopens=1` で書き出し、ffmpeg で並べて見る。重なり・はみ出し・消し残し・ペンの遅れ（`[page] pen … late` の警告）を直す
+7. **静止画で確かめる**: `.venv/Scripts/python films/_fe_template/stills.py films/<作業>` で各章の終わりのコマが4枚ずつ並んだ画像（`out/chk/sheet_*.jpg`）ができるので、それを見る。重なり・はみ出し・消し残し・ペンの遅れ（`[page] pen … late` の警告）を直す
 8. **BGM**（2026-10-29 に運営者が決めた。**毎回このやり方**）: 運営者が Suno で作った曲（歌なし）が `notes/科目B解説動画/BGM/` にある。**1本の動画に複数の曲を使ってよい**。章のまとまりごとに曲を選び、作業フォルダの `audio/` に曲をコピーして、選曲表 `audio/bgm_plan.json`（`[{"from": "章の最初の行の id", "file": "曲.mp3"}, …]`）を書くと、`mix.py` が章の頭（カメラが動くころ）で3秒かけて次の曲へ切りかえる（曲ごとの大きさは自動でそろう）。見本は基礎回①（説明 Focus Flow → if・配列 Curious Patterns → トレース Calm Focus → 問題 Solving the Puzzle → まとめ Focus Flow）。1曲だけなら `audio/bgm.mp3` でもよい。大きさは `BGM_DB`（話していないとき -22 dB）・`DUCK_DB`（話している間さらに -5 dB）。選ぶときは、歌が入っていないか（音声認識で言葉が出ないか）、高い音が目立たないか（スペクトル重心が低め）、音量の変化が小さいか（LRA）を見る。高い音が目立つ「Late Night Study」はナレーションの下に向かない。曲がないときはマリンバ風をコードで作る
 9. **書き出し**: `sh films/<作業>/build.sh`（events → mix（声・BGM・効果音）→ 字幕とチャプター → 本編 → サムネイル）。書き出しは10〜15分ほど。音量は -14 LUFS になっているか確かめる
 10. **YouTube の文字**: `YouTubeのタイトル.txt`・`YouTubeの説明文.txt`（チャプターは `out/chapters.json` から。サイトのリンク、「ナレーションは合成音声」「AI の支援で作成」を入れる）。「公式」「必ず合格」などは使わない
-11. **完成フォルダに集める**: `notes/科目B解説動画/<名前>/` に `<名前>_本編_YouTube.mp4`・`<名前>_サムネイル.jpg`・`<名前>_字幕.srt`・タイトルと説明文。完成した動画からもコマを抜き出して確かめる
+11. **完成フォルダに集める**: `.venv/Scripts/python films/_fe_template/finalize.py films/<作業> <名前> <タイトル> <説明の最初の段落> [前回] [次回]` で、`notes/科目B解説動画/<名前>/` に `<名前>_本編_YouTube.mp4`・`<名前>_サムネイル.jpg`・`<名前>_字幕.srt`・タイトルと説明文。完成した動画からもコマを抜き出して確かめる
 12. **運営者に見てもらってから上げる**: `python upload_youtube.py --lesson <名前>`（本編とサムネイル。記録は `youtube.json`。宣伝のファイルがある回はショートも上げる）。字幕は焼き込み済み。SRT を YouTube の字幕として足したいときは、運営者が YouTube Studio の「字幕」から上げる
 
 ## つまずきやすいところ
@@ -42,4 +42,5 @@ description: 基本情報技術者試験の科目Bのアルゴリズム（二分
 - 箱の中の数字だけを消すときは、消しゴムの帯を細く（40〜50）、道を箱の内側に寄せる。太いと箱の枠まで消える
 - このパソコンは ARM 版の Windows。Lemo-Opuscar の書き出しはそのまま動く（Manim・Remotion を使うときの回避策はメモ `manim-remotion-arm64` を参照）
 - 長い配列の移動平均は `np.convolve` だと遅すぎる（9分の音で10分以上）。累積和で計算する
+- 「次回」の案内は、作る順番（メモ fe-b-video-series）どおりにする（線形探索の次は二分探索。一度まちがえた）
 - `rm` で作業フォルダの中身を消そうとすると安全チェックに止められる。静止画は別のフォルダ名に書き出せばよい
