@@ -1,7 +1,9 @@
 """音声（wav）を文字に起こして「[mm:ss] 文」の行で書く。.venv-asr で動かす（video_research.py が呼ぶ）。"""
 import argparse
 import sys
+import wave
 
+import numpy as np
 from faster_whisper import WhisperModel
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -13,7 +15,10 @@ ap.add_argument("--lang", default=None, help="言語（なければ自動）")
 args = ap.parse_args()
 
 model = WhisperModel(args.model, device="cpu", compute_type="int8")
-segs, info = model.transcribe(args.wav, language=args.lang, vad_filter=True, beam_size=5)
+# av==19 では faster-whisper の decode_audio が動かないので、wav（16kHz・モノラル）を自分で読んで渡す
+with wave.open(args.wav, "rb") as w:
+    audio = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768.0
+segs, info = model.transcribe(audio, language=args.lang, vad_filter=True, beam_size=5)
 print("言語:", info.language, flush=True)
 lines = []
 for s in segs:

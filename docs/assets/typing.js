@@ -308,7 +308,7 @@
       <p class="ty-best">${best && best.points ? `自己ベスト: <b>${best.points}点</b>（ランク${grade(best.points, state.sec)}・${best.chars}文字・正確さ${best.acc}%）` : "まだ記録はありません"}</p>
       ${RANK_URL ? `<p class="ty-rank-link"><button type="button" class="btn ghost" data-act="rank">ランキングを見る</button>${rankOn() ? '<span class="muted">この設定でランキングに挑戦できます</span>'
         : `<button type="button" class="btn ghost" data-act="useboard">ランキングの設定にする</button><span class="muted">ランキングは「${esc(BOARD.name)}」だけです</span>`}</p>` : ""}
-      <button type="button" class="btn primary ty-start" data-act="start">スタート（スペースキー）</button>
+      <button type="button" class="btn primary ty-start" data-act="start">スタート${TOUCH ? "" : "（スペースキー）"}</button>
       <p class="muted">${state.sec / 60}分で何語打てるか挑戦します。${state.imi ? "用語を打ったあとに、意味の要点も打ちます。" : ""}ローマ字入力は半角英数で打ってください（スマホは、ひらがなのキーボードでも打てます）。</p>
     </div>`;
   }
@@ -328,7 +328,7 @@
         <div><dt>ミス</dt><dd>${state.miss}<small>回</small></dd></div><div><dt>1秒あたり</dt><dd>${kps}<small>打鍵</small></dd></div><div><dt>正確さ</dt><dd>${acc}<small>%</small></dd></div></dl>
       ${sendHtml()}
       ${missed.length ? `<h2>ミス・パスした用語（${missed.length}語）</h2><ul class="ty-missed">${list}</ul>` : ""}
-      <p class="ty-again"><button type="button" class="btn primary" data-act="start">もう一度（スペースキー）</button><button type="button" class="btn" data-act="menu">遊び方・分野を変える</button></p>
+      <p class="ty-again"><button type="button" class="btn primary" data-act="start">もう一度${TOUCH ? "" : "（スペースキー）"}</button><button type="button" class="btn" data-act="menu">遊び方・分野を変える</button></p>
     </div>`;
   }
 
@@ -408,6 +408,13 @@
     const best = load(bestKey(), null), pt = points();
     if (pt && (!best || !best.points || pt > best.points)) {
       store(bestKey(), { points: pt, chars: state.score, words: state.words, acc: Math.round(accuracy() * 100) }); state.newBest = true;
+    }
+    // 日ごとの学習の数（ホームの「〇日つづけています」に使う。app.js と同じ形）。打てた用語の数を足す
+    if (state.words) {
+      const d = new Date(), k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const log = load("study-log", {});
+      log[k] = Object.assign({ a: 0, k: 0 }, log[k]); log[k].a += state.words;
+      store("study-log", log);
     }
     state.phase = "result"; render();
     if (window.gtag) gtag("event", "typing_finish", { mode: state.mode, field: state.field, seconds: state.sec, meaning: state.imi ? 1 : 0, words: state.words, score: state.score, points: points() });

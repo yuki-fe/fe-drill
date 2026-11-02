@@ -19,6 +19,16 @@
     r.ok = ok; r.tries++; r.t = Date.now();
     p[id] = r;
     try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch (e) {}
+    logStudy();
+  }
+  /* 日ごとの学習の数（ホームの「〇日つづけています」に使う。app.js・typing.js と同じ形） */
+  function logStudy() {
+    try {
+      const d = new Date(), k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const log = JSON.parse(localStorage.getItem("study-log")) || {};
+      log[k] = Object.assign({ a: 0, k: 0 }, log[k]); log[k].a++;
+      localStorage.setItem("study-log", JSON.stringify(log));
+    } catch (e) {}
   }
   const status = (id) => { const r = loadProgress()[id]; return r ? (r.ok ? "ok" : "ng") : ""; };
 

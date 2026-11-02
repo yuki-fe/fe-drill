@@ -1,0 +1,9 @@
+[
+ {"id": "Lyj_WojMvcI", "title": "二分探索を擬似言語から1行ずつ", "pages": ["b/algorithms/binary-search.html"], "public": false},
+ {"id": "BDRihHa2hWs", "title": "線形探索を擬似言語から1行ずつ（番兵）", "pages": ["b/algorithms/linear-search.html"], "public": false},
+ {"id": "x5bjKPfbjEc", "title": "最大値を求めるアルゴリズム", "pages": ["b/algorithms/find-max.html"], "public": false},
+ {"id": "qr1JreBspQ0", "title": "10進数を2進数に変換するアルゴリズム", "pages": ["b/algorithms/to-binary.html"], "public": false},
+ {"id": "TMa3jk3h89w", "title": "擬似言語の読み方 基礎回①（変数・if・配列）", "pages": ["b/index.html", "b/notation.html"], "public": false},
+ {"id": "aZR5RqaeuVQ", "title": "擬似言語の読み方 基礎回②（for・while・トレース表）", "pages": ["b/index.html", "b/notation.html", "b/trace.html"], "public": false},
+ {"id": "R5rKfIGH-6w", "title": "擬似言語の読み方 基礎回③（関数・引数・戻り値・大域変数）", "pages": ["b/index.html", "b/notation.html"], "public": false}
+]

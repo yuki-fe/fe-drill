@@ -35,6 +35,25 @@ YOMI = json.loads((ROOT / "data" / "yomi.json").read_text(encoding="utf-8")) if 
 # 意味の要点（タイピングの「意味も打つ」で打つ）。用語 id → [画面に出す文, 打つ読み]
 IMI = {k: v for k, v in json.loads((ROOT / "data" / "imi.json").read_text(encoding="utf-8")).items() if not k.startswith("_")} \
     if (ROOT / "data" / "imi.json").exists() else {}
+# 科目Bの解説動画（YouTube）。"public": true のものだけサイトに出す
+VIDEOS = json.loads((ROOT / "data" / "videos.json").read_text(encoding="utf-8")) if (ROOT / "data" / "videos.json").exists() else []
+# sitemap の lastmod: ページの中身が変わった日だけ新しくする（ページ → [中身のハッシュ, 日付]）
+LASTMOD_FILE = ROOT / "data" / "lastmod.json"
+NOTES = []  # ビルドの注意（check() のあとに見つかるもの）
+
+
+def sister_site(folder):
+    """姉妹サイト（デスクトップの隣のフォルダ）の公開 URL と、用語名 → id。見つからなければ None。"""
+    for p in ROOT.parents:
+        d = p / folder
+        if (d / "data" / "terms.json").exists() and (d / "config.json").exists():
+            base = json.loads((d / "config.json").read_text(encoding="utf-8"))["base_url"].rstrip("/")
+            return base, {t["term"]: t["id"] for t in json.loads((d / "data" / "terms.json").read_text(encoding="utf-8"))}
+    NOTES.append(f"姉妹サイト {folder} が見つからないので、用語ページのリンクを出しません")
+    return None
+
+
+IP = sister_site("ip-drill")
 
 
 def load_b(name):
@@ -230,6 +249,7 @@ def build_home():
   </div>
   <aside class="hero-progress" aria-labelledby="prog-h">
     <h2 id="prog-h">あなたの進み具合</h2>
+    <div class="goal" id="goal"></div>
     <p class="hero-progress-sub">分野を押すと、その分野だけで学習します</p>
     <div class="fields" id="fields"></div>
     <p class="save-note">進み具合はこのブラウザに保存されます。<button id="reset" type="button">リセット</button></p>
@@ -307,7 +327,7 @@ def mini_quiz(t, related):
         for k, c in enumerate(choices))
     return f"""
   <section class="mini-quiz" data-answer="{answer}" data-term="{escape(target['term'])}" data-href="{target['id']}.html">
-    <h2>確認問題</h2>
+    <h2>同じ分野の確認問題</h2>
     <p>次の説明に当てはまる用語はどれか。</p>
     <p class="qd">{escape(masked(target))}</p>
     <div class="choices">{buttons}</div>
@@ -334,6 +354,10 @@ def build_term(t, prev, nxt):
                 f'<div class="fig-player">{fig_svg}</div>'
                 '<ol class="fig-steps">' + "".join(f"<li>{escape(s)}</li>" for s in fig["steps"]) + "</ol></section>") if fig else ""
     no = int(t["id"])
+    ip_id = IP and IP[1].get(t["term"])
+    ip_html = (f'<section class="side-card sister"><h2>ITパスポートでも出る用語</h2>'
+               f'<p>ITパスポート用語ドリルでは、やさしめの説明で練習できます。</p>'
+               f'<a href="{IP[0]}/terms/{ip_id}.html">ITパスポート用語ドリルで見る →</a></section>') if ip_id else ""
     body = f"""
 <div class="term-wrap">
   <nav class="crumbs" aria-label="パンくずリスト"><a href="../index.html">ホーム</a><span>›</span><a href="index.html#{t['field']}">{field}</a><span>›</span><a href="index.html#sub-{t['field']}-{escape(t['sub'])}">{escape(t['sub'])}</a></nav>
@@ -363,6 +387,7 @@ def build_term(t, prev, nxt):
         <h2>同じ分野の用語</h2>
         <ul class="related">{related_html}</ul>
       </section>
+      {ip_html}
     </aside>
   </div>
 </div>
@@ -467,7 +492,28 @@ def code_pre(lines):
     return f'<pre class="code-plain">{escape(chr(10).join(lines))}</pre>'
 
 
+def video_html(path):
+    """そのページに合う解説動画（公開済みのものだけ）。押すまで YouTube を読み込まない。"""
+    vs = [v for v in VIDEOS if v.get("public") and path in v["pages"]]
+    if not vs:
+        return ""
+    items = "".join(f'<li><button class="yt" type="button" data-yt="{escape(v["id"])}"><span class="yt-play" aria-hidden="true">▶</span>'
+                    f'<span>{escape(v["title"])}<small>押すと YouTube の動画が開きます</small></span></button></li>' for v in vs)
+    return f"""<section class="b-sec videos"><h2>動画で見る</h2><ul class="yt-list">{items}</ul></section>
+<script>document.querySelectorAll(".yt").forEach((b) => b.onclick = () => {{
+  const f = document.createElement("iframe");
+  f.src = "https://www.youtube-nocookie.com/embed/" + b.dataset.yt + "?autoplay=1&rel=0";
+  f.title = b.querySelector("span:last-child").firstChild.textContent;
+  f.allow = "autoplay; encrypted-media; picture-in-picture"; f.allowFullscreen = true; f.className = "yt-frame";
+  b.replaceWith(f); f.focus();
+}});</script>"""
+
+
 def b_page(path, title, desc, body, rel):
+    v = video_html(path)
+    if v:
+        i = body.rindex("</main>")
+        body = body[:i] + v + "\n" + body[i:]
     page(path, f"{title}｜基本情報技術者試験 科目B｜{SITE}", desc, body, rel, "b-page", scripts=b_scripts(rel))
 
 
@@ -809,7 +855,7 @@ def build_privacy():
   <p>{contact_html()}</p>
   <h2>改定</h2>
   <p>このページの内容は、必要に応じて予告なく変更することがあります。</p>
-  <p class="muted">制定日: {escape(config.get("established", ""))} / 最終更新日: {TODAY}</p>
+  <p class="muted">制定日: {escape(config.get("established", ""))} / 最終更新日: {escape(config.get("privacy_updated") or config.get("established", ""))}</p>
 </main>
 """
     page("privacy.html", f"プライバシーポリシー・免責事項｜{SITE}", f"{SITE}のプライバシーポリシーと免責事項です。", body, "")
@@ -953,7 +999,7 @@ def build_pwa_files():
     }
     (OUT / "manifest.webmanifest").write_text(json.dumps(manifest, ensure_ascii=False, indent=1), encoding="utf-8")
     # 最初に保存しておくもの（ホーム・科目B・CSS・JS・アイコン）
-    pre = ["./", "index.html", "offline.html", "app.html", "terms/index.html",
+    pre = ["./", "index.html", "offline.html", "app.html", "terms/index.html", "typing.html", "about.html",
            "b/index.html", "b/trace.html", "b/fill.html", "b/notation.html", "b/security.html", "b/simulator.html",
            "favicon.svg", "icon-192.png", "manifest.webmanifest"]
     pre += sorted("assets/" + f.name for f in (OUT / "assets").iterdir() if f.is_file())
@@ -982,8 +1028,7 @@ self.addEventListener("fetch", (e) => {{
   if (url.pathname.includes("/ig/")) return;                       // 動画や SNS の画像は保存しない
   if (req.mode === "navigate") {{                                   // ページ: ネット優先、だめなら保存したもの
     e.respondWith(fetch(req).then((res) => {{
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(req, copy));
+      if (res.ok) {{ const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }}   // エラーのページは保存しない
       return res;
     }}).catch(() => caches.match(req, {{ ignoreSearch: true }}).then((r) => r || caches.match("offline.html"))));
     return;
@@ -1000,11 +1045,25 @@ self.addEventListener("fetch", (e) => {{
     (OUT / "sw.js").write_text(sw, encoding="utf-8")
 
 
-def build_meta_files():
+def write_sitemap():
+    """sitemap.xml。lastmod は、ページの中身（CSS・JS の版の印と年を除く）が前のビルドと変わった日だけ新しくする。"""
+    old = json.loads(LASTMOD_FILE.read_text(encoding="utf-8")) if LASTMOD_FILE.exists() else {}
+    new = {}
+    for u in SITEMAP:
+        path = u[len(BASE) + 1:] or "index.html"
+        html = (OUT / path).read_text(encoding="utf-8")
+        html = re.sub(r"\?v=[0-9a-f]+", "", html).replace(f"© {date.today().year}", "")
+        h = hashlib.sha1(html.encode("utf-8")).hexdigest()[:12]
+        new[path] = [h, old[path][1] if path in old and old[path][0] == h else TODAY]
+    if new != old:
+        LASTMOD_FILE.write_text("{\n" + ",\n".join(f"{json.dumps(k)}: {json.dumps(v)}" for k, v in new.items()) + "\n}\n", encoding="utf-8")
     sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    sitemap += "".join(f"  <url><loc>{escape(u)}</loc><lastmod>{TODAY}</lastmod></url>\n" for u in SITEMAP)
+    sitemap += "".join(f"  <url><loc>{escape(u)}</loc><lastmod>{new[u[len(BASE) + 1:] or 'index.html'][1]}</lastmod></url>\n" for u in SITEMAP)
     sitemap += "</urlset>\n"
     (OUT / "sitemap.xml").write_text(sitemap, encoding="utf-8")
+
+
+def build_meta_files():
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {BASE}/sitemap.xml\n", encoding="utf-8")
     ad = config.get("adsense_client", "")
     if ad:
@@ -1101,14 +1160,16 @@ def main():
     build_app()
     build_typing()
     build_b()
+    NOTES.extend(f"data/videos.json の {v['id']}: ページ {p} がありません" for v in VIDEOS for p in v["pages"] if not (OUT / p).exists())
     build_meta_files()
+    write_sitemap()
     add_asset_versions()
     build_pwa_files()
     write_b_check()
     n = sum(1 for _ in OUT.rglob("*.html"))
     print(f"docs/ に {n} ページを書き出しました（用語 {len(terms)} 語、科目B {len(B['algorithms'])} 図鑑・{len(B['trace']) + len(B['fill']) + len(B['security']) + len(B['notation'])} 問）")
     print("科目Bの答えの確認: checks/b-check.html をブラウザで開いてください")
-    for w in warnings:
+    for w in warnings + NOTES:
         print("注意:", w)
 
 

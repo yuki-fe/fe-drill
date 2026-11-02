@@ -32,16 +32,65 @@
   const savePrefs = () => store("fe-drill-prefs", prefs);
   const isKnown = (t) => !!known[t.term];
   const isWeak = (t) => !!weak[t.term];
-  function saveProgress() { store("fe-drill-v1", known); store("fe-drill-weak", weak); renderFields(); updateWeakCount(); }
+  function saveProgress() { store("fe-drill-v1", known); store("fe-drill-weak", weak); renderFields(); updateWeakCount(); renderGoal(); }
   /* 学習での答え: 正解・覚えた → 覚えた用語に、間違い・まだ → 復習リストに */
   function record(t, ok) {
+    logStudy(1, ok && !isKnown(t) ? 1 : 0);
     if (ok) { known[t.term] = 1; delete weak[t.term]; } else { delete known[t.term]; weak[t.term] = 1; }
     saveProgress();
   }
   /* 一覧での印の付け外し: 復習リストには入れない */
   function setKnown(t, v) {
+    if (v && !isKnown(t)) logStudy(0, 1);
     if (v) { known[t.term] = 1; delete weak[t.term]; } else delete known[t.term];
     saveProgress();
+  }
+
+  /* ---------- 日ごとの記録と、試験日までの目安 ---------- */
+  /* study-log: 日付 → { a: 答えた数, k: 新しく覚えた数 }。b.js・typing.js も a を足す */
+  const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  function logStudy(a, k) {
+    const log = load("study-log", {}), key = dayKey(new Date());
+    log[key] = Object.assign({ a: 0, k: 0 }, log[key]);
+    log[key].a += a; log[key].k += k;
+    store("study-log", log);
+  }
+  function renderGoal() {
+    const el = $("#goal");
+    if (!el) return;
+    const log = load("study-log", {}), now = new Date(), today = dayKey(now);
+    const did = (k) => log[k] && (log[k].a || log[k].k);
+    const days = [];
+    for (let i = 13; i >= 0; i--) { const d = new Date(now); d.setDate(d.getDate() - i); days.push(dayKey(d)); }
+    let streak = 0;
+    const d = new Date(now);
+    if (!did(today)) d.setDate(d.getDate() - 1);   // 今日はまだでも、昨日まで続いていれば数える
+    while (did(dayKey(d))) { streak++; d.setDate(d.getDate() - 1); }
+    const t = log[today] || { a: 0, k: 0 };
+    let exam = "";
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(prefs.exam || "");
+    if (m) {
+      const left = Math.round((new Date(+m[1], m[2] - 1, +m[3]) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
+      const rest = TERMS.filter((x) => !isKnown(x)).length;
+      const per = left > 0 ? Math.ceil((rest + t.k) / left) : 0;   // 今朝の時点の残りで計算する（1日の中で目安が動かないように）
+      let line;
+      if (left < 0) line = "試験日が過ぎました。次の試験日を入れると、また目安を出します。";
+      else if (left === 0) line = "今日が試験日です。復習リストを見なおしておきましょう。";
+      else if (!rest) line = `試験まで あと <b class="mono">${left}</b> 日。全部の用語を覚えました。復習で仕上げましょう。`;
+      else line = `試験まで あと <b class="mono">${left}</b> 日。まだの用語 ${rest}語 → <b>1日 <span class="mono">${per}</span> 語</b>が目安です。`
+        + (t.k >= per ? `<span class="goal-done">今日の目安に届きました</span>` : `<span class="goal-left">今日はあと ${per - t.k} 語</span>`);
+      exam = `<p class="goal-exam">${line}</p><p class="goal-set"><span class="mono">${esc(prefs.exam)}</span> に受ける <button type="button" id="examEdit">変える</button></p>`;
+    }
+    const input = `<label class="goal-input"${m ? " hidden" : ""}>試験日を入れると、1日の目安が出ます<input type="date" id="examDate" value="${esc(prefs.exam || "")}"></label>`;
+    el.innerHTML = `
+      <div class="goal-top"><span>${streak ? `<b class="mono">${streak}</b> 日つづけています` : "今日から始めましょう"}</span><span>今日 答えた数 <b class="mono">${t.a}</b>・覚えた <b class="mono">${t.k}</b></span></div>
+      <ol class="goal-days" role="img" aria-label="この14日で学習した日: ${days.filter(did).length}日">${days.map((k) =>
+        `<li class="${did(k) ? "on" : ""}${k === today ? " today" : ""}" title="${k}${did(k) ? `（${log[k].a}問）` : ""}"></li>`).join("")}</ol>
+      ${exam}${input}`;
+    const inp = $("#examDate");
+    inp.onchange = () => { prefs.exam = inp.value; savePrefs(); renderGoal(); };
+    const edit = $("#examEdit");
+    if (edit) edit.onclick = () => { $(".goal-input").hidden = false; inp.focus(); };
   }
 
   /* ---------- 文字列 ---------- */
@@ -356,5 +405,6 @@
     }
   });
 
+  renderGoal();
   refresh();
 })();

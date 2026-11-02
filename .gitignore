@@ -16,3 +16,6 @@ checks/
 # LINE ボットのテストで作られるページ
 line-bot/test/test.html
 ranking/test/test.html
+
+# Claude の作業用のコピー（worktree）
+.claude/worktrees/

@@ -28,12 +28,15 @@
 
 | パス | 内容 |
 |---|---|
-| `config.json` | サイト名・公開 URL・運営者・GA・広告の設定 |
+| `config.json` | サイト名・公開 URL・運営者・GA・広告の設定。`privacy_updated` はプライバシーポリシーの最終更新日（文面を変えたときだけ手で書きかえる） |
+| `data/videos.json` | 科目Bの解説動画（YouTube の ID・題名・載せるページ）。`"public": true` のものだけ、図鑑などのページの下に「動画で見る」が出る（押すまで YouTube を読み込まない）。YouTube Studio で公開したら true にしてビルド |
+| `data/lastmod.json` | build.py が作る。ページごとの中身のハッシュと、変わった日（sitemap.xml の lastmod）。commit する |
 | `build.py` | サイトを生成する（`docs/` に書き出す）。運営者情報・プライバシーポリシーの文面もここ |
 | `data/terms.json` | 用語データ。`id` は URL（`terms/0001.html`）になるので、**公開後に変えたり使い回したりしない** |
 | `data/yomi.json` | 用語の読み（用語 id → ひらがな・半角英数字）。**用語タイピング**（`typing.html`、`static/assets/typing.js`）で打つ文字。用語を足したら読みも足す（ないと build.py が注意を出し、その用語はタイピングに出ない）。英語の略語は英字のまま、かっこの中は打たない |
 | `data/imi.json` | 用語の **意味の要点**（用語 id → [画面に出す短い文, 打つ読み]）。タイピングの「意味も打つ」（初めは「する」）で、用語のあとに打つ。10〜20文字ほどで、説明文（desc）の要点だけ。読みの文字の決まりは yomi.json と同じ（「・」などの記号は読みに入れない）。用語を足したらここにも足す（ないと build.py が注意を出し、その用語は意味を飛ばす）。制限時間は 1分・2分・3分（60・120・180秒）から選べ、自己ベストは時間・意味も打つかごとに分かれる（`typing.js` の `TIMES`・`bestKey`） |
 | `data/b/*.json` | 科目Bの問題（algorithms / trace / fill / security / notation） |
+| ホームの「〇日つづけています」 | 2026-11-02。localStorage の `study-log`（日付 → 答えた数 `a`・新しく覚えた数 `k`）を app.js・b.js・typing.js が足し、`renderGoal` が直近14日のマスと、試験日（`fe-drill-prefs` の `exam`）までの1日の目安を出す。typing.js は全サイト共通なので、ほかのサイトでも記録だけはたまる |
 | `static/` | `docs/` にそのままコピーされる。`assets/`（CSS・JS）、`ig/`（Instagram の画像・動画と投稿文の JSON） |
 | `static/assets/pseudo.js` | 擬似言語のインタプリタ。ビューア・答え合わせ・リール動画すべてがこれで動く |
 | `docs/` | **生成物。直接編集しない**（ビルドのたびに作り直される）。ただし GitHub Pages が使うので commit はする |

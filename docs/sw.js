@@ -1,6 +1,6 @@
 // FE用語ドリル のサービスワーカー（build.py が作る。直接編集しない）
-const CACHE = "fe-drill-53046c511e";
-const PRECACHE = ["./", "index.html", "offline.html", "app.html", "terms/index.html", "b/index.html", "b/trace.html", "b/fill.html", "b/notation.html", "b/security.html", "b/simulator.html", "favicon.svg", "icon-192.png", "manifest.webmanifest", "assets/app.js", "assets/b-data.js", "assets/b.js", "assets/fig.js", "assets/layout.css", "assets/pseudo.js", "assets/style.css", "assets/term.js", "assets/terms.js", "assets/typing.js"];
+const CACHE = "fe-drill-ab322325b7";
+const PRECACHE = ["./", "index.html", "offline.html", "app.html", "terms/index.html", "typing.html", "about.html", "b/index.html", "b/trace.html", "b/fill.html", "b/notation.html", "b/security.html", "b/simulator.html", "favicon.svg", "icon-192.png", "manifest.webmanifest", "assets/app.js", "assets/b-data.js", "assets/b.js", "assets/fig.js", "assets/layout.css", "assets/pseudo.js", "assets/style.css", "assets/term.js", "assets/terms.js", "assets/typing.js"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
@@ -17,8 +17,7 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname.includes("/ig/")) return;                       // 動画や SNS の画像は保存しない
   if (req.mode === "navigate") {                                   // ページ: ネット優先、だめなら保存したもの
     e.respondWith(fetch(req).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(req, copy));
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }   // エラーのページは保存しない
       return res;
     }).catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match("offline.html"))));
     return;

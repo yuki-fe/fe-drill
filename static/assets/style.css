@@ -76,6 +76,32 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
 .panel { display: flex; flex-direction: column; gap: 16px; min-height: 300px; }
 .meta { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); gap: 8px; flex-wrap: wrap; }
+/* ホームの「〇日つづけています」と試験日までの目安（app.js の renderGoal） */
+.goal { margin: 12px 0 16px; padding: 12px; border-radius: 10px; background: var(--bg); font-size: .9rem; }
+.goal-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; }
+.goal-top b { font-size: 1.15rem; }
+.goal-days { list-style: none; display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; margin: 8px 0 0; padding: 0; }
+.goal-days li { aspect-ratio: 1; max-height: 18px; border-radius: 3px; background: var(--line); }
+.goal-days li.on { background: var(--ok); }
+.goal-days li.today { outline: 2px solid var(--ink); outline-offset: 1px; }
+.goal-exam { margin: 10px 0 0; line-height: 1.6; }
+.goal-done, .goal-left { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; font-size: .82rem; font-weight: 700; }
+.goal-done { background: var(--ok-soft); color: var(--ok); }
+.goal-left { background: var(--mark-soft); color: var(--mark); }
+.goal-set { margin: 4px 0 0; font-size: .82rem; color: var(--muted); }
+.goal-set button { background: none; border: 0; padding: 0 8px; min-height: 44px; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; }
+.goal-input { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 10px; font-size: .85rem; color: var(--muted); }
+.goal-input[hidden] { display: none; }
+.goal-input input { min-height: 44px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; font-size: 16px; }   /* 16px 未満だと iPhone で押したときに拡大される */
+/* 科目Bの解説動画（押すまで YouTube を読み込まない） */
+.yt-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.yt { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); text-align: left; font: inherit; cursor: pointer; }
+.yt:hover { border-color: var(--mark); }
+.yt small { display: block; font-size: .78rem; color: var(--muted); }
+.yt-play { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--mark); color: #fff; font-size: .9rem; }
+.yt-frame { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 10px; }
+/* 姉妹サイトへのリンク（用語ページの右の欄） */
+.side-card.sister p { margin: 0; font-size: .85rem; color: var(--muted); }
 .save-note { font-size: .78rem; color: var(--muted); margin: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; }
 .save-note button { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
 
@@ -134,7 +160,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 .misses li { font-size: .9rem; border-top: 1px solid var(--line); padding-top: 8px; }
 .misses b, .misses a { color: var(--mark); font-weight: 700; }
 
-.search { font: inherit; width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+.search { font: inherit; font-size: 16px; width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
 .list { display: flex; flex-direction: column; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
 .row { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
 .row:first-child { border-top: 0; }
@@ -253,6 +279,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 .code { list-style: none; padding: 6px 0; }
 .code li { display: grid; grid-template-columns: 2.6em 1fr; white-space: pre; padding-right: 12px; }
 .code .ln { color: var(--muted); text-align: right; padding-right: 10px; user-select: none; font-size: .78rem; }
+@media (max-width: 600px) { .code li .tx { white-space: pre-wrap; overflow-wrap: anywhere; } }   /* スマホでは長い行を折り返す（右で切れないように） */
 .code li.mark { background: var(--mark-soft); }
 .code li.cur { background: var(--hl); }
 .code li.cur .ln { color: var(--ink); font-weight: 700; }
@@ -262,7 +289,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 
 /* 動きを見る部品 */
 .viewer { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--bg); }
-.viewer:focus { outline: none; }
+.viewer:focus:not(:focus-visible) { outline: none; }
 .v-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .v-ctrl { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .v-ctrl button { border: 1px solid var(--line); background: var(--paper); border-radius: 6px; padding: 7px 2px; cursor: pointer; font-size: .82rem; font-weight: 700; }
@@ -380,7 +407,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 
 /* 用語の動く図（make_figs.py・fig.js） */
 .fig-title { font-size: .85rem; color: var(--muted); margin: 0 0 8px; }
-.fig-player { max-width: 640px; outline: none; }
+.fig-player { max-width: 640px; }
+.fig-player:focus:not(:focus-visible) { outline: none; }
 .fig-player svg, .fig-player img { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); user-select: none; -webkit-user-select: none; }
 .fig-player:focus-visible svg { outline: 2px solid var(--mark); outline-offset: 2px; }
 .fig-cap { font-weight: 700; margin: 10px 0 6px; min-height: 1.75em; }
