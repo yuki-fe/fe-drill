@@ -177,6 +177,9 @@ function setup() {
   } else Logger.log("YouTube: チャンネル " + prop("YT_CHANNEL_ID"));
   if (calendarReady()) {
     try { Logger.log("カレンダー: 「" + CONFIG.calendarName + "」に " + calendarSync(null) + " 件入れました"); }
-    catch (e) { Logger.log("カレンダー: 入れられませんでした（" + e.message + "）"); }
+    catch (e) {
+      Logger.log("カレンダー: 入れられませんでした（" + e.message + "）");
+      if (/permission|権限/i.test(e.message)) Logger.log("→ appsscript.json の oauthScopes に https://www.googleapis.com/auth/calendar があるか確かめて保存し、setup をもう一度実行して「許可」を押してください");
+    }
   }
 }
