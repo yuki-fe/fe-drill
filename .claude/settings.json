@@ -1,7 +1,11 @@
 {
+  "env": {
+    "PYTHONUTF8": "1"
+  },
   "enabledPlugins": {
     "hookify@anthropic-plugin-directory": true,
     "claude-md-management@anthropic-plugin-directory": true,
-    "playground@anthropic-plugin-directory": true
+    "playground@anthropic-plugin-directory": true,
+    "session-report@anthropic-plugin-directory": true
   }
 }
