@@ -1,0 +1,7 @@
+{
+  "enabledPlugins": {
+    "hookify@anthropic-plugin-directory": true,
+    "claude-md-management@anthropic-plugin-directory": true,
+    "playground@anthropic-plugin-directory": true
+  }
+}
