@@ -7,10 +7,12 @@
     python upload_youtube.py --check              # ログインと、上げた記録だけ確かめる
     python upload_youtube.py --short コミットしないで   # 縦長のショート版（make_reel_cut.py --shorts で作る）を上げる
     python upload_youtube.py --lesson 二分探索    # 科目Bの解説動画（notes/科目B解説動画/二分探索/）の本編と宣伝のショート
+    python upload_youtube.py --playlist           # 科目Bの解説動画の再生リストを作る・まだ入っていない回を足す（LESSON_ORDER の順）
 
 使うファイル（どれも notes/ の中で、公開しない）
 - notes/曲の動画/youtube_client_secret.json   Google Cloud で作った OAuth クライアント（デスクトップ アプリ）
 - notes/曲の動画/youtube_token.json           初回にブラウザで許可すると作られる。合言葉と同じ扱い
+- notes/曲の動画/youtube_token_manage.json    再生リスト用の許可（YouTube アカウントの管理）。合言葉と同じ扱い
 - notes/曲の動画/<曲名>/<曲名>_YouTube.mp4・_YouTube_説明文.txt・_YouTube_サムネイル.jpg
 - notes/曲の動画/<曲名>/youtube.json          上げた動画の ID の記録（同じ曲を二重に上げない）
 """
@@ -29,14 +31,14 @@ TAGS = ["ITパスポート", "基本情報技術者試験", "勉強ソング", "
 SYNTHETIC = True
 
 
-def service():
+def service(token=TOKEN, scopes=SCOPES):
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
     creds = None
-    if TOKEN.exists():
-        creds = Credentials.from_authorized_user_file(str(TOKEN), SCOPES)
+    if token.exists():
+        creds = Credentials.from_authorized_user_file(str(token), scopes)
     if creds and creds.expired and creds.refresh_token:
         try:
             creds.refresh(Request())
@@ -45,10 +47,10 @@ def service():
     if not creds or not creds.valid:
         if not CLIENT.exists():
             sys.exit(f"OAuth クライアントのファイルがありません: {CLIENT}")
-        flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT), SCOPES)
-        print("ブラウザが開きます。YouTube に動画を上げる許可をしてください。", flush=True)
+        flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT), scopes)
+        print("ブラウザが開きます。YouTube の許可をしてください。", flush=True)
         creds = flow.run_local_server(port=0, prompt="consent")
-        TOKEN.write_text(creds.to_json(), encoding="utf-8")
+        token.write_text(creds.to_json(), encoding="utf-8")
     return build("youtube", "v3", credentials=creds)
 
 
@@ -214,12 +216,60 @@ def upload_lesson(yt, name):
     print(f"非公開で上げました（ショート）: https://youtu.be/{sid}")
 
 
+# ───────── 科目Bの解説動画の再生リスト（2026-11-04）
+# 再生リストを作る・足すには「YouTube アカウントの管理」の許可が要る。上げる許可（TOKEN）とは別のファイルに分ける
+MANAGE_TOKEN = SONGS_DIR / "youtube_token_manage.json"
+MANAGE_SCOPES = ["https://www.googleapis.com/auth/youtube"]
+PLAYLIST_REC = LESSON_DIR / "playlist.json"
+# 再生リストに並べる順（作る順。メモ fe-b-video-series と同じ）。新しい回を作ったら、ここに足す
+LESSON_ORDER = ["基礎回1_変数・if・配列", "基礎回2_for・while・トレース表", "基礎回3_関数・大域変数",
+                "最大値を求める", "線形探索", "二分探索", "10進数を2進数に変換する",
+                "ユークリッドの互除法", "バブルソート", "選択ソート", "挿入ソート"]
+PLAYLIST_TITLE = "基本情報技術者試験 科目B アルゴリズム解説（擬似言語を1行ずつ）"
+PLAYLIST_DESC = ("基本情報技術者試験の科目Bで出る擬似言語とアルゴリズムを、ホワイトボードで1行ずつ説明するシリーズです。\n"
+                 "擬似言語の読み方（基礎回）から始めて、探索・整列などのアルゴリズムへ進みます。どの回にも本番と同じ形の穴埋め問題があります。\n\n"
+                 "▼ 練習はこちら（FE用語ドリル 科目B）\nhttps://fe.yogo-drill.com/\n\n※ ナレーションは合成音声です。")
+
+
+def sync_playlist():
+    """再生リストがなければ公開で作り、LESSON_ORDER の順に、上げてある回（youtube.json があるもの）のうち、まだ入っていない回を足す。
+    記録は notes/科目B解説動画/playlist.json（再生リストの ID と、入れた動画の ID）。"""
+    yt = service(MANAGE_TOKEN, MANAGE_SCOPES)
+    rec = json.loads(PLAYLIST_REC.read_text(encoding="utf-8")) if PLAYLIST_REC.exists() else {}
+    if not rec.get("id"):
+        res = yt.playlists().insert(part="snippet,status", body={
+            "snippet": {"title": PLAYLIST_TITLE, "description": PLAYLIST_DESC, "defaultLanguage": "ja"},
+            "status": {"privacyStatus": "public"}}).execute()
+        rec = {"id": res["id"], "title": PLAYLIST_TITLE, "videos": []}
+        PLAYLIST_REC.write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"再生リストを作りました: https://www.youtube.com/playlist?list={res['id']}", flush=True)
+    for name in LESSON_ORDER:
+        r = LESSON_DIR / name / "youtube.json"
+        if not r.exists():
+            print(f"  まだ上げていない: {name}")
+            continue
+        vid = json.loads(r.read_text(encoding="utf-8"))["id"]
+        if vid in rec["videos"]:
+            continue
+        yt.playlistItems().insert(part="snippet", body={"snippet": {
+            "playlistId": rec["id"], "resourceId": {"kind": "youtube#video", "videoId": vid}}}).execute()
+        rec["videos"].append(vid)
+        PLAYLIST_REC.write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"  足しました: {name}", flush=True)
+    print(f"再生リスト: https://www.youtube.com/playlist?list={rec['id']}（{len(rec['videos'])} 本）")
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args and args[0] == "--lesson":     # python upload_youtube.py --lesson 二分探索
         yt = service()
         for n in args[1:]:
             upload_lesson(yt, n)
+        if MANAGE_TOKEN.exists():      # 再生リストの許可があれば、上げた回を再生リストにも足す
+            sync_playlist()
+        sys.exit()
+    if args and args[0] == "--playlist":   # python upload_youtube.py --playlist
+        sync_playlist()
         sys.exit()
     shorts = "--short" in args
     args = [a for a in args if a != "--short"]

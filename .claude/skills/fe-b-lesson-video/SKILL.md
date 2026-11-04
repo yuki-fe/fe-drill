@@ -35,7 +35,7 @@ description: 基本情報技術者試験の科目Bのアルゴリズム（二分
 9. **書き出し**: `sh films/<作業>/build.sh`（events → mix（声・BGM・効果音）→ 字幕とチャプター → 本編 → サムネイル）。書き出しは10〜15分ほど。音量は -14 LUFS になっているか確かめる
 10. **YouTube の文字**: `YouTubeのタイトル.txt`・`YouTubeの説明文.txt`（チャプターは `out/chapters.json` から。サイトのリンク、「ナレーションは合成音声」「AI の支援で作成」を入れる）。「公式」「必ず合格」などは使わない
 11. **完成フォルダに集める**: `.venv/Scripts/python films/_fe_template/finalize.py films/<作業> <名前> <タイトル> <説明の最初の段落> [前回] [次回]` で、`notes/科目B解説動画/<名前>/` に `<名前>_本編_YouTube.mp4`・`<名前>_サムネイル.jpg`・`<名前>_字幕.srt`・タイトルと説明文。完成した動画からもコマを抜き出して確かめる
-12. **運営者に見てもらってから上げる**: `python upload_youtube.py --lesson <名前>`（本編とサムネイル。記録は `youtube.json`。宣伝のファイルがある回はショートも上げる）。字幕は焼き込み済み。SRT を YouTube の字幕として足したいときは、運営者が YouTube Studio の「字幕」から上げる
+12. **運営者に見てもらってから上げる**: 先に `upload_youtube.py` の `LESSON_ORDER` に回の名前を足してから `python upload_youtube.py --lesson <名前>`（本編とサムネイル。記録は `youtube.json`。宣伝のファイルがある回はショートも上げる。再生リストにも自動で足す）。`data/videos.json` にも `"public": false` で足してビルドする。字幕は焼き込み済み。SRT を YouTube の字幕として足したいときは、運営者が YouTube Studio の「字幕」から上げる
 
 ## つまずきやすいところ
 - 選択肢の「エ」と空欄の「a（エー）」は、耳では聞き分けにくい。答え合わせでは `say` を「選択肢 エ は、空欄 エー も…」のように書き分ける（基礎回①で直した）
