@@ -224,39 +224,64 @@ PLAYLIST_REC = LESSON_DIR / "playlist.json"
 # 再生リストに並べる順（作る順。メモ fe-b-video-series と同じ）。新しい回を作ったら、ここに足す
 LESSON_ORDER = ["基礎回1_変数・if・配列", "基礎回2_for・while・トレース表", "基礎回3_関数・大域変数",
                 "最大値を求める", "線形探索", "二分探索", "10進数を2進数に変換する",
-                "ユークリッドの互除法", "バブルソート", "選択ソート", "挿入ソート"]
+                "ユークリッドの互除法", "バブルソート", "選択ソート", "挿入ソート",
+                "階乗（再帰）", "フィボナッチ数列", "スタック", "キュー",
+                "リスト", "2分木", "ハッシュ", "クイックソート"]
 PLAYLIST_TITLE = "基本情報技術者試験 科目B アルゴリズム解説（擬似言語を1行ずつ）"
 PLAYLIST_DESC = ("基本情報技術者試験の科目Bで出る擬似言語とアルゴリズムを、ホワイトボードで1行ずつ説明するシリーズです。\n"
                  "擬似言語の読み方（基礎回）から始めて、探索・整列などのアルゴリズムへ進みます。どの回にも本番と同じ形の穴埋め問題があります。\n\n"
                  "▼ 練習はこちら（FE用語ドリル 科目B）\nhttps://fe.yogo-drill.com/\n\n※ ナレーションは合成音声です。")
 
 
-def sync_playlist():
-    """再生リストがなければ公開で作り、LESSON_ORDER の順に、上げてある回（youtube.json があるもの）のうち、まだ入っていない回を足す。
-    記録は notes/科目B解説動画/playlist.json（再生リストの ID と、入れた動画の ID）。"""
+def _sync(rec_path, title, desc, items):
+    """再生リストがなければ公開で作り、items（[(名前, 動画 ID か None)] の並べたい順）のうち、まだ入っていないものを足す。
+    記録は rec_path（再生リストの ID と、入れた動画の ID）。"""
     yt = service(MANAGE_TOKEN, MANAGE_SCOPES)
-    rec = json.loads(PLAYLIST_REC.read_text(encoding="utf-8")) if PLAYLIST_REC.exists() else {}
+    rec = json.loads(rec_path.read_text(encoding="utf-8")) if rec_path.exists() else {}
     if not rec.get("id"):
         res = yt.playlists().insert(part="snippet,status", body={
-            "snippet": {"title": PLAYLIST_TITLE, "description": PLAYLIST_DESC, "defaultLanguage": "ja"},
+            "snippet": {"title": title, "description": desc, "defaultLanguage": "ja"},
             "status": {"privacyStatus": "public"}}).execute()
-        rec = {"id": res["id"], "title": PLAYLIST_TITLE, "videos": []}
-        PLAYLIST_REC.write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
+        rec = {"id": res["id"], "title": title, "videos": []}
+        rec_path.write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"再生リストを作りました: https://www.youtube.com/playlist?list={res['id']}", flush=True)
-    for name in LESSON_ORDER:
-        r = LESSON_DIR / name / "youtube.json"
-        if not r.exists():
+    order = [vid for _, vid in items if vid]
+    for name, vid in items:
+        if not vid:
             print(f"  まだ上げていない: {name}")
             continue
-        vid = json.loads(r.read_text(encoding="utf-8"))["id"]
         if vid in rec["videos"]:
             continue
+        # 先のものより後に上がっても、並べたい順の位置に入れる
+        pos = sum(1 for v in rec["videos"] if v in order and order.index(v) < order.index(vid))
         yt.playlistItems().insert(part="snippet", body={"snippet": {
-            "playlistId": rec["id"], "resourceId": {"kind": "youtube#video", "videoId": vid}}}).execute()
-        rec["videos"].append(vid)
-        PLAYLIST_REC.write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
+            "playlistId": rec["id"], "position": pos, "resourceId": {"kind": "youtube#video", "videoId": vid}}}).execute()
+        rec["videos"].insert(pos, vid)
+        rec_path.write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"  足しました: {name}", flush=True)
     print(f"再生リスト: https://www.youtube.com/playlist?list={rec['id']}（{len(rec['videos'])} 本）")
+
+
+def _vid(p):
+    return json.loads(p.read_text(encoding="utf-8"))["id"] if p.exists() else None
+
+
+def sync_playlist():
+    """科目Bの解説動画の再生リスト（LESSON_ORDER の順）。記録は notes/科目B解説動画/playlist.json。"""
+    _sync(PLAYLIST_REC, PLAYLIST_TITLE, PLAYLIST_DESC, [(n, _vid(LESSON_DIR / n / "youtube.json")) for n in LESSON_ORDER])
+
+
+# 勉強ソングの再生リスト（2026-11-04）。曲の横長の本編だけ（ショート・前の版は入れない）を、上げた順に並べる
+SONG_PLAYLIST_REC = SONGS_DIR / "playlist.json"
+SONG_PLAYLIST_TITLE = "IT用語の勉強ソング（ITパスポート・基本情報）"
+SONG_PLAYLIST_DESC = ("ITパスポート・基本情報技術者試験の用語を、歌と図で覚える勉強ソングです。\n"
+                      "歌詞に出てくる用語を、1行ずつ図で説明します。\n\n"
+                      "▼ 用語の練習はこちら（FE用語ドリル）\nhttps://fe.yogo-drill.com/\n\n※ 曲・歌声は AI で作成しています。")
+
+
+def sync_song_playlist():
+    recs = sorted(SONGS_DIR.glob("*/youtube.json"), key=lambda p: p.stat().st_mtime)
+    _sync(SONG_PLAYLIST_REC, SONG_PLAYLIST_TITLE, SONG_PLAYLIST_DESC, [(p.parent.name, _vid(p)) for p in recs])
 
 
 if __name__ == "__main__":
@@ -270,6 +295,9 @@ if __name__ == "__main__":
         sys.exit()
     if args and args[0] == "--playlist":   # python upload_youtube.py --playlist
         sync_playlist()
+        sys.exit()
+    if args and args[0] == "--song-playlist":   # python upload_youtube.py --song-playlist
+        sync_song_playlist()
         sys.exit()
     shorts = "--short" in args
     args = [a for a in args if a != "--short"]
@@ -288,3 +316,5 @@ if __name__ == "__main__":
     else:
         for n in args:
             upload(yt, n)
+        if MANAGE_TOKEN.exists():      # 再生リストの許可があれば、上げた曲を勉強ソングの再生リストにも足す
+            sync_song_playlist()
