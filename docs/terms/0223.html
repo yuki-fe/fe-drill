@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ブラックボックステストとは？意味と覚え方｜基本情報技術者試験の用語｜FE用語ドリル</title>
-<meta name="description" content="ブラックボックステスト（テクノロジ系・開発技術）: プログラムの内部構造は見ず、入力と出力の関係だけに注目して行うテスト。">
+<meta name="description" content="ブラックボックステスト（テクノロジ系・開発技術）: プログラムの内部構造は見ず、入力と出力の関係だけに注目して行うテスト。【覚え方】中身の見えない黒い箱にたとえます。プログラムの中は見ずに、仕様どおりの入力をしたら、仕様どおりの結果が出る…">
 <link rel="canonical" href="https://fe.yogo-drill.com/terms/0223.html">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ブラックボックステストとは？意味と覚え方｜基本情報技術者試験の用語｜FE用語ドリル">
-<meta property="og:description" content="ブラックボックステスト（テクノロジ系・開発技術）: プログラムの内部構造は見ず、入力と出力の関係だけに注目して行うテスト。">
+<meta property="og:description" content="ブラックボックステスト（テクノロジ系・開発技術）: プログラムの内部構造は見ず、入力と出力の関係だけに注目して行うテスト。【覚え方】中身の見えない黒い箱にたとえます。プログラムの中は見ずに、仕様どおりの入力をしたら、仕様どおりの結果が出る…">
 <meta property="og:url" content="https://fe.yogo-drill.com/terms/0223.html">
 <meta property="og:site_name" content="FE用語ドリル">
 <meta property="og:image" content="https://fe.yogo-drill.com/og.png">
@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
-<link rel="stylesheet" href="../assets/style.css?v=4bd211d5">
+<link rel="stylesheet" href="../assets/style.css?v=51eb5145">
 <link rel="stylesheet" href="../assets/layout.css?v=39167a19">
 <link rel="icon" href="../favicon.ico" sizes="48x48">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -52,6 +52,7 @@
         <a class="btn primary" href="../index.html#card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 2h12a2 2 0 0 1 2 2v12"/></svg>カードで練習</a>
         <a class="btn" href="../index.html#type"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>書いて答える</a>
       </div>
+      <section class="detail"><h2>覚え方</h2><p>中身の見えない黒い箱にたとえます。プログラムの中は見ずに、仕様どおりの入力をしたら、仕様どおりの結果が出るかだけを確かめます。</p></section><section class="detail"><h2>試験での出され方</h2><p>テスト技法の同値分割・境界値分析とセットで出ます。たとえば「18歳以上なら受け付ける」なら、境界値分析では 17 と 18 をテストします。</p></section><section class="detail"><h2>似た用語との違い</h2><dl class="diff-list"><dt><a href="0224.html">ホワイトボックステスト</a>との違い</dt><dd>ホワイトボックステストはプログラムの中身（命令や分岐）を見て、通り道を確かめる。</dd><dt><a href="0226.html">境界値分析</a>との違い</dt><dd>境界値分析は、ブラックボックステストのテストケースを、条件の境目の値で作る方法。</dd></dl></section>
       
       
   <section class="mini-quiz" data-answer="2" data-term="ドライバ" data-href="0222.html">
@@ -76,6 +77,7 @@
         <h2>同じ分野の用語</h2>
         <ul class="related"><li><a href="0222.html">ドライバ</a><p>テストで、まだできていない上位モジュールの代わりに、テスト対象を呼び出す仮のモジュール。</p></li><li><a href="0224.html">ホワイトボックステスト</a><p>プログラムの内部構造（命令や分岐）に注目して行うテスト。</p></li><li><a href="0221.html">スタブ</a><p>テストで、まだできていない下位モジュールの代わりに使う仮のモジュール。</p></li><li><a href="0225.html">同値分割</a><p>入力値を、同じ結果になるグループに分け、各グループから代表値を選んでテストする方法。</p></li><li><a href="0220.html">回帰テスト</a><p>プログラムを変更したことで、変更していない部分に悪い影響が出ていないかを確認するテスト。リグレッションテスト。</p></li><li><a href="0226.html">境界値分析</a><p>グループの境目の値と、その前後の値を選んでテストする方法。</p></li></ul>
       </section>
+      <section class="side-card"><h2>比べて覚える</h2><ul class="b-links"><li><a href="../compare/blackbox-whitebox-test.html">ブラックボックステストとホワイトボックステストの違い</a></li></ul></section>
       <section class="side-card sister"><h2>ITパスポートでも出る用語</h2><p>ITパスポート用語ドリルでは、やさしめの説明で練習できます。</p><a href="https://ip.yogo-drill.com/terms/0294.html">ITパスポート用語ドリルで見る →</a></section>
     </aside>
   </div>

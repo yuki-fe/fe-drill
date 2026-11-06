@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TCPとUDPの違いを表で比較｜基本情報技術者試験｜FE用語ドリル</title>
+<meta name="description" content="TCPは届いたかを確かめながら送る「確実さ重視」、UDPは確かめずにどんどん送る「速さ重視」のプロトコルです。どちらもトランスポート層で働きます。">
+<link rel="canonical" href="https://fe.yogo-drill.com/compare/tcp-udp.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCPとUDPの違いを表で比較｜基本情報技術者試験｜FE用語ドリル">
+<meta property="og:description" content="TCPは届いたかを確かめながら送る「確実さ重視」、UDPは確かめずにどんどん送る「速さ重視」のプロトコルです。どちらもトランスポート層で働きます。">
+<meta property="og:url" content="https://fe.yogo-drill.com/compare/tcp-udp.html">
+<meta property="og:site_name" content="FE用語ドリル">
+<meta property="og:image" content="https://fe.yogo-drill.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700&family=JetBrains+Mono:wght@500&family=M+PLUS+1+Code:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/style.css?v=51eb5145">
+<link rel="stylesheet" href="../assets/layout.css?v=39167a19">
+<link rel="icon" href="../favicon.ico" sizes="48x48">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<meta name="theme-color" content="#c0435a">
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-4FY1CNV38B"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-4FY1CNV38B');</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "ホーム", "item": "https://fe.yogo-drill.com/"}, {"@type": "ListItem", "position": 2, "name": "似た用語の違い", "item": "https://fe.yogo-drill.com/compare/index.html"}, {"@type": "ListItem", "position": 3, "name": "TCPとUDPの違い", "item": "https://fe.yogo-drill.com/compare/tcp-udp.html"}]}</script>
+</head>
+<body class="" data-root="../">
+<a class="skip" href="#content">本文へ移動</a>
+<header class="site-head">
+  <div class="site-head-in">
+    <a class="brand" href="../index.html"><img src="../favicon.svg" alt="" width="28" height="28">FE用語ドリル</a>
+    <nav class="site-nav" aria-label="サイト内">
+      <a href="../index.html">科目A 用語</a><a href="../b/index.html">科目B</a><a href="../terms/index.html">用語一覧</a><a href="../typing.html">タイピング</a><a href="../about.html">このサイトについて</a>
+    </nav>
+  </div>
+</header>
+<div id="content"></div>
+
+<main class="prose">
+  <nav class="crumbs" aria-label="パンくずリスト"><a href="../index.html">ホーム</a><span>›</span><a href="index.html">似た用語の違い</a><span>›</span><span>TCPとUDPの違い</span></nav>
+  <p class="eyebrow">似た用語を比べる</p>
+  <h1>TCPとUDPの違い</h1>
+  <p class="lead">TCPは届いたかを確かめながら送る「確実さ重視」、UDPは確かめずにどんどん送る「速さ重視」のプロトコルです。どちらもトランスポート層で働きます。</p>
+  <h2>表で比べる</h2>
+  <div class="table-scroll"><table class="cmp-table"><thead><tr><th scope="col">観点</th><th scope="col">TCP</th><th scope="col">UDP</th></tr></thead><tbody><tr><th scope="row">接続</th><td>通信の前に接続を確立する（コネクション型）</td><td>接続を確立しない（コネクションレス型）</td></tr><tr><th scope="row">届いたかの確認</th><td>確認応答（ACK）を返し、届かなければ送り直す</td><td>確認しない。届かなくても送り直さない</td></tr><tr><th scope="row">順番</th><td>番号を付けて、届いた順を並べ直す</td><td>並べ直さない</td></tr><tr><th scope="row">速さ・手間</th><td>手順が多いぶん遅め</td><td>手順が少なく速い</td></tr><tr><th scope="row">向いている用途</th><td>Webページ（HTTP）、メール（SMTP・POP3・IMAP）、ファイル転送</td><td>音声通話・動画の配信、DNSの問い合わせ、NTP、DHCP</td></tr></tbody></table></div>
+  <h2>見分けるポイント</h2>
+  <ul><li>「信頼性」「確認応答」「再送」「順序制御」が出てきたら TCP</li><li>「リアルタイム」「少しくらい欠けてもよい」「ブロードキャスト」が出てきたら UDP</li><li>どちらも OSI基本参照モデルのトランスポート層（第4層）。IP（ネットワーク層）の上で動く</li><li>どちらもポート番号で、どのアプリケーションあての通信かを区別する</li></ul>
+  <h2>試験での出され方</h2>
+  <p>「次のうち UDP を使うのに適しているものはどれか」のように、用途から選ばせる問題がよく出ます。音声や動画のように、遅れて届くより欠けても速いほうがよい通信は UDP、と覚えておきましょう。</p>
+  <h2>それぞれの用語</h2>
+  <ul class="term-list"><li><a href="../terms/0130.html">TCP</a><p>コネクションを確立してから通信する、信頼性の高いトランスポート層のプロトコル。</p></li><li><a href="../terms/0131.html">UDP</a><p>コネクションを確立せずに通信する、高速で軽いトランスポート層のプロトコル。動画配信や音声通話に使う。</p></li></ul>
+  <div class="cta-row">
+    <a class="btn primary" href="../index.html#quiz"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 2h12a2 2 0 0 1 2 2v12"/></svg>4択クイズで確かめる</a>
+    <a class="btn" href="../index.html#card">カードで練習</a>
+  </div>
+  
+  <h2>ほかの比べる用語</h2>
+  <ul class="b-links inline"><li><a href="common-key-public-key.html">共通鍵暗号方式と公開鍵暗号方式の違い</a></li><li><a href="dram-sram.html">DRAMとSRAMの違い</a></li><li><a href="raid.html">RAID0・RAID1・RAID5の違い</a></li><li><a href="backup.html">フルバックアップ・差分バックアップ・増分バックアップの違い</a></li><li><a href="write-through-write-back.html">ライトスルーとライトバックの違い</a></li><li><a href="waterfall-agile.html">ウォーターフォールモデルとアジャイルの違い</a></li><li><a href="blackbox-whitebox-test.html">ブラックボックステストとホワイトボックステストの違い</a></li><li><a href="stub-driver.html">スタブとドライバの違い</a></li><li><a href="stack-queue.html">スタックとキューの違い</a></li><li><a href="primary-key-foreign-key.html">主キーと外部キーの違い</a></li><li><a href="contract-types.html">請負契約・準委任契約・労働者派遣の違い</a></li><li><a href="compiler-interpreter.html">コンパイラとインタプリタの違い</a></li><li><a href="fault-tolerance.html">フォールトトレランス・フェールセーフ・フェールソフト・フールプルーフの違い</a></li><li><a href="saas-paas-iaas.html">SaaS・PaaS・IaaSの違い</a></li></ul>
+</main>
+
+<footer class="site-foot">
+  <nav aria-label="フッター">
+    <a href="https://yogo-drill.com/">用語ドリル（ほかの資格のサイト）</a>
+    <a href="../terms/index.html">用語一覧</a>
+    <a href="../about.html">運営者情報</a>
+    <a href="../privacy.html">プライバシーポリシー・免責事項</a>
+    <a href="../app.html">アプリとして使う</a>
+  </nav>
+  <p>基本情報技術者試験は、独立行政法人 情報処理推進機構（IPA）が実施する国家試験です。当サイトはIPAとは関係のない個人の学習サイトです。</p>
+  <p>© 2026 Yuki-fe</p>
+</footer>
+
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("../sw.js").catch(() => {}));</script>
+</body>
+</html>

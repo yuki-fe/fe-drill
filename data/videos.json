@@ -15,6 +15,10 @@
  {"id": "kQO2e5KYiUs", "title": "2分木と2分探索木を擬似言語から1行ずつ", "pages": ["b/algorithms/index.html"], "public": false},
  {"id": "iC514zTH5Ck", "title": "ハッシュを擬似言語から1行ずつ", "pages": ["b/algorithms/index.html"], "public": false},
  {"id": "rclrip2F1HQ", "title": "クイックソートを擬似言語から1行ずつ", "pages": ["b/algorithms/index.html"], "public": false},
+ {"id": "960Xr5EMnCo", "title": "マージソートを擬似言語から1行ずつ", "pages": ["b/algorithms/index.html"], "public": false},
+ {"id": "jGH7IVA07Fk", "title": "文字列探索を擬似言語から1行ずつ", "pages": ["b/algorithms/index.html"], "public": false},
+ {"id": "38AxfWp0OR0", "title": "素数の判定とエラトステネスのふるい", "pages": ["b/algorithms/index.html"], "public": false},
+ {"id": "TIVOao39l98", "title": "2次元配列を擬似言語から1行ずつ", "pages": ["b/algorithms/index.html"], "public": false},
  {"id": "TMa3jk3h89w", "title": "擬似言語の読み方 基礎回①（変数・if・配列）", "pages": ["b/index.html", "b/notation.html"], "public": false},
  {"id": "aZR5RqaeuVQ", "title": "擬似言語の読み方 基礎回②（for・while・トレース表）", "pages": ["b/index.html", "b/notation.html", "b/trace.html"], "public": false},
  {"id": "R5rKfIGH-6w", "title": "擬似言語の読み方 基礎回③（関数・引数・戻り値・大域変数）", "pages": ["b/index.html", "b/notation.html"], "public": false}

@@ -7,7 +7,9 @@
     python upload_youtube.py --check              # ログインと、上げた記録だけ確かめる
     python upload_youtube.py --short コミットしないで   # 縦長のショート版（make_reel_cut.py --shorts で作る）を上げる
     python upload_youtube.py --lesson 二分探索    # 科目Bの解説動画（notes/科目B解説動画/二分探索/）の本編と宣伝のショート
+    python upload_youtube.py --ip ネットワーク②_IPアドレス・DNS   # ITパスポートの解説動画（notes/ITパスポート解説動画/<名前>/）。再生リストにも足す
     python upload_youtube.py --playlist           # 科目Bの解説動画の再生リストを作る・まだ入っていない回を足す（LESSON_ORDER の順）
+    python upload_youtube.py --whatif もしも基本情報に合格したら   # もしも動画（notes/もしも動画/<名前>/）をショートで上げる
 
 使うファイル（どれも notes/ の中で、公開しない）
 - notes/曲の動画/youtube_client_secret.json   Google Cloud で作った OAuth クライアント（デスクトップ アプリ）
@@ -150,12 +152,12 @@ LESSON_DIR = ROOT / "notes" / "科目B解説動画"
 LESSON_TAGS = ["基本情報技術者試験", "科目B", "アルゴリズム", "擬似言語", "資格勉強"]
 
 
-def upload_lesson(yt, name):
+def upload_lesson(yt, name, root=LESSON_DIR, tags=LESSON_TAGS):
     """本編（<名前>_本編_YouTube.mp4）を非公開で上げる。宣伝のショート（<名前>_宣伝_リール・ショート.mp4）があれば、それも上げる（今は作らない）。
     タイトルは YouTubeのタイトル.txt、説明文は YouTubeの説明文.txt。ショートの説明文には本編の URL を入れる。
     上げた記録は youtube.json・youtube_short.json（同じものを二重に上げない）。"""
     from googleapiclient.http import MediaFileUpload
-    d = LESSON_DIR / name
+    d = root / name
     video, short = d / f"{name}_本編_YouTube.mp4", d / f"{name}_宣伝_リール・ショート.mp4"
     thumb, tfile, dfile = d / f"{name}_サムネイル.jpg", d / "YouTubeのタイトル.txt", d / "YouTubeの説明文.txt"
     for p in (video, thumb, tfile, dfile):
@@ -176,7 +178,7 @@ def upload_lesson(yt, name):
         return res["id"]
 
     def meta(t, b):
-        return {"snippet": {"title": t, "description": b, "tags": LESSON_TAGS, "categoryId": CATEGORY,
+        return {"snippet": {"title": t, "description": b, "tags": tags, "categoryId": CATEGORY,
                             "defaultLanguage": "ja", "defaultAudioLanguage": "ja"},
                 # ナレーションが合成音声なので、「改変・合成されたコンテンツ」の申告をする
                 "status": {"privacyStatus": "private", "selfDeclaredMadeForKids": False, "containsSyntheticMedia": True}}
@@ -226,7 +228,8 @@ LESSON_ORDER = ["基礎回1_変数・if・配列", "基礎回2_for・while・ト
                 "最大値を求める", "線形探索", "二分探索", "10進数を2進数に変換する",
                 "ユークリッドの互除法", "バブルソート", "選択ソート", "挿入ソート",
                 "階乗（再帰）", "フィボナッチ数列", "スタック", "キュー",
-                "リスト", "2分木", "ハッシュ", "クイックソート"]
+                "リスト", "2分木", "ハッシュ", "クイックソート",
+                "マージソート", "文字列探索", "素数", "2次元配列"]
 PLAYLIST_TITLE = "基本情報技術者試験 科目B アルゴリズム解説（擬似言語を1行ずつ）"
 PLAYLIST_DESC = ("基本情報技術者試験の科目Bで出る擬似言語とアルゴリズムを、ホワイトボードで1行ずつ説明するシリーズです。\n"
                  "擬似言語の読み方（基礎回）から始めて、探索・整列などのアルゴリズムへ進みます。どの回にも本番と同じ形の穴埋め問題があります。\n\n"
@@ -271,6 +274,28 @@ def sync_playlist():
     _sync(PLAYLIST_REC, PLAYLIST_TITLE, PLAYLIST_DESC, [(n, _vid(LESSON_DIR / n / "youtube.json")) for n in LESSON_ORDER])
 
 
+# ───────── ITパスポートの解説動画（2026-11-04〜。notes/ITパスポート解説動画/<名前>/）
+# 名前（フォルダ名）は 一覧.json の題名から ip_folder() で作る。再生リストは 一覧.json の順（no の順）に並べる
+IP_DIR = ROOT / "notes" / "ITパスポート解説動画"
+IP_TAGS = ["ITパスポート", "iパス", "IT用語", "資格勉強", "わかりやすい"]
+IP_PLAYLIST_REC = IP_DIR / "playlist.json"
+IP_PLAYLIST_TITLE = "ITパスポート たとえでわかる解説（全範囲）"
+IP_PLAYLIST_DESC = ("ITパスポート試験の範囲を、身近なたとえ（住所・電話帳など）で、はじめての人にもわかるように説明するシリーズです。\n"
+                    "どの回にも、本番と同じ4択の練習問題があります。\n\n"
+                    "▼ 用語の練習はこちら（ITパスポート用語ドリル）\nhttps://ip.yogo-drill.com/\n\n※ ナレーションは合成音声です。")
+
+
+def ip_folder(title):
+    """一覧.json の題名 → フォルダ名（例: ネットワーク②（IPアドレス・DNS） → ネットワーク②_IPアドレス・DNS）。"""
+    return title.replace("（", "_").replace("）", "").replace("？", "").replace(" ", "_")
+
+
+def sync_ip_playlist():
+    order = [ip_folder(v["title"]) for v in json.loads((IP_DIR / "一覧.json").read_text(encoding="utf-8"))]
+    items = [(n, _vid(IP_DIR / n / "youtube.json")) for n in order]
+    _sync(IP_PLAYLIST_REC, IP_PLAYLIST_TITLE, IP_PLAYLIST_DESC, [x for x in items if x[1]])
+
+
 # 勉強ソングの再生リスト（2026-11-04）。曲の横長の本編だけ（ショート・前の版は入れない）を、上げた順に並べる
 SONG_PLAYLIST_REC = SONGS_DIR / "playlist.json"
 SONG_PLAYLIST_TITLE = "IT用語の勉強ソング（ITパスポート・基本情報）"
@@ -284,6 +309,38 @@ def sync_song_playlist():
     _sync(SONG_PLAYLIST_REC, SONG_PLAYLIST_TITLE, SONG_PLAYLIST_DESC, [(p.parent.name, _vid(p)) for p in recs])
 
 
+# ───────── もしも動画（2026-11-05〜。Higgsfield の /content-factory で作った縦長の動画。notes/もしも動画/<名前>/）
+WHATIF_DIR = ROOT / "notes" / "もしも動画"
+WHATIF_TAGS = ["基本情報技術者試験", "基本情報", "IT資格", "資格勉強", "もしも"]
+
+
+def upload_whatif(yt, name):
+    """<名前>.mp4 をショートとして非公開で上げる。題名は YouTubeのタイトル.txt、説明文は YouTubeの説明文.txt。
+    絵はコードで描いたアニメで声もないので、「改変・合成されたコンテンツ」の申告はしない。記録は youtube_short.json。"""
+    from googleapiclient.http import MediaFileUpload
+    d = WHATIF_DIR / name
+    video, tfile, dfile = d / f"{name}.mp4", d / "YouTubeのタイトル.txt", d / "YouTubeの説明文.txt"
+    for p in (video, tfile, dfile):
+        if not p.exists():
+            sys.exit(f"ファイルがありません: {p}")
+    rec = d / "youtube_short.json"
+    if rec.exists():
+        sys.exit(f"もう上げてあります: https://youtu.be/{_vid(rec)}（上げ直すときは {rec.name} を消してから）")
+    title = tfile.read_text(encoding="utf-8").strip()[:100]
+    body = dfile.read_text(encoding="utf-8").strip()[:5000]
+    meta = {"snippet": {"title": title, "description": body, "tags": WHATIF_TAGS, "categoryId": CATEGORY,
+                        "defaultLanguage": "ja", "defaultAudioLanguage": "ja"},
+            "status": {"privacyStatus": "private", "selfDeclaredMadeForKids": False, "containsSyntheticMedia": False}}
+    media = MediaFileUpload(str(video), mimetype="video/mp4", chunksize=8 * 1024 * 1024, resumable=True)
+    req = yt.videos().insert(part="snippet,status", body=meta, media_body=media)
+    print(f"上げています: {video.name}", flush=True)
+    res = None
+    while res is None:
+        _, res = req.next_chunk()
+    rec.write_text(json.dumps({"id": res["id"], "title": title, "privacy": "private"}, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"非公開で上げました（ショート）: https://youtu.be/{res['id']}")
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args and args[0] == "--lesson":     # python upload_youtube.py --lesson 二分探索
@@ -292,6 +349,21 @@ if __name__ == "__main__":
             upload_lesson(yt, n)
         if MANAGE_TOKEN.exists():      # 再生リストの許可があれば、上げた回を再生リストにも足す
             sync_playlist()
+        sys.exit()
+    if args and args[0] == "--ip":         # python upload_youtube.py --ip ネットワーク②_IPアドレス・DNS
+        yt = service()
+        for n in args[1:]:
+            upload_lesson(yt, n, IP_DIR, IP_TAGS)
+        if MANAGE_TOKEN.exists():
+            sync_ip_playlist()
+        sys.exit()
+    if args and args[0] == "--ip-playlist":
+        sync_ip_playlist()
+        sys.exit()
+    if args and args[0] == "--whatif":     # python upload_youtube.py --whatif もしも基本情報に合格したら
+        yt = service()
+        for n in args[1:]:
+            upload_whatif(yt, n)
         sys.exit()
     if args and args[0] == "--playlist":   # python upload_youtube.py --playlist
         sync_playlist()

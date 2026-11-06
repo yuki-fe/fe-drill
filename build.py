@@ -37,6 +37,11 @@ IMI = {k: v for k, v in json.loads((ROOT / "data" / "imi.json").read_text(encodi
     if (ROOT / "data" / "imi.json").exists() else {}
 # 科目Bの解説動画（YouTube）。"public": true のものだけサイトに出す
 VIDEOS = json.loads((ROOT / "data" / "videos.json").read_text(encoding="utf-8")) if (ROOT / "data" / "videos.json").exists() else []
+# 用語ページの本文（覚え方・試験での出され方・似た用語との違い）。用語 id → {"oboe", "exam", "diff": [{"id", "text"}]}
+DETAIL = {k: v for k, v in json.loads((ROOT / "data" / "detail.json").read_text(encoding="utf-8")).items() if not k.startswith("_")} \
+    if (ROOT / "data" / "detail.json").exists() else {}
+# 似た用語を比べるページ（compare/<slug>.html）。slug は URL になるので公開後に変えない
+COMPARE = json.loads((ROOT / "data" / "compare.json").read_text(encoding="utf-8")) if (ROOT / "data" / "compare.json").exists() else []
 # sitemap の lastmod: ページの中身が変わった日だけ新しくする（ページ → [中身のハッシュ, 日付]）
 LASTMOD_FILE = ROOT / "data" / "lastmod.json"
 NOTES = []  # ビルドの注意（check() のあとに見つかるもの）
@@ -285,7 +290,7 @@ def build_home():
   </dl>
   <h2>収録している分野</h2>
   <ul class="field-list">{field_links}</ul>
-  <p>すべての用語は<a href="terms/index.html">用語一覧</a>から、1語ずつ解説ページで読めます。</p>
+  <p>すべての用語は<a href="terms/index.html">用語一覧</a>から、1語ずつ解説ページで読めます。TCPとUDP、共通鍵暗号と公開鍵暗号のようなまぎらわしい用語は、<a href="compare/index.html">似た用語の違い</a>で表にして比べられます。</p>
   <h2>用語タイピング</h2>
   <p><a href="typing.html">用語タイピング</a>では、制限時間（1〜3分）の中で何語打てるかに挑戦しながら、用語と意味を打って覚えられます。読みを見て打つ「練習」と、意味だけを見て用語を思い出して打つ「腕だめし」があります。</p>
   <h2>科目Bの対策</h2>
@@ -335,6 +340,86 @@ def mini_quiz(t, related):
   </section>"""
 
 
+TERM_BY_ID = {t["id"]: t for t in terms}
+
+
+def detail_sections(t, rel_terms=""):
+    """data/detail.json の本文（覚え方・試験での出され方・似た用語との違い）。rel_terms は用語ページへの相対パス。"""
+    d = DETAIL.get(t["id"])
+    if not d:
+        return ""
+    out = ""
+    if d.get("oboe"):
+        out += f'<section class="detail"><h2>覚え方</h2><p>{escape(d["oboe"])}</p></section>'
+    if d.get("exam"):
+        out += f'<section class="detail"><h2>試験での出され方</h2><p>{escape(d["exam"])}</p></section>'
+    if d.get("diff"):
+        items = "".join(f'<dt><a href="{rel_terms}{x["id"]}.html">{escape(TERM_BY_ID[x["id"]]["term"])}</a>との違い</dt><dd>{escape(x["text"])}</dd>'
+                        for x in d["diff"] if x["id"] in TERM_BY_ID)
+        out += f'<section class="detail"><h2>似た用語との違い</h2><dl class="diff-list">{items}</dl></section>'
+    return out
+
+
+def faq_html(items):
+    """よくある質問（本文の Q&A）。items は [(質問, 答えの HTML)]。"""
+    return ('<section class="faq"><h2>よくある質問</h2>'
+            + "".join(f'<details><summary>{escape(q)}</summary><div>{a}</div></details>' for q, a in items) + "</section>")
+
+
+def build_compare():
+    """似た用語を比べるページ（compare/<slug>.html）と一覧。"""
+    if not COMPARE:
+        return
+    cards = "".join(f'<li><a href="{c["slug"]}.html">{escape(c["title"])}</a><p>{escape(c["summary"])}</p></li>' for c in COMPARE)
+    body = f"""
+<main class="prose wide">
+  <nav class="crumbs" aria-label="パンくずリスト"><a href="../index.html">ホーム</a><span>›</span><span>似た用語を比べる</span></nav>
+  <h1>似た用語の違い<small>基本情報技術者試験でまぎらわしい用語 {len(COMPARE)}組</small></h1>
+  <p>試験では、似た用語の違いがよく問われます。2つ（3つ）の用語を表で並べて、どこが違うかを確かめましょう。</p>
+  <ul class="term-list">{cards}</ul>
+  <p><a href="../terms/index.html">用語一覧（{len(terms)}語）へ</a></p>
+</main>
+"""
+    page("compare/index.html", f"似た用語の違い（{len(COMPARE)}組）｜基本情報技術者試験｜{SITE}",
+         f"基本情報技術者試験でまぎらわしい用語{len(COMPARE)}組（TCPとUDP、共通鍵暗号と公開鍵暗号など）の違いを、表で比べてまとめました。",
+         body, "../", "", [breadcrumb_ld([("ホーム", BASE + "/"), ("似た用語の違い", f"{BASE}/compare/index.html")])])
+    for c in COMPARE:
+        ts = [TERM_BY_ID[i] for i in c["terms"]]
+        head, *rows = c["table"]
+        table = ('<div class="table-scroll"><table class="cmp-table"><thead><tr>' + "".join(f"<th scope=\"col\">{escape(h)}</th>" for h in head)
+                 + "</tr></thead><tbody>" + "".join("<tr>" + f'<th scope="row">{escape(r[0])}</th>' + "".join(f"<td>{escape(x)}</td>" for x in r[1:]) + "</tr>" for r in rows)
+                 + "</tbody></table></div>")
+        terms_html = "".join(f'<li><a href="../terms/{x["id"]}.html">{escape(x["term"])}</a><p>{escape(x["desc"])}</p></li>' for x in ts)
+        others = "".join(f'<li><a href="{o["slug"]}.html">{escape(o["title"])}</a></li>' for o in COMPARE if o is not c)
+        body = f"""
+<main class="prose">
+  <nav class="crumbs" aria-label="パンくずリスト"><a href="../index.html">ホーム</a><span>›</span><a href="index.html">似た用語の違い</a><span>›</span><span>{escape(c["title"])}</span></nav>
+  <p class="eyebrow">似た用語を比べる</p>
+  <h1>{escape(c["title"])}</h1>
+  <p class="lead">{escape(c["summary"])}</p>
+  <h2>表で比べる</h2>
+  {table}
+  <h2>見分けるポイント</h2>
+  <ul>{"".join(f"<li>{escape(p)}</li>" for p in c["points"])}</ul>
+  <h2>試験での出され方</h2>
+  <p>{escape(c["exam"])}</p>
+  <h2>それぞれの用語</h2>
+  <ul class="term-list">{terms_html}</ul>
+  <div class="cta-row">
+    <a class="btn primary" href="../index.html#quiz">{icon("cards")}4択クイズで確かめる</a>
+    <a class="btn" href="../index.html#card">カードで練習</a>
+  </div>
+  {pr_box()}
+  <h2>ほかの比べる用語</h2>
+  <ul class="b-links inline">{others}</ul>
+</main>
+"""
+        url = f"{BASE}/compare/{c['slug']}.html"
+        page(f"compare/{c['slug']}.html", f"{c['title']}を表で比較｜基本情報技術者試験｜{SITE}",
+             (c["summary"] if len(c["summary"]) <= 120 else c["summary"][:119] + "…"), body, "../", "",
+             [breadcrumb_ld([("ホーム", BASE + "/"), ("似た用語の違い", f"{BASE}/compare/index.html"), (c["title"], url)])])
+
+
 def build_term(t, prev, nxt):
     field = FIELDS[t["field"]]
     rel = related_terms(t)
@@ -354,6 +439,11 @@ def build_term(t, prev, nxt):
                 f'<div class="fig-player">{fig_svg}</div>'
                 '<ol class="fig-steps">' + "".join(f"<li>{escape(s)}</li>" for s in fig["steps"]) + "</ol></section>") if fig else ""
     no = int(t["id"])
+    detail_html = detail_sections(t)
+    cmps = [c for c in COMPARE if t["id"] in c["terms"]]
+    cmp_html = ('<section class="side-card"><h2>比べて覚える</h2><ul class="b-links">'
+                + "".join(f'<li><a href="../compare/{c["slug"]}.html">{escape(c["title"])}</a></li>' for c in cmps)
+                + "</ul></section>") if cmps else ""
     ip_id = IP and IP[1].get(t["term"])
     ip_html = (f'<section class="side-card sister"><h2>ITパスポートでも出る用語</h2>'
                f'<p>ITパスポート用語ドリルでは、やさしめの説明で練習できます。</p>'
@@ -370,6 +460,7 @@ def build_term(t, prev, nxt):
         <a class="btn primary" href="../index.html#card">{icon("cards")}カードで練習</a>
         <a class="btn" href="../index.html#type">{icon("pencil")}書いて答える</a>
       </div>
+      {detail_html}
       {fig_html}
       {mini_quiz(t, rel)}
       {b_html}
@@ -387,6 +478,7 @@ def build_term(t, prev, nxt):
         <h2>同じ分野の用語</h2>
         <ul class="related">{related_html}</ul>
       </section>
+      {cmp_html}
       {ip_html}
     </aside>
   </div>
@@ -398,9 +490,14 @@ def build_term(t, prev, nxt):
          "inDefinedTermSet": {"@type": "DefinedTermSet", "name": f"{SITE} 基本情報技術者試験 用語集", "url": f"{BASE}/terms/index.html"}},
         breadcrumb_ld([("ホーム", BASE + "/"), (field, f"{BASE}/terms/index.html#{t['field']}"), (t["term"], url)]),
     ]
-    short = t["desc"] if len(t["desc"]) <= 100 else t["desc"][:99] + "…"
-    page(f"terms/{t['id']}.html", f"{t['term']}とは？意味と覚え方｜基本情報技術者試験の用語｜{SITE}",
-         f"{t['term']}（{field}・{t['sub']}）: {short}", body, "../", "", ld, '<script src="../assets/term.js"></script>' + ('\n<script src="../assets/fig.js"></script>' if fig else ""))
+    d = DETAIL.get(t["id"], {})
+    desc = f"{t['term']}（{field}・{t['sub']}）: {t['desc']}"
+    if d.get("oboe"):
+        desc += "【覚え方】" + d["oboe"]
+    desc = desc if len(desc) <= 120 else desc[:119] + "…"
+    title = f"{t['term']}とは？意味と覚え方" if d.get("oboe") else f"{t['term']}とは？意味をわかりやすく"
+    page(f"terms/{t['id']}.html", f"{title}｜基本情報技術者試験の用語｜{SITE}",
+         desc, body, "../", "", ld, '<script src="../assets/term.js"></script>' + ('\n<script src="../assets/fig.js"></script>' if fig else ""))
 
 
 def build_index():
@@ -420,8 +517,16 @@ def build_index():
   <h1>基本情報技術者試験の用語一覧<small>{len(terms)}語</small></h1>
   <p>基本情報技術者試験の出題範囲を、テクノロジ系・マネジメント系・ストラテジ系の分野ごとに並べています。用語名から解説ページに進めます。</p>
   <ul class="field-list">{''.join(toc)}</ul>
+  {f'<p>まぎらわしい用語は<a href="../compare/index.html">似た用語の違い（{len(COMPARE)}組）</a>で、表で比べられます。</p>' if COMPARE else ''}
   {pr_box()}
   {''.join(sections)}
+  {faq_html([
+      ("用語はどの順番で覚えればいいですか？", "<p>科目Aでは、テクノロジ系の出題がいちばん多くなります。まずテクノロジ系（基礎理論・ネットワーク・セキュリティ・データベースなど）から始め、マネジメント系・ストラテジ系へ進むのがおすすめです。ホームの「学習する」で分野を選ぶと、その分野だけで練習できます。</p>"),
+      ("意味を読んでもすぐ忘れてしまいます。", "<p>読むだけより、思い出す練習のほうが記憶に残ります。カードで用語を思い出し、4択や「書いて答える」で確かめ、間違えた用語は「復習」でくり返しましょう。<a href=\"../typing.html\">用語タイピング</a>で手を動かして覚える方法もあります。</p>"),
+      ("似た用語の区別がつきません。", f"<p>試験では、似た用語の違いがよく問われます。<a href=\"../compare/index.html\">似た用語の違い</a>で表にして比べると、見分けるポイントがつかめます。用語ページの「似た用語との違い」もあわせて読んでください。</p>"),
+      ("このサイトだけで合格できますか？", "<p>このサイトは用語の暗記と科目Bのトレースの練習が中心です。計算問題や長い文章の問題もあるので、参考書や IPA が公開している過去の問題もあわせて解くことをおすすめします。</p>"),
+      ("試験の制度が変わると聞きました。", "<p>IPA の試験制度は2027年度から見直しが予定されており、基本情報技術者試験もシラバスが改訂される見込みです。このサイトの用語は今の出題範囲に合わせており、新しいシラバスが決まったら見直します。最新の情報は IPA のウェブサイトで確かめてください。</p>"),
+  ])}
 </main>
 """
     page("terms/index.html", f"基本情報技術者試験の用語一覧（{len(terms)}語）｜{SITE}",
@@ -499,7 +604,14 @@ def video_html(path):
         return ""
     items = "".join(f'<li><button class="yt" type="button" data-yt="{escape(v["id"])}"><span class="yt-play" aria-hidden="true">▶</span>'
                     f'<span>{escape(v["title"])}<small>押すと YouTube の動画が開きます</small></span></button></li>' for v in vs)
-    return f"""<section class="b-sec videos"><h2>動画で見る</h2><ul class="yt-list">{items}</ul></section>
+    # 検索結果に動画として出るように VideoObject を付ける（公開日 "date" がある動画だけ）
+    ld = "".join('<script type="application/ld+json">' + json.dumps({
+        "@context": "https://schema.org", "@type": "VideoObject", "name": v["title"],
+        "description": v.get("description") or f"基本情報技術者試験 科目Bの解説動画「{v['title']}」。擬似言語のプログラムの動きを1行ずつ説明します。",
+        "thumbnailUrl": f"https://i.ytimg.com/vi/{v['id']}/hqdefault.jpg", "uploadDate": v["date"],
+        "embedUrl": f"https://www.youtube-nocookie.com/embed/{v['id']}", "contentUrl": f"https://www.youtube.com/watch?v={v['id']}",
+    }, ensure_ascii=False) + "</script>" for v in vs if v.get("date"))
+    return f"""<section class="b-sec videos"><h2>動画で見る</h2><ul class="yt-list">{items}</ul></section>{ld}
 <script>document.querySelectorAll(".yt").forEach((b) => b.onclick = () => {{
   const f = document.createElement("iframe");
   f.src = "https://www.youtube-nocookie.com/embed/" + b.dataset.yt + "?autoplay=1&rel=0";
@@ -559,6 +671,13 @@ def build_b_hub():
       <li>間違えた問題は、上の「復習する問題」から解き直す</li>
     </ol>
   </section>
+  {faq_html([
+      ("プログラミングの経験がなくても科目Bは解けますか？", "<p>解けるようになります。科目Bの擬似言語は、変数・if・for・while・配列・関数などの決まった書き方だけでできています。まず<a href=\"notation.html\">擬似言語の書き方</a>で記号に慣れ、<a href=\"trace.html\">トレース練習</a>で1行ずつ動きを追う練習をくり返しましょう。</p>"),
+      ("トレースとは何ですか？", "<p>プログラムを1行ずつ実行したつもりで、変数の値がどう変わるかを表に書きながら追うことです。科目Bでは、トレースが正確にできるかどうかで点数が大きく変わります。このサイトでは、自分のトレースを「再生」で1行ずつ答え合わせできます。</p>"),
+      ("どのアルゴリズムから覚えればいいですか？", "<p>線形探索・二分探索・バブルソート・選択ソート・挿入ソートのような基本のものから始めましょう。<a href=\"algorithms/index.html\">アルゴリズム図鑑</a>では、考え方・計算量・試験でのポイントと、動きの再生をまとめて見られます。</p>"),
+      ("配列の番号は0からですか、1からですか？", "<p>科目Bの擬似言語では、問題の中で特に書かれていなければ、配列の要素の番号は1から始まります。問題文の説明を必ず確かめてください。</p>"),
+      ("情報セキュリティの問題はどう対策すればいいですか？", "<p>場面を読んで、正しい対応や対策を選ぶ形で出ます。科目Aのセキュリティの用語（ファイアウォール・WAF・デジタル署名など）を覚えたうえで、<a href=\"security.html\">セキュリティ事例</a>で場面に当てはめる練習をしましょう。</p>"),
+  ])}
   <p class="muted">試験の仕組みは、2023年4月からの制度に基づいています。最新の出題範囲と擬似言語の仕様は、IPA の公式サイトで確認してください。</p>
 </main>
 """
@@ -1111,6 +1230,25 @@ def check():
             errors.append(f"{t['id']} {t['term']} の意味の要点の形か読みがおかしい: {m}")
     for k in set(IMI) - set(ids):
         warnings.append(f"data/imi.json の {k} は、用語にない id です")
+    # 用語ページの本文と、比べるページ
+    for k, d in DETAIL.items():
+        if k not in ids:
+            errors.append(f"data/detail.json の {k} は、用語にない id です")
+        for x in d.get("diff", []):
+            if x.get("id") not in ids or not x.get("text"):
+                errors.append(f"data/detail.json の {k} の diff がおかしい: {x}")
+    cslugs = [c["slug"] for c in COMPARE]
+    for c in COMPARE:
+        if cslugs.count(c["slug"]) > 1 or not re.fullmatch(r"[a-z0-9-]+", c["slug"]):
+            errors.append(f"data/compare.json の slug が重複しているか、使えない文字があります: {c['slug']}")
+        for i in c["terms"]:
+            if i not in ids:
+                errors.append(f"data/compare.json の {c['slug']}: 用語 id {i} がありません")
+        if any(len(r) != len(c["table"][0]) for r in c["table"]):
+            errors.append(f"data/compare.json の {c['slug']}: 表の列の数がそろっていません")
+    for v in VIDEOS:
+        if v.get("public") and not v.get("date"):
+            warnings.append(f"data/videos.json の {v['id']} に公開日 \"date\"（例 2026-11-04）がありません（動画の構造化データを出しません）")
     # 科目B
     slugs = {a["slug"] for a in B["algorithms"]}
     for kind in ["algorithms", "trace", "fill", "security", "notation", "kakomon"]:
@@ -1154,6 +1292,7 @@ def main():
     build_index()
     for i, t in enumerate(terms):
         build_term(t, terms[i - 1] if i > 0 else None, terms[i + 1] if i + 1 < len(terms) else None)
+    build_compare()
     build_about()
     build_privacy()
     build_404()
