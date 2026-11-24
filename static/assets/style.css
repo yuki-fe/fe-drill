@@ -92,6 +92,15 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 .goal-set button { background: none; border: 0; padding: 0 8px; min-height: 44px; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; }
 .goal-input { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 10px; font-size: .85rem; color: var(--muted); }
 .goal-input[hidden] { display: none; }
+.rev-now { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 44px; margin-top: 10px; padding: 6px 12px; border: 1px solid var(--mark); border-radius: 8px; background: var(--mark-soft); color: var(--mark); font: inherit; font-weight: 700; cursor: pointer; }
+.rev-now b { font-size: 1.15rem; }
+.rev-week { list-style: none; display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin: 6px 0 0; padding: 0; }
+.rev-week li { display: flex; flex-direction: column; align-items: center; min-width: 0; padding: 3px 0; border-radius: 4px; background: var(--paper); color: var(--muted); line-height: 1.3; }
+.rev-week li.on { color: var(--ink); background: var(--mark-soft); }
+.rev-week small { font-size: .62rem; white-space: nowrap; }
+.rev-week b { font-size: .85rem; }
+.next-review { margin: 10px 0 0; font-size: .86rem; font-weight: 700; color: var(--muted); }
+.next-tag { font-size: .68rem; font-weight: 700; color: var(--muted); background: var(--bg); border-radius: 4px; padding: 0 6px; }
 .goal-input input { min-height: 44px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; font-size: 16px; }   /* 16px 未満だと iPhone で押したときに拡大される */
 /* 科目Bの解説動画（押すまで YouTube を読み込まない） */
 .yt-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
