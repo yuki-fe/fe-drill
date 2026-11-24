@@ -182,6 +182,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, .card:focus-visible 
 .prose p { margin: 0 0 14px; }
 .home-intro { border-top: 1px solid var(--line); margin-top: 32px; }
 .home-intro h1 { font-size: 1.6rem; }
+.home-intro pre { overflow-x: auto; margin: 12px 0; padding: 14px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; font-size: .86rem; line-height: 1.7; }
+.home-intro pre code { font-family: "M PLUS 1 Code", "JetBrains Mono", monospace; }
+.home-intro .table-scroll { margin: 12px 0; }
+.home-intro .cmp-table { min-width: 0; }
+.home-intro .faq { margin-top: 40px; }
 .howto { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; margin: 0; }
 .howto dt { font-weight: 700; }
 .howto dd { margin: 0; }

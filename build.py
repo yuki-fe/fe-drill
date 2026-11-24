@@ -238,10 +238,34 @@ def build_home():
     ]
     feature_cards = "".join(f'<a class="feat" href="{h}">{icon(i)}<b>{escape(t)}</b><span>{escape(d)}</span><em>{escape(c)} →</em></a>'
                             for i, t, d, h, c in features)
+    by_id = {t["id"]: t for t in terms}
+
+    def term_links(*ids):
+        return "・".join(f'<a href="terms/{i}.html">{escape(by_id[i]["term"])}</a>' for i in ids)
+
+    # トレースの例は、科目Bの問題 t1（配列の合計）の値から作る
+    trace_sample = next(x for x in B["trace"] if x["id"] == "t1")
+    trace_data = [3, 5, 2]
+    trace_total, trace_rows = 0, ""
+    for n, v in enumerate(trace_data, 1):
+        trace_total += v
+        trace_rows += f'<tr><th scope="row">{n}回目</th><td>{n}</td><td>{v}</td><td>{trace_total}</td></tr>'
+    home_faq = [
+        ("科目Aと科目Bは、どちらから勉強すればいいですか？",
+         '<p>科目Aのテクノロジ系から始めるのがおすすめです。2進数や配列などの用語がわかると、科目Bのプログラムも読みやすくなります。慣れてきたら、<a href="b/trace.html">トレース練習</a>を並行して進めます。</p>'),
+        ("科目Bの擬似言語とは何ですか？",
+         '<p>特定のプログラミング言語ではなく、基本情報技術者試験でプログラムを表すために使う書き方です。<a href="b/notation.html">記法クイズ</a>で読み方を確認できます。</p>'),
+        ("片方の科目だけ基準点を超えれば合格できますか？",
+         "<p>できません。科目Aと科目Bの両方で、1,000点満点中600点以上が必要です。</p>"),
+        ("2027年度から試験は変わりますか？",
+         "<p>2027年度から新しい試験制度の開始が予定されていて、基本情報技術者試験のシラバス案も公開されています。このサイトの用語は今の出題範囲に合わせていて、新しいシラバスが決まったら見直します。</p>"),
+        ("料金や会員登録は必要ですか？",
+         '<p>どちらも要りません。スマホでもパソコンでも使えて、進み具合は使っているブラウザに保存されます。<a href="app.html">ホーム画面に追加</a>すると、アプリのように開けます。</p>'),
+    ]
     body = f"""
 <section class="hero" aria-labelledby="hero-h">
   <div class="hero-text">
-    <p class="hero-eyebrow">基本情報技術者試験（FE）の対策・無料</p>
+    <p class="hero-eyebrow">{escape(SITE)}｜基本情報技術者試験の無料対策</p>
     <h1 id="hero-h"><span>用語は、</span><span>すきま時間に。</span><br><span>科目Bは、</span><span>1行ずつ動かして。</span></h1>
     <p class="hero-lead">科目Aの用語{len(terms)}語を単語帳とクイズで覚え、科目Bは擬似言語のプログラムを1行ずつ再生して、変数の変化を目で追えます。登録は要りません。</p>
     <div class="hero-cta">
@@ -281,24 +305,43 @@ def build_home():
 
 <section class="prose home-intro">
   <h2 class="intro-title">{escape(SITE)}について<small>{escape(config["tagline"])}</small></h2>
-  <p>基本情報技術者試験（FE）の科目A・科目Bで出てくる用語を、{len(terms)}語収録しています。登録は不要で、スマホでもパソコンでも無料で使えます。</p>
-  <h2>5つの学び方</h2>
-  <dl class="howto">
-    <dt>カード</dt><dd>意味を読んで用語を思い出し、裏返して確かめます。「用語 → 意味」の向きにも切り替えられます。</dd>
-    <dt>4択クイズ</dt><dd>本試験と同じア〜エの選択肢から答えを選びます。同じ分野の用語がひっかけとして並びます。</dd>
-    <dt>書いて答える</dt><dd>説明を読んで、用語を自分で入力します。ひらがなや英字の略語でも正解になります。</dd>
-    <dt>復習</dt><dd>「まだ」を押した用語や、クイズで間違えた用語だけを集めて、カード・4択・書いて答えるで学習し直せます。</dd>
-    <dt>一覧</dt><dd>用語を検索し、覚えた用語に印を付けられます。</dd>
-  </dl>
-  <h2>収録している分野</h2>
+  <p>{escape(SITE)}は、基本情報技術者試験（FE）を受ける人のための無料の学習サイトです。科目Aの知識は{len(terms)}語の単語帳と解説ページで固め、科目Bの擬似言語はプログラムを1行ずつ動かして読めるようにします。</p>
+  <h2>科目Aと科目Bの違い</h2>
+  <div class="table-scroll"><table class="cmp-table">
+    <thead><tr><th scope="col">項目</th><th scope="col">科目A</th><th scope="col">科目B</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">問われる力</th><td>知識</td><td>技能（読んで考える力）</td></tr>
+      <tr><th scope="row">試験時間</th><td>90分</td><td>100分</td></tr>
+      <tr><th scope="row">問題数</th><td>60問（四肢択一）</td><td>20問（多肢選択式）</td></tr>
+      <tr><th scope="row">内容</th><td>テクノロジ系・マネジメント系・ストラテジ系</td><td>アルゴリズムとプログラミング16問、情報セキュリティ4問</td></tr>
+      <tr><th scope="row">基準点</th><td>600点／1,000点満点</td><td>600点／1,000点満点</td></tr>
+    </tbody>
+  </table></div>
+  <p>合格には、科目Aと科目Bの両方で基準点以上が必要です。片方だけ高得点でも合格にはなりません。（試験要綱 Ver.5.6、2026年10月の試験から適用）</p>
+  <h2>基本情報技術者試験のおすすめの勉強順</h2>
+  <ol>
+    <li><b>科目Aのテクノロジ系から始める。</b>{term_links("0001", "0006", "0026", "0048")}のように、科目Bの土台にもなる用語を先に覚えます。</li>
+    <li><b>擬似言語の書き方に慣れる。</b><a href="b/notation.html">記法クイズ</a>で、代入・条件分岐・繰り返し・配列の読み方を確認します。</li>
+    <li><b>科目Bのトレースを練習する。</b><a href="b/trace.html">トレース練習</a>（{len(B["trace"])}問）と<a href="b/algorithms/index.html">アルゴリズム図鑑</a>で、変数の変化を追います。</li>
+    <li><b>マネジメント系・ストラテジ系を足す。</b>範囲を一周したら、間違えた用語だけを復習して穴を埋めます。</li>
+  </ol>
+  <h2>科目Aの分野と代表的な用語</h2>
   <ul class="field-list">{field_links}</ul>
-  <p>すべての用語は<a href="terms/index.html">用語一覧</a>から、1語ずつ解説ページで読めます。TCPとUDP、共通鍵暗号と公開鍵暗号のようなまぎらわしい用語は、<a href="compare/index.html">似た用語の違い</a>で表にして比べられます。</p>
-  <h2>用語タイピング</h2>
-  <p><a href="typing.html">用語タイピング</a>では、制限時間（1〜3分）の中で何語打てるかに挑戦しながら、用語と意味を打って覚えられます。読みを見て打つ「練習」と、意味だけを見て用語を思い出して打つ「腕だめし」があります。</p>
-  <h2>科目Bの対策</h2>
-  <p>科目Bでは、プログラムの動きを追う「トレース」が鍵になります。このサイトでは、擬似言語のプログラムを<b>1行ずつ再生</b>して、どの行で変数がどう変わるかを目で見て確かめられます。<a href="b/trace.html">トレース練習</a>（{len(B["trace"])}問）のほか、アルゴリズム図鑑、穴埋め問題、情報セキュリティの事例問題、自分で書いたプログラムを動かせるシミュレータも用意しています。<a href="b/index.html">科目Bのページへ</a></p>
-  <h2>出題範囲の見直しについて</h2>
-  <p>IPA の試験制度は2027年度から見直しが予定されており、基本情報技術者試験もシラバスが改訂される見込みです。このサイトの用語は今の出題範囲に合わせています。新しいシラバスが決まったら、用語を見直します。</p>
+  <dl class="howto">
+    <dt>テクノロジ系</dt><dd>{term_links("0067", "0092", "0104", "0130", "0158", "0201")}など、コンピュータ・データベース・ネットワーク・セキュリティ・開発の用語です。</dd>
+    <dt>マネジメント系</dt><dd>{term_links("0236", "0238", "0246", "0261")}など、プロジェクトやITサービスの管理、システム監査の用語です。</dd>
+    <dt>ストラテジ系</dt><dd>{term_links("0264", "0266", "0308", "0330")}など、経営戦略・会計・法務の用語です。</dd>
+  </dl>
+  <p>まぎらわしい用語は、<a href="compare/tcp-udp.html">TCPとUDP</a>、<a href="compare/common-key-public-key.html">共通鍵暗号と公開鍵暗号</a>、<a href="compare/stack-queue.html">スタックとキュー</a>のように<a href="compare/index.html">表で比べて</a>覚えられます。全{len(terms)}語は<a href="terms/index.html">用語一覧</a>から読めます。</p>
+  <h2>科目Bのトレースとは</h2>
+  <p>トレースは、プログラムを上から順に追い、変数の値がどう変わるかを確かめる読み方です。たとえば、配列 {{3, 5, 2}} の合計を求める次のプログラムを見てみます。</p>
+  <pre><code>{escape(chr(10).join(trace_sample["code"]))}</code></pre>
+  <div class="table-scroll"><table class="cmp-table">
+    <thead><tr><th scope="col">繰り返し</th><th scope="col">i</th><th scope="col">data[i]</th><th scope="col">s（足したあと）</th></tr></thead>
+    <tbody>{trace_rows}</tbody>
+  </table></div>
+  <p>最後に s の値 {trace_total} が返ります。このサイトの<a href="b/trace.html">トレース練習</a>では、こうした変化を1行ずつ再生して確かめられます。<a href="b/index.html">科目Bの対策ページへ</a></p>
+  {faq_html(home_faq)}
   <h2>間違いを見つけたら</h2>
   <p>用語の説明は、運営者が AI の支援を受けて作り、確かめたうえで載せています。説明の誤りや、足りない用語に気づいたら、{contact_html()}から教えてください。</p>
 </section>
