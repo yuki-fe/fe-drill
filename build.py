@@ -202,6 +202,8 @@ def page(path, title, desc, body, rel, body_class="", jsonld=None, scripts="", i
 </body>
 </html>
 """
+    # トップへのリンクは正規 URL（/）にそろえる（index.html のままだと検索エンジンの評価が分かれる）
+    html = html.replace(f'href="{rel}index.html', f'href="{rel or "./"}')
     dest = OUT / path
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(html, encoding="utf-8")
